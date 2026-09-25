@@ -7,6 +7,7 @@
 
 사용법
   python scripts/fetch_buildings.py                       # data/lectures.json 의 모든 동
+  python scripts/fetch_buildings.py --history             # data/buildings_history.csv (과거 학기 포함) 의 모든 동
   python scripts/fetch_buildings.py 200 301 302 500 504   # 지정한 동만
 기존 data/buildings.csv 의 행(GATE, 919 같은 수동 항목 포함)은 유지하고, 새 동만 추가한다.
 
@@ -33,6 +34,7 @@ HEADERS = {
 }
 BUILDINGS = ROOT / "data" / "buildings.csv"
 LECTURES = ROOT / "data" / "lectures.json"
+HISTORY = ROOT / "data" / "buildings_history.csv"
 
 
 def lookup(session: requests.Session, building: str) -> dict | None:
@@ -56,7 +58,10 @@ def main(argv: list[str]) -> int:
             for row in csv.DictReader(f):
                 existing[row["building"]] = row
 
-    if argv:
+    if argv == ["--history"]:
+        with open(HISTORY, newline="", encoding="utf-8") as f:
+            wanted = [row["building"] for row in csv.DictReader(f)]
+    elif argv:
         wanted = argv
     else:
         secs = sections_from_json(LECTURES)
