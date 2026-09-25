@@ -41,7 +41,11 @@ def lookup(session: requests.Session, building: str) -> dict | None:
     r = session.get(URL, params={"lang_type": "KOR", "search_word": building}, timeout=30)
     r.raise_for_status()
     items = r.json().get("search_list", [])
-    cands = [i for i in items if i.get("con_type") == "F" and i.get("fac_type") == "OTHER" and str(i.get("vil_dong_nm")) == building]
+    same = [i for i in items if str(i.get("vil_dong_nm")) == building]
+    # 1순위: 시설(F)·기타(OTHER) — SNUTT 규칙. 없으면 시설이면 아무 유형이나(체육시설 등), 그래도 없으면 동 번호만 맞는 것
+    cands = ([i for i in same if i.get("con_type") == "F" and i.get("fac_type") == "OTHER"]
+             or [i for i in same if i.get("con_type") == "F"]
+             or same)
     if not cands:
         return None
     best = min(cands, key=lambda i: len(i.get("name", "")))
@@ -83,7 +87,7 @@ def main(argv: list[str]) -> int:
             print(f"  {b}: {hit['name']} ({hit['lat']:.5f}, {hit['lon']:.5f})")
         else:
             missing.append(b)
-            print(f"  {b}: 못 찾음 — 수동으로 채울 것")
+            print(f"  {b}: 못 찾음 — map.snu.ac.kr 에서 '{b}' 검색해 buildings.csv 에 직접 추가")
         time.sleep(0.3)
 
     BUILDINGS.parent.mkdir(exist_ok=True)
