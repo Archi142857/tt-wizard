@@ -59,6 +59,8 @@ class Section:
     department: str = ""
     credit: float = 0.0
     classification: str = ""  # 교과구분(전필/전선/교양 …)
+    program: str = ""  # 이수과정(학사/석사/박사/석박사통합)
+    status: str = ""  # 개설상태(설강/폐강대상)
 
     @property
     def key(self) -> str:

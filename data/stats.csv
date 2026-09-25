@@ -1,2 +1,2 @@
-timestamp,semester,sections,sections_with_location,location_ratio,courses,courses_with_multiple_buildings
-2026-09-26T01:41+09:00,2026-2,8552,4697,0.549,4218,184
+timestamp,semester,sections_total,sections_timed,sections_located,located_ratio,courses,courses_multi_section,courses_multi_building,multi_building_ratio,buildings
+2026-09-26T01:41+09:00,2026-2,8552,3275,2990,0.913,2070,279,135,0.484,79

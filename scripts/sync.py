@@ -116,10 +116,12 @@ def append_stats(ts: datetime, label: str, stats: dict) -> None:
     with open(STATS, "a", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         if new_file:
-            w.writerow(["timestamp", "semester", "sections", "sections_with_location", "location_ratio",
-                        "courses", "courses_with_multiple_buildings"])
-        w.writerow([ts.isoformat(timespec="minutes"), label, stats["sections"], stats["sections_with_location"],
-                    stats["location_ratio"], stats["courses"], stats["courses_with_multiple_buildings"]])
+            w.writerow(["timestamp", "semester", "sections_total", "sections_timed", "sections_located",
+                        "located_ratio", "courses", "courses_multi_section", "courses_multi_building",
+                        "multi_building_ratio", "buildings"])
+        w.writerow([ts.isoformat(timespec="minutes"), label] + [stats[k] for k in (
+            "sections_total", "sections_timed", "sections_located", "located_ratio", "courses",
+            "courses_multi_section", "courses_multi_building", "multi_building_ratio", "buildings")])
 
 
 def main() -> int:
@@ -167,7 +169,7 @@ def main() -> int:
     old_sections = sections_from_json(LECTURES) if LECTURES.exists() else []
     d = diff_sections(old_sections, new_sections)
     stats = location_stats(new_sections)
-    print(f"분반 {stats['sections']}개 (강의실 확정 {stats['location_ratio']:.1%}) · "
+    print(f"분반 {stats['sections_total']}개 (학사·설강·시간 있음 {stats['sections_timed']}개, 강의실 확정 {stats['located_ratio']:.1%}) · "
           f"신설 {len(d['created'])} · 변경 {len(d['updated'])} · 삭제 {len(d['deleted'])}")
 
     if args.dry_run:

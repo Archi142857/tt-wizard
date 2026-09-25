@@ -50,7 +50,7 @@ def test_parse_excel_layout(tmp_path):
     c = next(s for s in secs if s.key == "M1103.000100-001")
     assert not c.has_location  # 미정
     st = location_stats(secs)
-    assert st["sections"] == 4 and st["sections_with_location"] == 3
+    assert st["sections_total"] == 4 and st["sections_timed"] == 4 and st["sections_located"] == 3
 
     all_secs = parse_sugang_excel(p, campus=None)
     assert len(all_secs) == 5

@@ -40,6 +40,8 @@ _COLUMN_HINTS = {
     "college": ("개설대학",),
     "credit": ("학점",),
     "classification": ("교과구분",),
+    "program": ("이수과정",),
+    "status": ("개설상태",),
 }
 
 
@@ -192,6 +194,8 @@ def parse_sugang_excel(path: str | Path, campus: str | None = "관악") -> list[
                 department=cell(row, "department") or cell(row, "college"),
                 credit=credit,
                 classification=cell(row, "classification"),
+                program=cell(row, "program"),
+                status=cell(row, "status"),
             )
         )
     return sections
@@ -209,6 +213,8 @@ def sections_to_json(sections: Iterable[Section], path: str | Path) -> None:
             "department": s.department,
             "credit": s.credit,
             "classification": s.classification,
+            "program": s.program,
+            "status": s.status,
             "meetings": [
                 {"day": m.day, "start": m.start, "end": m.end, "building": m.building, "room": m.room}
                 for m in s.meetings
@@ -231,24 +237,39 @@ def sections_from_json(path: str | Path) -> list[Section]:
             department=d.get("department", ""),
             credit=d.get("credit", 0.0),
             classification=d.get("classification", ""),
+            program=d.get("program", ""),
+            status=d.get("status", ""),
         )
         for d in data
     ]
 
 
-def location_stats(sections: Iterable[Section]) -> dict:
-    """보고서용: 강의실 확정 비율, 같은 과목 분반이 서로 다른 동에서 열리는 비율."""
-    sections = list(sections)
-    with_loc = sum(1 for s in sections if s.has_location)
-    by_course: dict[str, set[str]] = {}
-    for s in sections:
-        by_course.setdefault(s.course_id, set()).update(s.buildings)
-    multi = [cid for cid, b in by_course.items() if len(b) > 1]
+def location_stats(sections: Iterable[Section], program: str | None = "학사") -> dict:
+    """보고서용 수치. 기본은 학사·설강·수업시간 있는 강좌만 센다.
+
+    - located_ratio            : 그중 강의실이 전부 확정된 비율 (편람 게시 후 시간에 따라 오르는 값)
+    - multi_building_ratio     : 분반이 둘 이상인 과목 중 분반이 서로 다른 동에서 열리는 과목 비율
+    - buildings                : 강의가 실제로 열리는 동 수
+    수업시간이 없는 강좌(논문연구 등)는 위치가 있을 수 없으므로 분모에서 뺀다.
+    """
+    all_secs = list(sections)
+    timed = [s for s in all_secs if s.meetings and (s.status in ("", "설강")) and (program is None or s.program in ("", program))]
+    located = [s for s in timed if s.has_location]
+    by_course: dict[str, list[Section]] = {}
+    for s in timed:
+        by_course.setdefault(s.course_id, []).append(s)
+    multi = {cid: ss for cid, ss in by_course.items() if len(ss) >= 2}
+    multi_diff = [cid for cid, ss in multi.items() if len(set().union(*(s.buildings for s in ss))) >= 2]
+    buildings = set().union(*(s.buildings for s in timed)) if timed else set()
     return {
-        "sections": len(sections),
-        "sections_with_location": with_loc,
-        "location_ratio": round(with_loc / len(sections), 3) if sections else 0.0,
+        "sections_total": len(all_secs),
+        "sections_timed": len(timed),
+        "sections_located": len(located),
+        "located_ratio": round(len(located) / len(timed), 3) if timed else 0.0,
         "courses": len(by_course),
-        "courses_with_multiple_buildings": len(multi),
-        "multi_building_ratio": round(len(multi) / len(by_course), 3) if by_course else 0.0,
+        "courses_multi_section": len(multi),
+        "courses_multi_building": len(multi_diff),
+        "multi_building_ratio": round(len(multi_diff) / len(multi), 3) if multi else 0.0,
+        "buildings": len(buildings),
+        "program": program or "전체",
     }

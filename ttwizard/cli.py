@@ -69,9 +69,10 @@ def cmd_demo(args) -> int:
 
 def cmd_parse(args) -> int:
     sections = parse_sugang_excel(args.excel, campus=None if args.all_campus else "관악")
-    stats = location_stats(sections)
-    print(f"분반 {stats['sections']}개, 강의실 확정 {stats['sections_with_location']}개 ({stats['location_ratio']:.1%})")
-    print(f"과목 {stats['courses']}개, 분반이 서로 다른 동에서 열리는 과목 {stats['courses_with_multiple_buildings']}개 ({stats['multi_building_ratio']:.1%})")
+    st = location_stats(sections)
+    print(f"전체 분반 {st['sections_total']}개 / {st['program']}·설강·수업시간 있음 {st['sections_timed']}개")
+    print(f"  강의실 확정 {st['sections_located']}개 ({st['located_ratio']:.1%}), 강의 건물 {st['buildings']}동")
+    print(f"  과목 {st['courses']}개, 복수 분반 과목 {st['courses_multi_section']}개 중 서로 다른 동 {st['courses_multi_building']}개 ({st['multi_building_ratio']:.1%})")
     if args.output:
         sections_to_json(sections, args.output)
         print(f"저장: {args.output}")
