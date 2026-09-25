@@ -1,0 +1,10 @@
+from,to,minutes,source
+919,200,9,sample
+200,504,14,sample
+504,302,8,sample
+302,83,11,sample
+83,919,12,sample
+504,83,6,sample
+200,302,18,sample
+919,302,7,sample
+919,504,10,sample

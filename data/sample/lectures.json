@@ -1,0 +1,338 @@
+[
+ {
+  "course_id": "M1101.000100",
+  "section_no": "001",
+  "course_name": "동물생리학",
+  "instructor": "김OO",
+  "department": "식품·동물생명공학부",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 0,
+    "start": 570,
+    "end": 645,
+    "building": "200",
+    "room": "200-205"
+   },
+   {
+    "day": 2,
+    "start": 570,
+    "end": 645,
+    "building": "200",
+    "room": "200-205"
+   }
+  ]
+ },
+ {
+  "course_id": "M1101.000100",
+  "section_no": "002",
+  "course_name": "동물생리학",
+  "instructor": "이OO",
+  "department": "식품·동물생명공학부",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 1,
+    "start": 660,
+    "end": 735,
+    "building": "200",
+    "room": "200-301"
+   },
+   {
+    "day": 3,
+    "start": 660,
+    "end": 735,
+    "building": "200",
+    "room": "200-301"
+   }
+  ]
+ },
+ {
+  "course_id": "M1102.000100",
+  "section_no": "001",
+  "course_name": "생화학 1",
+  "instructor": "박OO",
+  "department": "생명과학부",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 0,
+    "start": 660,
+    "end": 735,
+    "building": "504",
+    "room": "504-105"
+   },
+   {
+    "day": 2,
+    "start": 660,
+    "end": 735,
+    "building": "504",
+    "room": "504-105"
+   }
+  ]
+ },
+ {
+  "course_id": "M1102.000100",
+  "section_no": "002",
+  "course_name": "생화학 1",
+  "instructor": "최OO",
+  "department": "생명과학부",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 1,
+    "start": 570,
+    "end": 645,
+    "building": "500",
+    "room": "500-101"
+   },
+   {
+    "day": 3,
+    "start": 570,
+    "end": 645,
+    "building": "500",
+    "room": "500-101"
+   }
+  ]
+ },
+ {
+  "course_id": "M1102.000100",
+  "section_no": "003",
+  "course_name": "생화학 1",
+  "instructor": "박OO",
+  "department": "생명과학부",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 0,
+    "start": 840,
+    "end": 915,
+    "building": "504",
+    "room": "504-201"
+   },
+   {
+    "day": 2,
+    "start": 840,
+    "end": 915,
+    "building": "504",
+    "room": "504-201"
+   }
+  ]
+ },
+ {
+  "course_id": "M1103.000100",
+  "section_no": "001",
+  "course_name": "화공열역학",
+  "instructor": "정OO",
+  "department": "화학생물공학부",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 0,
+    "start": 840,
+    "end": 915,
+    "building": "302",
+    "room": "302-106"
+   },
+   {
+    "day": 2,
+    "start": 840,
+    "end": 915,
+    "building": "302",
+    "room": "302-106"
+   }
+  ]
+ },
+ {
+  "course_id": "M1103.000100",
+  "section_no": "002",
+  "course_name": "화공열역학",
+  "instructor": "강OO",
+  "department": "화학생물공학부",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 1,
+    "start": 840,
+    "end": 915,
+    "building": "301",
+    "room": "301-118"
+   },
+   {
+    "day": 3,
+    "start": 840,
+    "end": 915,
+    "building": "301",
+    "room": "301-118"
+   }
+  ]
+ },
+ {
+  "course_id": "L0444.000100",
+  "section_no": "001",
+  "course_name": "대학글쓰기",
+  "instructor": "윤OO",
+  "department": "기초교육원",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 0,
+    "start": 930,
+    "end": 1005,
+    "building": "83",
+    "room": "083-302"
+   },
+   {
+    "day": 2,
+    "start": 930,
+    "end": 1005,
+    "building": "83",
+    "room": "083-302"
+   }
+  ]
+ },
+ {
+  "course_id": "L0444.000100",
+  "section_no": "002",
+  "course_name": "대학글쓰기",
+  "instructor": "장OO",
+  "department": "기초교육원",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 1,
+    "start": 930,
+    "end": 1005,
+    "building": "83",
+    "room": "083-501"
+   },
+   {
+    "day": 3,
+    "start": 930,
+    "end": 1005,
+    "building": "83",
+    "room": "083-501"
+   }
+  ]
+ },
+ {
+  "course_id": "L0444.000100",
+  "section_no": "003",
+  "course_name": "대학글쓰기",
+  "instructor": "한OO",
+  "department": "기초교육원",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 4,
+    "start": 540,
+    "end": 710,
+    "building": "83",
+    "room": "083-101"
+   }
+  ]
+ },
+ {
+  "course_id": "M1104.000100",
+  "section_no": "001",
+  "course_name": "세포생물학",
+  "instructor": "오OO",
+  "department": "생명과학부",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 1,
+    "start": 660,
+    "end": 735,
+    "building": "504",
+    "room": "504-105"
+   },
+   {
+    "day": 3,
+    "start": 660,
+    "end": 735,
+    "building": "504",
+    "room": "504-105"
+   }
+  ]
+ },
+ {
+  "course_id": "M1104.000100",
+  "section_no": "002",
+  "course_name": "세포생물학",
+  "instructor": "오OO",
+  "department": "생명과학부",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 0,
+    "start": 570,
+    "end": 645,
+    "building": "504",
+    "room": "504-105"
+   },
+   {
+    "day": 2,
+    "start": 570,
+    "end": 645,
+    "building": "504",
+    "room": "504-105"
+   }
+  ]
+ },
+ {
+  "course_id": "M1105.000100",
+  "section_no": "001",
+  "course_name": "유기화학",
+  "instructor": "서OO",
+  "department": "화학생물공학부",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 1,
+    "start": 840,
+    "end": 915,
+    "building": "302",
+    "room": "302-201"
+   },
+   {
+    "day": 3,
+    "start": 840,
+    "end": 915,
+    "building": "302",
+    "room": "302-201"
+   }
+  ]
+ },
+ {
+  "course_id": "M1105.000100",
+  "section_no": "002",
+  "course_name": "유기화학",
+  "instructor": "서OO",
+  "department": "화학생물공학부",
+  "credit": 3.0,
+  "classification": "전선",
+  "meetings": [
+   {
+    "day": 4,
+    "start": 840,
+    "end": 1010,
+    "building": "302",
+    "room": "302-201"
+   }
+  ]
+ }
+]

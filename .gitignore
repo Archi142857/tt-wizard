@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# tt-wizard
+.env
+data/raw/latest.xls
+data/raw/latest.xlsx

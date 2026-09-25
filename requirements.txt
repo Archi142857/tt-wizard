@@ -1,0 +1,6 @@
+pandas>=2.0
+xlrd>=2.0          # .xls (수강편람 엑셀 저장 형식)
+openpyxl>=3.1      # .xlsx
+requests>=2.31
+beautifulsoup4>=4.12
+pytest>=8.0

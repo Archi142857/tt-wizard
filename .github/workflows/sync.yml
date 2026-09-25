@@ -1,0 +1,38 @@
+# 수강편람 자동 갱신 (SNUTT의 CronJob에 해당).
+# 6시간마다 깨어나서 scripts/sync.py 를 부르고, 실제로 내려받을지는 스크립트가 정책(12h / 부스트 6h)으로 정한다.
+# 켜는 법: 레포 Settings → Actions → "Allow all actions", 그리고 Settings → Actions → General →
+#          Workflow permissions 를 "Read and write" 로. 끄려면 이 파일의 schedule 을 지우거나 워크플로를 Disable.
+# 주의: GitHub 서버에서 sugang.snu.ac.kr 에 접속한다. 실행당 요청 2~3회라 부담은 작지만, 차단되면 로컬에서 수동 실행으로 전환.
+
+name: sync-coursebook
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # UTC 기준 6시간마다 (KST 02:17, 08:17, 14:17, 20:17). 분을 0이 아닌 값으로 두면 혼잡 시간대를 피한다
+  workflow_dispatch: {}      # Actions 탭에서 수동 실행
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Run sync
+        run: python scripts/sync.py
+      - name: Commit data changes
+        run: |
+          git config user.name "tt-wizard-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "변경 없음"
+          else
+            git commit -m "sync: coursebook $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
