@@ -1,0 +1,211 @@
+building,name,ename,fac_type,lat,lon
+1,인문관1,College of Humanities 1,OTHER,37.460270,126.952340
+2,인문관2,College of Humanities 2,OTHER,37.460380,126.952950
+3,인문관3,College of Humanities 3,OTHER,37.460710,126.953550
+4,신양인문학술정보관,Shinyang Hall II,OTHER,37.460890,126.953260
+5,인문관4,College of Humanities 4,OTHER,37.460600,126.953930
+6,인문관5,College of Humanities 5,OTHER,37.460730,126.954520
+7,인문관6,College of Humanities 6,OTHER,37.460220,126.954360
+8,두산인문관,Doosan Humanities Hall,OTHER,37.460160,126.953980
+9,사범관1,College of Education 1,OTHER,37.460170,126.954800
+10,사범관2,College of Education 2,OTHER,37.460310,126.955360
+10-1,사범대교육정보관,Education Information Hall,OTHER,37.459960,126.955920
+11,사범관3,College of Education 3,OTHER,37.459790,126.955200
+12,사범교육협력센터,Teacher Training Center,OTHER,37.459620,126.954790
+13,과학교육관,Science Education Building,OTHER,37.459270,126.953890
+14,인문관7,College of Humanities 7,OTHER,37.460930,126.954990
+15,법학관1,College of Law 1,OTHER,37.462330,126.951740
+16,사회과학관,College of Social Sciences,OTHER,37.463530,126.950920
+16-1,신양학술정보관Ⅲ,Shinyang Hall III,OTHER,37.462710,126.951000
+17,법학관2,College of Law 2,OTHER,37.462840,126.951870
+18,자연과학관1,College of Natural Sciences 1,OTHER,37.456780,126.952770
+19,자연과학관2,College of Natural Sciences 2,OTHER,37.456180,126.952770
+20,약학관3,College of Pharmacy 3,OTHER,37.458690,126.952890
+21,약학관1,College of Pharmacy 1,OTHER,37.457840,126.952230
+22,자연과학관4,College of Natural Sciences 4,OTHER,37.457920,126.950960
+23,자연과학관5,College of Natural Sciences 5,OTHER,37.458600,126.951050
+24,자연과학관6,College of Natural Sciences 6,OTHER,37.459420,126.949890
+25,자연과학관7,College of Natural Sciences 7,OTHER,37.458560,126.949880
+26,자연과학관8,College of Natural Sciences 8,OTHER,37.458810,126.950360
+27,자연과학관9,College of Natural Sciences 9,OTHER,37.458050,126.950010
+28,자연대(대형),Natural Sciences Lecture Hall,OTHER,37.457620,126.950390
+29,약학관2,College of Pharmacy 2,OTHER,37.456100,126.953680
+30,공학관1,College of Engineering 1,OTHER,37.456860,126.950850
+31,공학관2,College of Engineering 2,OTHER,37.457020,126.950020
+32,공학관3,College of Engineering 3,OTHER,37.456480,126.950090
+33,공학관4,College of Engineering 4,OTHER,37.456250,126.950840
+34,공학관5,College of Engineering 5,OTHER,37.456090,126.951490
+35,공학관6,College of Engineering 6,OTHER,37.456650,126.952110
+36,공학관7,College of Engineering 7,OTHER,37.455540,126.951460
+37,공학관8,College of Engineering 8,OTHER,37.455720,126.950750
+38,글로벌공학교육센터,Global Education Center for Engineers,OTHER,37.454900,126.950620
+39,대학원연구동(1단계),Graduate Research Center (Level 1),OTHER,37.454650,126.951570
+40,풍동실험동1,Wind Tunnel 1,OTHER,37.454250,126.951580
+41,선체구조실험동,Ship Structure Research Center,OTHER,37.455630,126.952640
+42,선형수조실험동,Towing Tank,OTHER,37.455300,126.952540
+43,데이터사이언스대학원 및 공과대학 강의동 1,Engineering Lecture Building,OTHER,37.457220,126.951730
+43-2,관악 43-2동[데이터사이언스대학원 및 공과대학 강의동 2],DataScienceGraduate,OTHER,37.457010,126.951260
+44,풍동실험동2,Wind Tunnel 2,OTHER,37.454780,126.952090
+44-1,신양학술정보관,Shinyang Hall I,OTHER,37.455200,126.952060
+45,천문대(신),Optical Astronomical Observatory(new),OTHER,37.453950,126.952760
+46,천문관측소,Optical Astronomical Observatory,OTHER,37.457060,126.954270
+47,기상관측소,Atmosphere Observatory,OTHER,37.452850,126.950180
+48,지진관측소,Seismological Observatory,OTHER,37.453940,126.954210
+49,예술관연구동,Design Center AND Concert Hall,OTHER,37.463440,126.954250
+50,예술관(미대)1,College of Fine Arts 1,OTHER,37.463040,126.952340
+51,예술관(미대)2,College of Fine Arts 2,OTHER,37.463540,126.952680
+52,예술관(미대)3,College of Fine Arts 3,OTHER,37.463520,126.953190
+52-2,야외조각실습장2,Outdoor Sculpture Studio 2,OTHER,37.464040,126.952940
+53,예술관(음대)1,College of Music 1,OTHER,37.463040,126.953440
+54,예술관(음대)2,College of Music 2,OTHER,37.462600,126.953350
+55,예술관(음대)3,College of Music 3,OTHER,37.462480,126.952870
+56,자연과학관10,College of Natural Sciences 10,OTHER,37.457700,126.951400
+56-1,관악 56-1동[김철수물리관],Kim Chul-Soo Physics Building,OTHER,37.458209,126.951594
+57,행정대학원,Graduate School of Public Administration,OTHER,37.465590,126.953140
+57-1,행정대학원,Graduate School of Public Administration,OTHER,37.465190,126.953730
+58,SK경영관,College of Business,OTHER,37.465680,126.952030
+59,LG경영관(경영연구관및산학협동관),Graduate School of Business,OTHER,37.464960,126.952950
+59-1,관악 59-1동[매니지먼트센터],,OTHER,37.464916,126.952318
+60,행정관,Administration Building,OTHER,37.460020,126.951290
+61,기초교육원,Center for Teaching and Learning / Faculty of Liberal Education,OTHER,37.459850,126.953760
+62,중앙도서관 본관,University Library,OTHER,37.459400,126.951990
+62-1,중앙도서관 관정관,Kwanjeong Library,OTHER,37.459030,126.952470
+63,학생회관,Student Center,OTHER,37.459320,126.950580
+64,IBK커뮤니케이션센터,IBK Communication Center,OTHER,37.463830,126.949370
+65,교수회관,Faculty Club,OTHER,37.457810,126.953870
+66,학군단,ROTC,OTHER,37.456700,126.954240
+67,NH농협두레문예관,Dure Cultural Center,OTHER,37.463530,126.949730
+68,파워플랜트,Power Plant 1,OTHER,37.466270,126.954880
+69,실험동물자원관리원,Institute of Laboratorial Animal Resources,OTHER,37.457280,126.952780
+70,박물관,University Museum,OTHER,37.464540,126.952350
+71,체육관,Gymnasium,OTHER,37.467600,126.952380
+72,법학도서관,Law Library,OTHER,37.461820,126.951890
+73,문화관,University Cultural Center,OTHER,37.461590,126.951040
+74,예술복합연구동,Arts Research Center,OTHER,37.461930,126.953120
+75,복지관,University Newspaper,OTHER,37.456090,126.949090
+75-1,제3학생식당,3rd Cafeteria,OTHER,37.456470,126.948510
+76,제4식당(서당골),4th Cafeteria,OTHER,37.460730,126.955700
+80,수의대부속동물병원,SNU Veterinary Medical Teaching Hospital,OTHER,37.468220,126.953240
+81,생명공학연구동,Biotechnology Research Building,OTHER,37.466980,126.954250
+82,환경대학원,Graduate School of Environmental Studies,OTHER,37.462370,126.954090
+83,인문사회계멀티미디어강의동,Multimedia Lecture Building II,OTHER,37.463440,126.951680
+84,근대법학교육100주년기념관,"Centennial Building, College of Law",OTHER,37.462260,126.952330
+85,수의과대학,College of Veterinary Medicine,OTHER,37.467440,126.953650
+86,치의학대학원 첨단교육연구복합단지,SNU Dental Hospital in Gwanak,OTHER,37.468990,126.953040
+97,환경안전원1,Institute of Environmental Protection and Safety,OTHER,37.466340,126.950730
+98,환경안전원,Institute of Environmental Protection and Safety,OTHER,37.466630,126.950630
+100,버들골 풍산마당,Poongsan Outdoor Theater,OTHER,37.458479,126.955227
+101,아시아연구소,Asia Center,OTHER,37.463280,126.950150
+102,정보화본부,Office of Information Systems and Technology,OTHER,37.459620,126.949270
+103,규장각한국학연구원,Kyujanggak Institute for Korean Studies,OTHER,37.462260,126.950280
+104,반도체공동연구소,Inter-University Semiconductor Research Center,OTHER,37.454770,126.953010
+105,유전공학연구소,Institute of Molecular Biology and Genetics,OTHER,37.454320,126.953640
+105-1,창업보육센터및유전공학연구소,"Business Incubator Center, Institute of Molecular Biology and Genetics",OTHER,37.454460,126.953530
+105-2,유전공학연구소 신관,Institute of Molecular Biology and Genetics,OTHER,37.454040,126.953362
+106,수영장,Swimming Pool,OTHER,37.453310,126.955140
+107-1,방가로1,Bungalow 1,OTHER,37.455010,126.955860
+107-2,방가로2,Bungalow 2,OTHER,37.454700,126.955980
+107-3,방가로3,Bungalow 3,OTHER,37.454340,126.955740
+109,자하연식당,Jahayeon Cafeteria,OTHER,37.460980,126.952520
+110,간이식당1,Pine Tree Restaurant,OTHER,37.457380,126.955100
+111,사범대학 간이식당,College of Education Cafeteria,OTHER,37.459220,126.955180
+113,동원생활관,Dongwon Dining Hall,OTHER,37.465040,126.951750
+115,정문수위실,Main Gate Security Office,OTHER,37.466303,126.948129
+117,양수장,Pumping Station,OTHER,37.466630,126.953750
+120,위험물저장고,Hazardous Materials Storage,OTHER,37.453760,126.953880
+121,공관,Presidential Residence,OTHER,37.466830,126.957380
+122-1,교수아파트1,Faculty Apartment A,OTHER,37.467090,126.957170
+122-2,교수아파트2,Faculty Apartment B,OTHER,37.467300,126.957550
+122-3,교수아파트3,Faculty Apartment C-D,OTHER,37.467420,126.957160
+122-4,교수아파트4,Faculty Apartment E-F,OTHER,37.467960,126.957210
+122-5,교수아파트5,Faculty Apartment G,OTHER,37.468190,126.956970
+122-6,교수아파트6,Faculty Apartment H,OTHER,37.468460,126.957420
+122-7,교수아파트7,Faculty Apartment I,OTHER,37.468570,126.957050
+125,호암교수회관,Hoam Faculty House,OTHER,37.467920,126.958960
+126,호암동관,Guest House east,OTHER,37.467630,126.959450
+127,호암서관,Guest House west,OTHER,37.467350,126.958910
+128,호암창고,Hoam Faculty House Storage,OTHER,37.468120,126.959260
+129,수리과학연구동,Sangsan Mathematical Science Building,OTHER,37.457800,126.949480
+130,기초전력연구소,Electrical Engineering AND Science Research Institute,OTHER,37.454290,126.950790
+131,신소재공동연구소,Research Institute of Advanced Materials,OTHER,37.453590,126.950850
+132,뉴미디어통신공동연구소,Institute of New Media and Communications,OTHER,37.454870,126.954070
+133,자동화연구소,Automation and Systems Research Institute,OTHER,37.454390,126.950430
+135,에너지신기술연구동,Research Institute of Energy and Resources,OTHER,37.454390,126.952270
+137,언어교육원,Language Education Institute,OTHER,37.466770,126.953260
+137-1,CJ어학관,CJ Language Education Institute,OTHER,37.466400,126.953280
+137-2,대림국제관,Daelim International House,OTHER,37.466470,126.953850
+138,컴퓨터연구소,Institute of Computer Technology,OTHER,37.455810,126.954740
+139,공동기기원,National Center for Inter-University Research Facilities,OTHER,37.455510,126.954270
+140,국제대학원,Graduate School of International Studies,OTHER,37.464270,126.954870
+140-1,국제대학원2,Graduate School of International Studies 2,OTHER,37.464060,126.954600
+140-2,국제회의동,International Conference Hall,OTHER,37.464480,126.954970
+141,약학관4,College of Pharmacy 4,OTHER,37.455700,126.953760
+142,약학관5,College of Pharmacy 5,OTHER,37.456630,126.953700
+143,약대신약개발연구센터,Center for Pharmaceutical Development,OTHER,37.458280,126.953080
+144,후문수위실,Back Gate Security Office,OTHER,37.464660,126.957740
+149,종합운동장본부석,Main Stadium Box Seats,OTHER,37.464470,126.950700
+150,명예교수연구동,Office of Admissions,OTHER,37.467040,126.950310
+151,미술관,Museum of Art,OTHER,37.466500,126.949690
+152,CJ인터내셔널센터,CJ International Center,OTHER,37.466240,126.951320
+152-1,롯데국제교육관,Lotte International Hall,OTHER,37.466570,126.951190
+153,우정원 글로벌사회공헌센터,Woojeongwon Institute for Global Social Responsibility,OTHER,37.466420,126.952170
+200,농업생명과학대학,College of Agricultural and Life Sciences,OTHER,37.457690,126.948680
+201,농업생명과학대학환경관,College of Agricultural and Life Sciences,OTHER,37.456870,126.948520
+203,SPC농생명과학 및 기초과학연구동,SPC Research Building,OTHER,37.458340,126.948360
+207,야외조각실습장1,Outdoor Sculpture Studio 1,OTHER,37.464093,126.952949
+220,종합교육연구동,College of Liberal Studies,OTHER,37.464510,126.954240
+221,보건대학원,Graduate School of Public Health,OTHER,37.464890,126.954690
+222,생활과학대학,College of Human Ecology,OTHER,37.464370,126.953180
+223,관악 223동[우석경제관],Gwanak 223[Woosuk Economics],OTHER,37.465509,126.955673
+250,인문관연결동(1동-2동),Connected Passage (1-2),OTHER,37.460380,126.952650
+251,사회관연결동(6동-7동),Connected Passage (6-7),OTHER,37.460590,126.954620
+252,교육관연결동(10동-11동),Connected Passage (10-11),OTHER,37.460100,126.955430
+253,화학관연결동(22동-23동),Connected Passage (22-23),OTHER,37.458390,126.951180
+254,물리관연결동(25동-27동),Connected Passage (25-27),OTHER,37.458440,126.949990
+255,예능관연결동(51동-52동),Connected Passage (51-52),OTHER,37.463560,126.952900
+300,관악 300동[유회진 학술정보관],Gwanak 300[Ryu Hoi Jin Library],OTHER,37.450950,126.952700
+301,제1공학관,College of Engineering Building #301,OTHER,37.450160,126.952590
+302,제2공학관,College of Engineering Building #302,OTHER,37.448870,126.952650
+310,엔지니어하우스,Engineer House,OTHER,37.448620,126.951020
+311,화학공정신기술연구소,Institute of Chemical Processes,OTHER,37.448890,126.951790
+312,정밀기계연구소실험연구동,Institute of Advanced Machinery and Design,OTHER,37.450910,126.951880
+313,정밀기계공동연구소,Institute of Advanced Machinery and Design,OTHER,37.451230,126.951970
+314,차세대자동차신기술연구소,Advanced Automotive Research Center,OTHER,37.451780,126.952430
+316,대형구조실험동,Structure Experiment Building,OTHER,37.447380,126.950310
+330,제2파워플랜트,Power Plant 2,OTHER,37.449850,126.950260
+331,차량정비고,Garage,OTHER,37.449370,126.950140
+332,다목적차량보관소,Multiple-use Garage,OTHER,37.449640,126.950060
+500,대학원연구동(2단계),College of Natural Sciences,OTHER,37.459219,126.948120
+506,자연대 생명과학부 시약보관창고,Reagent Storage,OTHER,37.460090,126.948220
+900,(관악사)대학원 생활관,Graduate Housing,OTHER,37.461490,126.958100
+902,(관악사)대학원 생활관,Graduate Housing,OTHER,37.461560,126.957290
+903,(관악사)대학원 생활관,Graduate Housing,OTHER,37.461070,126.957600
+904,(관악사)대학원 생활관,Graduate Housing,OTHER,37.460430,126.957630
+905,(관악사)대학원 생활관,Graduate Housing,OTHER,37.461140,126.958540
+906,(관악사)대학원 생활관,Graduate Housing,OTHER,37.462480,126.958350
+915,관악 915동[외국인학생기숙사],,OTHER,37.465012,126.957503
+916,관악 916동[외국인학생기숙사],,OTHER,37.465400,126.957139
+917,관악 917동[외국인학생기숙사],,OTHER,37.465821,126.957455
+918,(관악사)대학원 생활관,Graduate Housing,OTHER,37.460580,126.958670
+919,(관악사)학부 생활관,Undergraduate Housing,OTHER,37.463060,126.958720
+920,관악사후생관,Agorium,OTHER,37.463940,126.959050
+921,(관악사)학부 생활관,Undergraduate Housing,OTHER,37.463350,126.959030
+922,(관악사)학부 생활관,Undergraduate Housing,OTHER,37.463000,126.959250
+923,(관악사)학부 생활관,Undergraduate Housing,OTHER,37.463410,126.959550
+924,(관악사)학부 생활관,Undergraduate Housing,OTHER,37.463620,126.959460
+925,(관악사)학부 생활관,Undergraduate Housing,OTHER,37.464090,126.958600
+926,(관악사)학부 생활관,Undergraduate Housing,OTHER,37.464290,126.958990
+931,가족생활관1,Family Housing,OTHER,37.467110,126.958660
+932,가족생활관2,Family Housing,OTHER,37.466840,126.958620
+933,가족생활관3,Family Housing,OTHER,37.466790,126.959110
+934,가족생활관4,Family Housing,OTHER,37.466760,126.959420
+935,가족생활관5,Family Housing,OTHER,37.467350,126.959660
+936,교직원아파트,Staff Apartments,OTHER,37.467080,126.959850
+940,연구공원지원시설,Research Center,OTHER,37.465880,126.959520
+941,백학어린이집,Center for Child Educare Service AND Research,OTHER,37.466260,126.958260
+941-1,느티나무어린이집,Center for Child Educare Service AND Research,OTHER,37.465890,126.958760
+942,LG연구동,LG R AND D Center,OTHER,37.465870,126.960880
+943,SK텔레콤,SK Telecom R AND D Center,OTHER,37.466370,126.960590
+945,웅진R&D센터,Coway R AND D Center,OTHER,37.465270,126.960650
+946,BK국제관,BK International House,OTHER,37.465310,126.958410
+950,국제백신연구소,International Vaccine Institute,OTHER,37.464780,126.959920
