@@ -4,4 +4,6 @@ openpyxl>=3.1      # .xlsx
 requests>=2.31
 beautifulsoup4>=4.12
 rasterio>=1.3      # DEM(.img/.tif) 읽기 — 건물 고도
+scipy>=1.11        # 등고선 → DEM 삼각망 보간
+pyshp>=2.3         # 수치지형도 SHP 읽기
 pytest>=8.0

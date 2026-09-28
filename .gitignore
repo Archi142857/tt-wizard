@@ -223,3 +223,12 @@ data/raw/latest.xls
 data/raw/latest.xlsx
 data/raw/campusmap/
 data/dem/
+data/topo_buildings.geojson
+# 수치지형도: 스크립트가 읽는 레이어(등고선 F0010000, 표고점 F0020000, 건물 B0010000)만 올린다
+data/topo/*
+!data/topo/README.md
+!data/topo/*/
+data/topo/*/*
+!data/topo/*/*F0010000.*
+!data/topo/*/*F0020000.*
+!data/topo/*/*B0010000.*

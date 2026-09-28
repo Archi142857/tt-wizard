@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import building_elevation as be  # noqa: E402
+import dem_from_contours as dfc  # noqa: E402
 import fetch_campus_buildings as fcb  # noqa: E402
 import fetch_osm_footprints as fof  # noqa: E402
 
@@ -42,6 +43,7 @@ def dem(tmp_path_factory):
         ds.write(arr, 1)
     d = be.Dem([path])
     d.origin = (x0, y0)
+    d.src_path = path
     return d
 
 
@@ -81,6 +83,18 @@ def test_bilinear_reproduces_plane(dem):
     lats = P_LAT + rng.uniform(-0.01, 0.01, 50)
     assert np.allclose(dem.sample(lons, lats), _truth(dem, lons, lats), atol=1e-3)
     assert np.isnan(dem.sample([P_LON + 0.2], [P_LAT])[0])  # 범위 밖
+
+
+def test_dem_reads_only_campus_window(dem):
+    src = dem.src_path
+    small = be.Dem([src], bbox=(P_LAT - 0.002, P_LON - 0.002, P_LAT + 0.002, P_LON + 0.002))
+    layer = small.layers[0]
+    assert layer.full_size == (800, 800) and layer.arr.shape[0] < 120 and layer.arr.shape[1] < 120
+    lons, lats = [P_LON, P_LON + 0.0015], [P_LAT, P_LAT - 0.0015]
+    assert np.allclose(small.sample(lons, lats), _truth(dem, lons, lats), atol=1e-3)
+    assert np.isnan(small.sample([P_LON + 0.01], [P_LAT])[0])  # 읽은 범위 밖
+    far = be.Dem([src], bbox=(38.0, 128.0, 38.1, 128.1))  # 겹치지 않는 도엽은 건너뜀
+    assert far.layers == [] and far.skipped == ["plane.tif"]
 
 
 def test_first_floor_is_perimeter_weighted_mean(dem, tmp_path):
@@ -270,3 +284,195 @@ def test_osm_parsing():
     paths = fof.to_paths(data)
     assert [p["properties"]["osm_id"] for p in paths] == [50]  # 좌표가 빠진 51은 점 1개라 제외
     assert paths[0]["properties"]["nodes"] == [9, 60] and paths[0]["properties"]["highway"] == "steps"
+
+
+def _write_topo(tmp_path, x0, y0, sheet="37612018", prefix="N3", contours=True, spots=((10, 20, 102.0),),
+                buildings=(("공과대학301동시험관", 5),)):
+    """가짜 수치지형도 도엽 폴더: 동서로 뻗은 등고선(50 m마다 5 m씩 높아짐 = 북쪽 10 % 경사), 표고점, 건물(40 m 정사각형)."""
+    shapefile = pytest.importorskip("shapefile")
+    from rasterio.crs import CRS
+
+    d = tmp_path / "topo" / f"(B010)수치지도_{sheet}_2025_0001"
+    d.mkdir(parents=True)
+    wkt = CRS.from_epsg(5186).to_wkt()
+    stems = []
+    if contours:
+        w = shapefile.Writer(str(d / f"{prefix}L_F0010000"), shapeType=shapefile.POLYLINE, encoding="cp949")
+        w.field("구분", "C", 10)
+        w.field("등고수치", "N", 10, 2)
+        for k in range(-20, 21):
+            w.line([[[x0 - 1200, y0 + 50 * k], [x0 + 1200, y0 + 50 * k]]])
+            w.record("주곡선", 100 + 5 * k)
+        w.close()
+        stems.append(f"{prefix}L_F0010000")
+    if spots:
+        wp = shapefile.Writer(str(d / f"{prefix}P_F0020000"), shapeType=shapefile.POINT, encoding="cp949")
+        wp.field("수치", "N", 10, 2)
+        for dx, dy, v in spots:
+            wp.point(x0 + dx, y0 + dy)
+            wp.record(v)
+        wp.close()
+        stems.append(f"{prefix}P_F0020000")
+    if buildings:
+        wa = shapefile.Writer(str(d / f"{prefix}A_B0010000"), shapeType=shapefile.POLYGON, encoding="cp949")
+        wa.field("명칭", "C", 50)
+        wa.field("종류", "C", 20)
+        wa.field("주기", "C", 100)
+        wa.field("층수", "N", 5, 0)
+        for k, (label, levels) in enumerate(buildings):
+            cx = x0 + 200 * k
+            wa.poly([[[cx - 20, y0 - 20], [cx - 20, y0 + 20], [cx + 20, y0 + 20], [cx + 20, y0 - 20], [cx - 20, y0 - 20]]])
+            wa.record("서울대학교", "주택외건물", label, levels)
+        wa.close()
+        stems.append(f"{prefix}A_B0010000")
+    for stem in stems:
+        (d / f"{stem}.prj").write_text(wkt, encoding="utf-8")
+    return tmp_path / "topo"
+
+
+def test_dem_from_contours(dem, tmp_path):
+    from rasterio.warp import transform as warp
+
+    x0, y0 = dem.origin
+    topo = _write_topo(tmp_path, x0, y0)
+    # 1:1,000 도엽: 등고선은 무시하고 표고점만 검증에 쓴다 (평면보다 0.5 m 높게 적어 둠)
+    _write_topo(tmp_path, x0, y0, sheet="376120571", prefix="N1", spots=((-100, -100, 100 - 10 + 0.5),),
+                buildings=(("다른건물", 1),))
+    campus = tmp_path / "campus.csv"
+    campus.write_text(f"building,name,lat,lon\n301,시험관,{P_LAT},{P_LON}\n", encoding="utf-8")
+    out, bout = tmp_path / "dem" / "topo_dem.tif", tmp_path / "topo_buildings.geojson"
+    assert dfc.main(["--topo", str(topo), "--buildings", str(campus), "--margin", "0.003", "--res", "2",
+                     "-o", str(out), "--buildings-output", str(bout)]) == 0
+    d = be.Dem([out])
+    lons, lats = [P_LON, P_LON + 0.001], [P_LAT, P_LAT - 0.001]
+    _, ys = warp("EPSG:4326", "EPSG:5186", lons, lats)
+    assert np.allclose(d.sample(lons, lats), 100 + 0.1 * (np.asarray(ys) - y0), atol=0.05)  # 등고선 사이 선형
+    feats = json.loads(bout.read_text(encoding="utf-8"))["features"]
+    assert len(feats) == 1  # 1:5,000 건물만
+    p = feats[0]["properties"]
+    assert p["name"] == "공과대학301동시험관" and p["ref"] == "301" and p["kind"] == "주택외건물" and p["levels"] == "5"
+    assert p["fid"] == "topo/37612018/0"
+    proj = be.LocalProj()
+    rows, _ = be.estimate(_one(), be.load_footprints(bout, proj), d, proj)
+    r = rows[0]
+    assert r["footprint"] == "topo/37612018/0" and r["footprint_match"] == "inside" and r["dem"] == "topo_dem.tif"
+    assert r["footprint_name"] == "공과대학301동시험관" and "다름" not in r["note"]
+    assert abs(float(r["first_floor_est_m"]) - 100.0) < 0.1 and 3.8 <= float(r["ground_span_m"]) <= 4.0
+
+
+def test_topo_scale_and_check_points(dem, tmp_path):
+    from rasterio.transform import from_origin
+
+    x0, y0 = dem.origin
+    _write_topo(tmp_path, x0, y0, spots=())
+    _write_topo(tmp_path, x0, y0, sheet="376120571", prefix="N1", spots=(), buildings=())
+    layers, sheets = dfc.find_layers(tmp_path / "topo")
+    assert {s["sheet"]: s["scale"] for s in sheets} == {"37612018": "5000", "376120571": "1000"}
+    assert len(layers["5000"][dfc.CONTOUR]) == 1 and len(layers["1000"][dfc.CONTOUR]) == 1
+    assert [dfc.dong_refs(s) for s in ("사범대학10-1동교육정보관", "105동유전자공학연구소동관", "관악학생생활관919-B동",
+                                       "인문대학4동,신양인문학술정보관")] == [["10-1"], ["105"], [], ["4"]]
+    arr = np.full((10, 10), 50.0, dtype="float32")  # 오차 검증: 칸 가운데 기준 보간
+    chk = dfc.check_points(arr, from_origin(0, 10, 1, 1), np.array([[5.0, 5.0], [2.5, 7.5], [50.0, 50.0]]),
+                           np.array([49.0, 50.5, 1.0]))
+    assert chk["n"] == 2 and abs(chk["mae"] - 0.75) < 1e-6 and abs(chk["mean"] - 0.25) < 1e-6 and chk["max"] == 1.0
+
+
+def test_finer_dem_is_used_first(dem, tmp_path):
+    import rasterio
+    from rasterio.transform import from_origin
+
+    x0, y0 = dem.origin
+    coarse = tmp_path / "coarse.tif"
+    with rasterio.open(coarse, "w", driver="GTiff", width=40, height=40, count=1, dtype="float32", crs="EPSG:5186",
+                       transform=from_origin(x0 - 1800, y0 + 1800, 90, 90), nodata=-9999) as ds:
+        ds.write(np.full((40, 40), 50.0, dtype="float32"), 1)
+    d = be.Dem([coarse, dem.src_path])  # 90 m를 먼저 줘도 5 m가 먼저 쓰인다
+    assert [L.name for L in d.layers] == ["plane.tif", "coarse.tif"]
+    assert abs(d.sample([P_LON], [P_LAT])[0] - 100.0) < 1e-3 and d.source_at(P_LON, P_LAT) == "plane.tif"
+
+
+def test_topo_building_ids_are_unique_per_sheet(tmp_path):
+    shapefile = pytest.importorskip("shapefile")
+    paths = []
+    for sheet in ("376120571", "376120572"):  # 1:1,000 도엽번호는 9자리
+        d = tmp_path / sheet
+        d.mkdir()
+        w = shapefile.Writer(str(d / "N1A_B0010000"), shapeType=shapefile.POLYGON, encoding="cp949")
+        w.field("명칭", "C", 50)
+        w.poly([[[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]]])
+        w.record("건물")
+        w.close()
+        paths.append(d / "N1A_B0010000.shp")
+    feats = dfc.read_buildings(paths, "EPSG:5186")
+    assert [f["properties"]["fid"] for f in feats] == ["topo/376120571/0", "topo/376120572/0"]
+
+
+def _topo_fp(proj, fid, pts, name="", ref=""):
+    ring = _lonlat(proj, pts + pts[:1])
+    return {"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [ring]},
+            "properties": {"fid": fid, "name": name, "ref": ref}}
+
+
+def test_split_pieces_are_merged(dem, tmp_path):
+    """도엽 경계(x = 0)에서 잘린 40×20 m 건물 → 한 윤곽. 같은 도엽 안에서 벽을 맞댄 건물은 합치지 않는다."""
+    proj = be.LocalProj()
+    px, py = (float(v) for v in proj.fwd(P_LON, P_LAT))
+    feats = [
+        _topo_fp(proj, "topo/37612018/1", [(px - 20, py - 10), (px, py - 10), (px, py + 10), (px - 20, py + 10)], "공학관", "301"),
+        _topo_fp(proj, "topo/37612019/7", [(px, py - 10), (px + 20, py - 10), (px + 20, py + 10), (px, py + 10)]),
+        _topo_fp(proj, "topo/37612019/8", [(px + 20, py - 10), (px + 40, py - 10), (px + 40, py + 10), (px + 20, py + 10)]),
+    ]
+    fps, n = be.merge_split_pieces(be.load_footprints(_geojson(tmp_path, "t.geojson", feats), proj))
+    assert n == 1 and len(fps) == 2
+    m = next(fp for fp in fps if "+" in fp.fid)
+    assert m.fid == "topo/37612018/1+topo/37612019/7" and m.props["name"] == "공학관" and be.refs_of(m) == {"301"}
+    segs = m.boundary()
+    assert abs(float(np.hypot(*(segs[:, 1] - segs[:, 0]).T).sum()) - 120.0) < 0.5  # 둘레 2×(40+20), 잘린 선 제외
+    assert m.contains(px - 10, py) and m.contains(px + 10, py) and not m.contains(px + 30, py)
+    rows, _ = be.estimate(_one(), fps, dem, proj, step=1.0)
+    r = rows[0]
+    assert r["footprint"] == m.fid and r["perimeter_m"] == "120"
+    assert abs(float(r["first_floor_est_m"]) - float(_truth(dem, [P_LON], [P_LAT])[0])) <= 0.1  # 합친 윤곽의 가운데
+
+
+def test_topo_label_matching(tmp_path):
+    proj = be.LocalProj()
+    sq = lambda cx, cy, h: [(cx - h, cy - h), (cx + h, cy - h), (cx + h, cy + h), (cx - h, cy + h)]  # noqa: E731
+    fps = be.load_footprints(_geojson(tmp_path, "t.geojson", [
+        _topo_fp(proj, "topo/1/0", sq(0, 0, 10), "음악대학49동예술관", "49"),
+        _topo_fp(proj, "topo/1/1", sq(25, 0, 3), "미술대학49-1동", "49-1"),
+        _topo_fp(proj, "topo/1/2", sq(0, 60, 10), "경영대학59동", "59"),
+        _topo_fp(proj, "topo/1/3", sq(0, 120, 10), "137동언어교육원", "137"),
+    ]), proj)
+    # 좌표가 어느 윤곽에도 없음: 가장 가까운 49-1동(2 m) 대신 동 번호가 맞는 49동(10 m)
+    fp, how = be.match_footprint("49", 20, 0, fps, ref_first=False)
+    assert fp.fid == "topo/1/0" and how == "ref"
+    fp, how, _ = be.pick_footprints("59-1", 0, 60, fps, [])  # 59-1동이 '59동' 윤곽 안 → 같은 건물로 봄
+    assert fp.fid == "topo/1/2" and how == "inside" and not be.number_conflict("59-1", be.refs_of(fp))
+    assert be.number_conflict("500", {"503"}) and not be.number_conflict("10-1", {"10"})
+    assert be.match_footprint("117", 0, 135, fps, ref_first=False) == (None, "none")  # 137동 윤곽은 다른 건물
+
+
+def test_topo_outline_with_osm_entrances(dem, tmp_path):
+    """둘레는 수치지형도 윤곽으로 재고, 출입구는 같은 건물의 OSM 윤곽(보행로와 노드 공유)에서 가져온다."""
+    proj = be.LocalProj()
+    px, py = (float(v) for v in proj.fwd(P_LON, P_LAT))
+    topo = _topo_fp(proj, "topo/37612018/0", [(px - 20, py - 20), (px + 20, py - 20), (px + 20, py + 20), (px - 20, py + 20)],
+                    "공과대학301동", "301")
+    osm = _poly(_lonlat(proj, [(px - 18, py - 19), (px + 20, py - 19), (px + 20, py + 19), (px - 18, py + 19), (px - 18, py - 19)]),
+                {"osm_type": "way", "osm_id": 7, "nodes": [1, 2, 3, 4, 1]})
+    fps = be.load_footprints(_geojson(tmp_path, "fp.geojson", [topo, osm]), proj)
+    path = _geojson(tmp_path, "paths.geojson", [{
+        "type": "Feature", "geometry": {"type": "LineString", "coordinates": _lonlat(proj, [(px + 50, py - 19), (px + 20, py - 19)])},
+        "properties": {"osm_id": 30, "highway": "footway", "nodes": [99, 2]}}])
+    rows, ents = be.estimate(_one(), fps, dem, proj, paths=be.load_paths(path, proj))
+    assert rows[0]["footprint"] == "topo/37612018/0" and rows[0]["footprint_match"] == "inside"
+    assert [e["source"] for e in ents] == ["osm-path-join"] and rows[0]["entrances"] == "1"
+    # 좌표를 품은 수치지형도 윤곽에 다른 번호(503)가 적혀 있고 OSM ref가 500이면 OSM 윤곽
+    both = be.load_footprints(_geojson(tmp_path, "w.geojson", [
+        _topo_fp(proj, "topo/1/0", [(-10, -10), (10, -10), (10, 10), (-10, 10)], "자연과학대학503동", "503"),
+        _poly(_lonlat(proj, [(15, -10), (35, -10), (35, 10), (15, 10), (15, -10)]), {"osm_type": "way", "osm_id": 8, "ref": "500"}),
+    ]), proj)
+    fp, how, _ = be.pick_footprints("500", 0, 0, [f for f in both if f.fid.startswith("topo/")],
+                                    [f for f in both if not f.fid.startswith("topo/")])
+    assert fp.fid == "osm-way/8" and how == "ref"

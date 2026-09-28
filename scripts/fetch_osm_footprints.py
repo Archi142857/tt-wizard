@@ -3,7 +3,7 @@
   python scripts/fetch_osm_footprints.py
   python scripts/fetch_osm_footprints.py --bbox 37.443,126.938,37.472,126.967   # 남,서,북,동
 
-- Overpass API 1회 요청. 결과
+- Overpass API에 건물·출입구·길을 따로 3번 요청한다(서버가 바쁘면 다른 서버로, 그래도 안 되면 잠시 쉬고 다시). 결과
     data/osm_buildings.geojson   건물 윤곽 Polygon (osm_type, osm_id, part, name, ref, levels, building, nodes)
     data/osm_entrances.geojson   entrance 태그가 붙은 노드 Point (entrance, level, name, ref, door, wheelchair, access)
     data/osm_paths.geojson       highway 선 LineString (highway, bridge, tunnel, indoor, layer, level, covered, nodes)
@@ -17,6 +17,8 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import sys
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -27,18 +29,18 @@ OUT = ROOT / "data" / "osm_buildings.geojson"
 OUT_ENT = ROOT / "data" / "osm_entrances.geojson"
 OUT_PATHS = ROOT / "data" / "osm_paths.geojson"
 CAMPUS = ROOT / "data" / "campus_buildings.csv"
-ENDPOINTS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
+ENDPOINTS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+]
 DEFAULT_BBOX = (37.443, 126.938, 37.472, 126.967)  # 남, 서, 북, 동
-QUERY = """[out:json][timeout:180];
-(
-  way["building"]({s},{w},{n},{e});
-  relation["building"]({s},{w},{n},{e});
-);
-out body geom;
-node["entrance"]({s},{w},{n},{e});
-out body;
-way["highway"]({s},{w},{n},{e});
-out body geom;"""
+QUERIES = {  # 한 번에 다 받으면 서버가 504(시간 초과)를 낼 때가 있어 셋으로 나눈다
+    "buildings": '[out:json][timeout:90];(way["building"]({bb});relation["building"]({bb}););out body geom;',
+    "entrances": '[out:json][timeout:60];node["entrance"]({bb});out body;',
+    "paths": '[out:json][timeout:90];way["highway"]({bb});out body geom;',
+}
 HEADERS = {"User-Agent": "tt-wizard/0.1 (student project; one-off download)"}
 
 Point = tuple[float, float]  # (lon, lat)
@@ -169,35 +171,56 @@ def _save(path: Path, feats: list[dict]) -> None:
     path.write_text(json.dumps({"type": "FeatureCollection", "features": feats}, ensure_ascii=False), encoding="utf-8")
 
 
+def overpass(query: str, tries: int = 3, wait: float = 20.0) -> dict | None:
+    """서버를 돌아가며 요청. 모두 실패하면 wait·2wait 초 쉬고 다시. 끝내 안 되면 None."""
+    for attempt in range(tries):
+        for url in ENDPOINTS:
+            try:
+                r = requests.post(url, data={"data": query}, headers=HEADERS, timeout=150)
+                r.raise_for_status()
+                return r.json()
+            except Exception as ex:
+                print(f"    {url.split('/')[2]}: {type(ex).__name__} {str(ex)[:70]}")
+        if attempt + 1 < tries:
+            print(f"    {wait * (attempt + 1):.0f}초 쉬고 다시")
+            time.sleep(wait * (attempt + 1))
+    return None
+
+
 def main() -> int:
+    for stream in (sys.stdout, sys.stderr):  # cmd에서 로그를 파일로 저장할 때 멈추지 않게
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
     ap = argparse.ArgumentParser()
     ap.add_argument("--bbox", help="남,서,북,동 (위도·경도)")
     args = ap.parse_args()
     s, w, n, e = [float(v) for v in args.bbox.split(",")] if args.bbox else bbox_from_campus()
-    query = QUERY.format(s=s, w=w, n=n, e=e)
+    bb = f"{s},{w},{n},{e}"
     print(f"범위 남 {s:.4f} 서 {w:.4f} 북 {n:.4f} 동 {e:.4f}")
 
-    data = None
-    for url in ENDPOINTS:
-        try:
-            r = requests.post(url, data={"data": query}, headers=HEADERS, timeout=240)
-            r.raise_for_status()
-            data = r.json()
-            break
-        except Exception as ex:
-            print(f"  {url}: 실패 {ex}")
-    if data is None:
-        raise SystemExit("Overpass 서버 두 곳 모두 실패. 잠시 뒤 다시 실행")
-
-    feats, ents, paths = to_features(data), to_entrances(data), to_paths(data)
-    _save(OUT, feats)
-    _save(OUT_ENT, ents)
-    _save(OUT_PATHS, paths)
-    named = sum(1 for f in feats if f["properties"]["name"])
-    reffed = sum(1 for f in feats if f["properties"]["ref"])
-    print(f"저장: {OUT} (건물 윤곽 {len(feats)}개, 이름 있음 {named}, ref 있음 {reffed})")
-    print(f"저장: {OUT_ENT} (출입구 노드 {len(ents)}개, {dict(Counter(f['properties']['entrance'] for f in ents))})")
-    print(f"저장: {OUT_PATHS} (길 {len(paths)}개, {dict(Counter(f['properties']['highway'] for f in paths).most_common(8))})")
+    failed = []
+    for key, out, parse, label in (("buildings", OUT, to_features, "건물 윤곽"),
+                                   ("entrances", OUT_ENT, to_entrances, "출입구 노드"),
+                                   ("paths", OUT_PATHS, to_paths, "길")):
+        print(f"  {label} 요청")
+        data = overpass(QUERIES[key].format(bb=bb))
+        if data is None:
+            failed.append(label)
+            print(f"  {label}: 실패 (기존 파일은 그대로 둔다)")
+            continue
+        feats = parse(data)
+        _save(out, feats)
+        if key == "buildings":
+            named = sum(1 for f in feats if f["properties"]["name"])
+            reffed = sum(1 for f in feats if f["properties"]["ref"])
+            print(f"저장: {out} ({label} {len(feats)}개, 이름 있음 {named}, ref 있음 {reffed})")
+        elif key == "entrances":
+            print(f"저장: {out} ({label} {len(feats)}개, {dict(Counter(f['properties']['entrance'] for f in feats))})")
+        else:
+            print(f"저장: {out} ({label} {len(feats)}개, {dict(Counter(f['properties']['highway'] for f in feats).most_common(8))})")
+    if failed:
+        print(f"실패: {failed} → 몇 분 뒤 다시 실행")
+        return 1
     return 0
 
 

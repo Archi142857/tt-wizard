@@ -70,7 +70,8 @@ SNUTT와 같은 방식: 학기 전체 강좌 엑셀을 주기적으로 내려받
 ```bash
 python scripts/fetch_campus_buildings.py     # 캠퍼스맵 동 번호 1~999 검색 → data/campus_buildings.csv (10분 남짓, 한 번만)
 python scripts/fetch_osm_footprints.py       # OpenStreetMap 건물 윤곽·출입구·보행로 → data/osm_*.geojson
-# 국토정보플랫폼에서 공개DEM(.img)을 받아 data/dem/ 에 넣은 뒤
+# data/topo/ 에 수치지형도(1:5,000 4장, 1:1,000 22장)의 등고선·표고점·건물 레이어가 들어 있다 (출처·다시 받는 법: data/topo/README.md)
+python scripts/dem_from_contours.py          # 등고선·표고점 → data/dem/topo_dem.tif (2 m), 건물 윤곽 → data/topo_buildings.geojson
 python scripts/building_elevation.py         # → data/buildings_elevation.csv, data/building_entrances.csv (+ .geojson)
 ```
 
@@ -95,11 +96,13 @@ scripts/
   fetch_buildings.py   캠퍼스맵 API → buildings.csv
   fetch_campus_buildings.py  캠퍼스맵의 동 번호 있는 건물 전체 → campus_buildings.csv
   fetch_osm_footprints.py    OpenStreetMap 건물 윤곽·출입구·보행로 → osm_*.geojson
+  dem_from_contours.py       1:5,000 수치지형도 등고선·표고점 → DEM(1:1,000 표고점으로 검증), 건물 윤곽
   building_elevation.py      DEM + 윤곽 + 출입구 → 건물별·출입구별 고도 (buildings_elevation.csv, building_entrances.csv)
   tmap_matrix.py       TMAP 보행자 API → travel.csv
 data/
   sample/              데모용 가짜 데이터
   raw/                 엑셀 원본 (latest + 변경이 있던 날짜별)
+  topo/                수치지형도 원자료 (등고선·표고점·건물 레이어) — 건물 고도용
   lectures.json, buildings.csv, travel.csv, results.json, stats.csv, changes/
 web/                 3분할 화면 (시간표 · 동선 지도(OpenStreetMap) · 순위 목록) — 예정
 docs/                계획·결정 사항
