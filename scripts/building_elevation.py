@@ -38,6 +38,7 @@ import csv
 import json
 import math
 import re
+import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -604,6 +605,9 @@ def write_entrances(rows: list[dict], csv_path: Path) -> Path:
 
 
 def main() -> int:
+    for stream in (sys.stdout, sys.stderr):  # cmd에서 로그를 파일로 저장할 때 cp949에 없는 글자가 있어도 멈추지 않게
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
     ap = argparse.ArgumentParser()
     ap.add_argument("--dem", nargs="+", default=[str(DEM_DIR)], help="DEM 파일이나 폴더 (기본 data/dem)")
     ap.add_argument("--dem-crs", default=None, help="DEM 좌표계를 직접 지정 (예: EPSG:5186)")
@@ -672,7 +676,7 @@ def main() -> int:
         print(f"  가장 높은 곳: {', '.join(fmt(r) for r in srt[-3:])}")
     missing = [r["building"] for r in rows if not r["first_floor_est_m"]]
     if missing:
-        print(f"  고도 없음 {len(missing)}개 (좌표 없음 또는 DEM 범위 밖 — 도엽을 더 받거나 --dem-crs 확인): {missing}")
+        print(f"  고도 없음 {len(missing)}개 (좌표 없음 또는 DEM 범위 밖. 도엽을 더 받거나 --dem-crs 확인): {missing}")
     return 0
 
 

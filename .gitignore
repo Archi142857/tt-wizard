@@ -221,3 +221,5 @@ __marimo__/
 .env
 data/raw/latest.xls
 data/raw/latest.xlsx
+data/raw/campusmap/
+data/dem/
