@@ -62,6 +62,20 @@ SNUTT와 같은 방식: 학기 전체 강좌 엑셀을 주기적으로 내려받
 실행당 요청은 엑셀 1회 + 첫 화면 1회. 강좌별 상세 팝업은 호출하지 않는다.
 `data/stats.csv` 에 매 실행의 강의실 확정 비율이 쌓이므로 "정보가 얼마나 빨리 채워지는가" 그래프를 그릴 수 있다.
 
+## 건물 고도 ('캠퍼스 마법 지도' 개발자 전달용)
+
+동 번호가 있는 모든 건물의 1층 기준면·로비층 고도와, 지상 출입구마다의 고도·층을 추정한다.
+방법과 열 설명은 `docs/elevation_method.md`.
+
+```bash
+python scripts/fetch_campus_buildings.py     # 캠퍼스맵 동 번호 1~999 검색 → data/campus_buildings.csv (10분 남짓, 한 번만)
+python scripts/fetch_osm_footprints.py       # OpenStreetMap 건물 윤곽·출입구·보행로 → data/osm_*.geojson
+# 국토정보플랫폼에서 공개DEM(.img)을 받아 data/dem/ 에 넣은 뒤
+python scripts/building_elevation.py         # → data/buildings_elevation.csv, data/building_entrances.csv (+ .geojson)
+```
+
+현장에서 확인한 출입구는 `data/entrances_manual.csv`(`building,lat,lon,floor,kind,note`)에 적으면 그 건물은 자동 후보 대신 그것을 쓴다.
+
 ## 구조
 
 ```
@@ -79,6 +93,9 @@ scripts/
   sugang_client.py     수강신청 시스템 접근 (학기 확인, 엑셀, 일정표)
   sync.py              갱신 정책 + diff
   fetch_buildings.py   캠퍼스맵 API → buildings.csv
+  fetch_campus_buildings.py  캠퍼스맵의 동 번호 있는 건물 전체 → campus_buildings.csv
+  fetch_osm_footprints.py    OpenStreetMap 건물 윤곽·출입구·보행로 → osm_*.geojson
+  building_elevation.py      DEM + 윤곽 + 출입구 → 건물별·출입구별 고도 (buildings_elevation.csv, building_entrances.csv)
   tmap_matrix.py       TMAP 보행자 API → travel.csv
 data/
   sample/              데모용 가짜 데이터
