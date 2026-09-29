@@ -42,3 +42,10 @@ def test_service_worker_precache_list():
         assert (WEB / path).exists(), path
     # 지도 타일(다른 사이트)과 큰 모델 파일은 다루지 않는다
     assert "url.origin !== self.location.origin" in sw and "/model/" in sw
+
+
+def test_service_worker_skips_stale_browser_cache():
+    """배포 직후에도 새 파일: 서버에 바뀌었는지 묻고, 판(?v=)을 뗀 주소로 파일마다 하나만 저장한다."""
+    sw = (WEB / "sw.js").read_text(encoding="utf-8")
+    assert 'fetch(req, { cache: "no-cache" })' in sw and 'cache: "reload"' in sw
+    assert "cache.put(key," in sw and "cache.match(key)" in sw and 'u.search = ""' in sw

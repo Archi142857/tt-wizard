@@ -36,7 +36,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Build web data
-        run: python scripts/export_web.py   # 표준 라이브러리만 써서 따로 설치할 것이 없다
+        # 표준 라이브러리만 써서 따로 설치할 것이 없다. --stamp: 스크립트·스타일 주소에 판(?v=)을 붙여
+        # 배포 직후 새로고침해도 옛 스크립트가 남지 않게 한다
+        run: python scripts/export_web.py --stamp
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

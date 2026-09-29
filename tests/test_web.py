@@ -93,3 +93,23 @@ def test_export_semesters(tmp_path):
     assert json.loads((out / "semesters" / "2025-2.json").read_text(encoding="utf-8"))["meta"]["semester"] == "2025-2"
     assert sorted(ew.semester_key(x) for x in ("2026-W", "2026-1", "2026-S", "2026-2")) == [(2026, 0), (2026, 1), (2026, 2), (2026, 3)]
 
+
+
+def test_stamp_assets(tmp_path):
+    """배포 때 스크립트·스타일 주소에 판(?v=)을 붙인다: 내용이 바뀌면 판도 바뀌고, 두 번 해도 같다."""
+    web = tmp_path / "web"
+    for name in ("index.html", "style.css", "js/app.js", "js/engine.js"):
+        (web / name).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / "web" / name, web / name)
+    v = ew.stamp_assets(web)
+    html = (web / "index.html").read_text(encoding="utf-8")
+    app = (web / "js" / "app.js").read_text(encoding="utf-8")
+    assert f'href="style.css?v={v}"' in html and f'src="js/app.js?v={v}"' in html
+    assert f'from "./engine.js?v={v}"' in app
+    assert ew.stamp_assets(web) == v and (web / "index.html").read_text(encoding="utf-8") == html
+    (web / "js" / "engine.js").write_text((web / "js" / "engine.js").read_text(encoding="utf-8") + "\n// 바뀜\n", encoding="utf-8")
+    v2 = ew.stamp_assets(web)
+    assert v2 != v and f'src="js/app.js?v={v2}"' in (web / "index.html").read_text(encoding="utf-8")
+    # 레포의 원본은 판 없이 두고, 배포할 때만 붙인다
+    assert "?v=" not in (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    assert "export_web.py --stamp" in (ROOT / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
