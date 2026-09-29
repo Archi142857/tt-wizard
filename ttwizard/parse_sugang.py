@@ -19,7 +19,7 @@ from typing import Iterable
 
 import pandas as pd
 
-from .models import DAY_INDEX, Meeting, Section, hm_to_min
+from .models import DAY_INDEX, Meeting, Section, hm_to_min, merge_duplicate_meetings
 
 # 월(09:30~10:45) 형태. 공백이 섞여도 잡히게 \s* 허용.
 _TIME_RE = re.compile(r"([월화수목금토일])\s*\(\s*(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})\s*\)")
@@ -137,7 +137,7 @@ def parse_meetings(time_text: str, room_text: str) -> tuple[list[Meeting], set[s
                 room=room,
             )
         )
-    return meetings, campuses
+    return list(merge_duplicate_meetings(meetings)), campuses
 
 
 def _norm_section_no(value) -> str:
@@ -232,7 +232,7 @@ def sections_from_json(path: str | Path) -> list[Section]:
             course_id=d["course_id"],
             section_no=d["section_no"],
             course_name=d["course_name"],
-            meetings=tuple(Meeting(**m) for m in d["meetings"]),
+            meetings=merge_duplicate_meetings(Meeting(**m) for m in d["meetings"]),
             instructor=d.get("instructor", ""),
             department=d.get("department", ""),
             credit=d.get("credit", 0.0),

@@ -2,6 +2,7 @@
 
   python scripts/dem_from_contours.py                    # data/topo 아래 SHP 전부 → data/dem/topo_dem.tif, data/topo_buildings.geojson
   python scripts/dem_from_contours.py --scale 1000       # 1:1,000으로 만들기 (기본은 1:5,000)
+  python scripts/dem_from_contours.py --extent campus    # 건물 좌표 범위만 (기본은 받은 도엽 전체 — 도로 그래프까지 덮는다)
   python scripts/dem_from_contours.py --crs EPSG:5186    # .prj 파일이 없을 때만 좌표계 지정 (기본 EPSG:5186)
 
 국토정보플랫폼의 공개 DEM은 90 m 격자라 건물 단위 고도를 구하기엔 거칠다. 수치지형도의 등고선(5 m 간격)과
@@ -14,7 +15,7 @@
         B0010000 건물   — 윤곽. '주기'(예: 인문대학1동)를 이름으로, 거기 든 동 번호를 ref 로 쓴다
       축척은 경로에 든 도엽번호 자릿수로 구분한다: 8자리(37612018) = 1:5,000, 9자리(376120571) = 1:1,000.
       관악캠퍼스는 1:5,000 도엽 37612018, 37612019, 37612028, 37612029 네 장에 들어간다.
-출력  data/dem/topo_dem.tif        --scale 축척(기본 1:5,000)의 등고선·표고점으로 만든 2 m 격자
+출력  data/dem/topo_dem.tif        --scale 축척(기본 1:5,000)의 등고선·표고점으로 만든 2 m 격자. 받은 도엽 전체 범위
       data/topo_buildings.geojson  같은 축척의 건물 윤곽. 도엽 경계에서 잘린 조각은 building_elevation.py 가 합친다
       다른 축척의 표고점은 DEM에 넣지 않고 검증점으로 써서 오차를 로그에 찍는다.
 
@@ -362,7 +363,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--scale", choices=SCALES, default="5000", help="DEM·건물 윤곽을 만들 축척 (기본 5000)")
     ap.add_argument("--res", type=float, default=2.0, help="DEM 격자(m)")
     ap.add_argument("--step", type=float, default=2.0, help="등고선을 점으로 바꿀 간격(m)")
-    ap.add_argument("--margin", type=float, default=0.006, help="건물 좌표 범위에 더할 여유(도)")
+    ap.add_argument("--extent", choices=("data", "campus"), default="data",
+                    help="DEM 범위. data = 받은 도엽 전체(도로 그래프까지 덮도록), campus = 건물 좌표 범위 ± --margin")
+    ap.add_argument("--margin", type=float, default=0.006, help="--extent campus 일 때 건물 좌표 범위에 더할 여유(도)")
     ap.add_argument("--crs", default="EPSG:5186", help=".prj 가 없을 때 쓸 좌표계")
     ap.add_argument("--buildings", nargs="+", default=[str(p) for p in BUILDING_LISTS])
     ap.add_argument("-o", "--output", default=str(OUT))
@@ -400,7 +403,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  높이 필드(파일 수): {dict(st['fields'])}")
     if len(z) < 3:
         raise SystemExit("보간할 점이 모자람")
-    bb = campus_bounds([Path(p) for p in args.buildings], args.margin)
+    bb = campus_bounds([Path(p) for p in args.buildings], args.margin) if args.extent == "campus" else None
     if bb is not None:
         left, bottom, right, top = transform_bounds("EPSG:4326", work, bb[1], bb[0], bb[3], bb[2])
     else:
@@ -409,7 +412,7 @@ def main(argv: list[str] | None = None) -> int:
     keep = (xy[:, 0] > left - pad) & (xy[:, 0] < right + pad) & (xy[:, 1] > bottom - pad) & (xy[:, 1] < top + pad)
     if keep.sum() < 3:
         raise SystemExit("캠퍼스 범위에 등고선·표고점이 없음. 도엽을 확인할 것")
-    print(f"  높이 {z[keep].min():.1f}~{z[keep].max():.1f} m, 캠퍼스 근처 점 {int(keep.sum()):,}개")
+    print(f"  높이 {z[keep].min():.1f}~{z[keep].max():.1f} m, 쓴 점 {int(keep.sum()):,}개")
     arr, transform = build_dem(xy[keep], z[keep], (left, bottom, right, top), args.res)
     out = Path(args.output)
     write_dem(arr, transform, work, out)

@@ -35,9 +35,8 @@ python -m ttwizard parse data/raw/latest.xls -o data/lectures.json
 python scripts/fetch_buildings.py
 
 # 3) 이동시간 행렬 → data/travel.csv
-#    1순위 '캠퍼스 마법 지도' 데이터, 없으면 TMAP 보행자 API (.env 에 TMAP_APP_KEY)
-python scripts/tmap_matrix.py --test
-python scripts/tmap_matrix.py --limit 900
+#    '캠퍼스 마법 지도' 건물쌍 거리표(data/magicmap/)에서 만든다. 표에 없는 쌍만 TMAP 보행자 API로 (.env 에 TMAP_APP_KEY)
+python scripts/magicmap_travel.py
 
 # 4) 과목 찾기 → 탐색
 python -m ttwizard find --lectures data/lectures.json 생화학
@@ -75,6 +74,15 @@ python scripts/dem_from_contours.py          # 등고선·표고점 → data/dem
 python scripts/building_elevation.py         # → data/buildings_elevation.csv, data/building_entrances.csv (+ .geojson)
 ```
 
+## 캠퍼스 마법 지도 도로 그래프와 이동시간
+
+'캠퍼스 마법 지도'에서 받은 도로 그래프와 건물쌍 거리표(`data/magicmap/`, 출처·허락 범위는 그 폴더의 README)를 쓴다.
+
+```bash
+python scripts/magicmap_travel.py            # 건물쌍 거리표 → data/travel.csv (알고리즘 입력)
+python scripts/graph_slopes.py               # 그래프에 노드 고도·구간별 경사 → data/magicmap/roads_graph_slope.json, *.csv
+```
+
 현장에서 확인한 출입구는 `data/entrances_manual.csv`(`building,lat,lon,floor,kind,note`)에 적으면 그 건물은 자동 후보 대신 그것을 쓴다.
 
 ## 구조
@@ -98,11 +106,14 @@ scripts/
   fetch_osm_footprints.py    OpenStreetMap 건물 윤곽·출입구·보행로 → osm_*.geojson
   dem_from_contours.py       1:5,000 수치지형도 등고선·표고점 → DEM(1:1,000 표고점으로 검증), 건물 윤곽
   building_elevation.py      DEM + 윤곽 + 출입구 → 건물별·출입구별 고도 (buildings_elevation.csv, building_entrances.csv)
+  magicmap_travel.py         마법 지도 건물쌍 거리표 → travel.csv
+  graph_slopes.py            마법 지도 도로 그래프에 노드 고도·구간별 경사
   tmap_matrix.py       TMAP 보행자 API → travel.csv
 data/
   sample/              데모용 가짜 데이터
   raw/                 엑셀 원본 (latest + 변경이 있던 날짜별)
   topo/                수치지형도 원자료 (등고선·표고점·건물 레이어) — 건물 고도용
+  magicmap/            캠퍼스 마법 지도에서 받은 도로 그래프·건물쌍 거리표와 경사를 붙인 결과
   lectures.json, buildings.csv, travel.csv, results.json, stats.csv, changes/
 web/                 3분할 화면 (시간표 · 동선 지도(OpenStreetMap) · 순위 목록) — 예정
 docs/                계획·결정 사항
@@ -114,6 +125,13 @@ tests/               pytest
 - `.env` (TMAP_APP_KEY 등)는 커밋하지 않는다. 자동 갱신에서 키가 필요해지면 GitHub Secrets 로.
 - 수강신청 시스템·캠퍼스맵 API 호출은 최소한으로. 차단되면 로컬 수동 실행으로 전환.
 - 지도 타일은 OpenStreetMap — 출처 표기(© OpenStreetMap contributors) 필수.
+
+## 데이터 출처
+
+- 도로 그래프·건물쌍 이동거리: 캠퍼스 마법 지도 (https://moreadorecampus.com/) — 비상업 공개 저장소 게시 허락을 받았다
+- 지면 고도·건물 윤곽: 국토지리정보원 수치지형도 (국토정보플랫폼, 공공누리 제1유형)
+- 건물 윤곽·출입구·보행로: © OpenStreetMap contributors (ODbL)
+- 건물 번호·이름·좌표: 서울대학교 캠퍼스맵 (https://map.snu.ac.kr)
 
 ## 참고
 

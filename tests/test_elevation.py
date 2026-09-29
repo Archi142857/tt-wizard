@@ -341,8 +341,8 @@ def test_dem_from_contours(dem, tmp_path):
     campus = tmp_path / "campus.csv"
     campus.write_text(f"building,name,lat,lon\n301,시험관,{P_LAT},{P_LON}\n", encoding="utf-8")
     out, bout = tmp_path / "dem" / "topo_dem.tif", tmp_path / "topo_buildings.geojson"
-    assert dfc.main(["--topo", str(topo), "--buildings", str(campus), "--margin", "0.003", "--res", "2",
-                     "-o", str(out), "--buildings-output", str(bout)]) == 0
+    assert dfc.main(["--topo", str(topo), "--buildings", str(campus), "--extent", "campus", "--margin", "0.003",
+                     "--res", "2", "-o", str(out), "--buildings-output", str(bout)]) == 0
     d = be.Dem([out])
     lons, lats = [P_LON, P_LON + 0.001], [P_LAT, P_LAT - 0.001]
     _, ys = warp("EPSG:4326", "EPSG:5186", lons, lats)
@@ -358,6 +358,22 @@ def test_dem_from_contours(dem, tmp_path):
     assert r["footprint"] == "topo/37612018/0" and r["footprint_match"] == "inside" and r["dem"] == "topo_dem.tif"
     assert r["footprint_name"] == "공과대학301동시험관" and "다름" not in r["note"]
     assert abs(float(r["first_floor_est_m"]) - 100.0) < 0.1 and 3.8 <= float(r["ground_span_m"]) <= 4.0
+
+
+def test_dem_covers_whole_sheet_by_default(dem, tmp_path):
+    """기본(--extent data)은 캠퍼스 좌표와 상관없이 받은 도엽 전체를 덮는다 (도로 그래프용)."""
+    import rasterio
+    from rasterio.transform import array_bounds
+
+    x0, y0 = dem.origin
+    topo = _write_topo(tmp_path, x0, y0)
+    out = tmp_path / "dem" / "topo_dem.tif"
+    assert dfc.main(["--topo", str(topo), "--buildings", str(tmp_path / "없음.csv"), "--res", "20", "-o", str(out),
+                     "--buildings-output", str(tmp_path / "b.geojson")]) == 0
+    with rasterio.open(out) as ds:
+        west, south, east, north = array_bounds(ds.height, ds.width, ds.transform)
+    # 등고선은 y0 ± 1000 m (맨 아래 0 m 선은 빈 값으로 빠져 y0 − 950 m부터)
+    assert west <= x0 - 1190 and east >= x0 + 1190 and south <= y0 - 940 and north >= y0 + 990
 
 
 def test_topo_scale_and_check_points(dem, tmp_path):

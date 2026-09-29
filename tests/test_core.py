@@ -95,3 +95,11 @@ def test_late_penalty():
     ev = evaluate([a, b], travel, "919", Weights(late=2.0))
     assert ev.late_minutes == pytest.approx(3.0)
     assert ev.cost == pytest.approx(ev.travel_minutes + 6.0)
+
+
+def test_duplicate_meetings_are_merged():
+    """같은 시간·같은 건물의 두 강의실(반을 나눈 경우)은 한 번의 수업으로 본다."""
+    ms, _ = parse_meetings("월(12:30~13:45)/수(17:00~17:50)/수(17:00~17:50)", "8-304/5-116/5-208")
+    assert len(ms) == 2
+    wed = [m for m in ms if m.day == 2][0]
+    assert wed.building == "5" and wed.room == "5-116/5-208"

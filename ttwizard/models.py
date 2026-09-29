@@ -47,6 +47,23 @@ class Meeting:
         return f"{self.day_ko}({min_to_hm(self.start)}~{min_to_hm(self.end)}) {where}"
 
 
+def merge_duplicate_meetings(meetings: Iterable[Meeting]) -> tuple[Meeting, ...]:
+    """같은 요일·시간·건물의 미팅을 하나로 합친다(반을 두 강의실로 나눈 경우 등). 강의실은 '/'로 잇는다.
+    수강편람에 '수(17:00~17:50) 5-116 / 수(17:00~17:50) 5-208'처럼 올라온 분반이 겹치는 두 수업으로 보여
+    지각이 잘못 잡히는 것을 막는다."""
+    merged: dict[tuple[int, int, int, str], Meeting] = {}
+    for mt in meetings:
+        key = (mt.day, mt.start, mt.end, mt.building)
+        if key in merged:
+            old = merged[key]
+            rooms = [r for r in old.room.split("/") if r]
+            if mt.room and mt.room not in rooms:
+                merged[key] = Meeting(old.day, old.start, old.end, old.building, "/".join(rooms + [mt.room]))
+        else:
+            merged[key] = mt
+    return tuple(merged.values())
+
+
 @dataclass(frozen=True)
 class Section:
     """분반(강좌) 하나. (course_id, section_no)가 전역 키."""
