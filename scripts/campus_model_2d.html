@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>서울대학교 관악캠퍼스 2D 모델링</title>
+<!-- scripts/campus_model.py 가 만든 파일. 고칠 때는 scripts/campus_model_2d.html 을 고치고 다시 만든다 -->
+<style>
+html, body { margin: 0; height: 100%; overflow: hidden; background: #f4f4f4; font-family: sans-serif; }
+canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+#note { position: fixed; left: 6px; bottom: 4px; font-size: 11px; color: #333; }
+#note i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin: 0 2px 0 6px; }
+</style>
+</head>
+<body>
+<canvas id="map"></canvas>
+<div id="note">
+  경사(길 방향 30 m):<i style="background:#5598e7"></i>5% 미만<i style="background:#2a78d6"></i>5~10%<i style="background:#1c5cab"></i>10~20%<i style="background:#0d366b"></i>20% 이상<i style="border-top:2px dashed #888;height:0"></i>터널 ·
+  도로 그래프: 캠퍼스 마법 지도 (https://moreadorecampus.com/) · 지형: 국토지리정보원 수치지형도(공공누리 제1유형)
+</div>
+<script type="application/json" id="data">__DATA__</script>
+<script>
+var D = JSON.parse(document.getElementById("data").textContent);
+function b64(s, T) { var bin = atob(s), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new T(u.buffer); }
+var nodes = b64(D.nodes, Uint16Array);   // x, y (0.1 m, 원점 기준), z (0.1 m)
+var edges = b64(D.edges, Uint16Array);
+var codes = b64(D.codes, Uint8Array);    // 0~3 경사 단계, 4 터널
+var B = D.buildings, T = D.terrain, tz = b64(T.z, Uint16Array);
+var COLORS = ["#5598e7", "#2a78d6", "#1c5cab", "#0d366b"];
+
+// 음영: 북서쪽 45° 위에서 비춘 지형. 격자 한 칸 = 한 점인 그림을 만들어 늘려 그린다 (위쪽이 북쪽)
+var shade = document.createElement("canvas");
+shade.width = T.nx; shade.height = T.ny;
+(function () {
+  var sc = shade.getContext("2d"), img = sc.createImageData(T.nx, T.ny);
+  var az = 315 * Math.PI / 180, alt = 45 * Math.PI / 180, zf = 1.5;
+  var lx = Math.cos(alt) * Math.sin(az), ly = Math.cos(alt) * Math.cos(az), lz = Math.sin(alt);
+  function h(r, c) { r = Math.max(0, Math.min(T.ny - 1, r)); c = Math.max(0, Math.min(T.nx - 1, c)); var v = tz[r * T.nx + c]; return v === 65535 ? null : v / 10; }
+  for (var r = 0; r < T.ny; r++) for (var c = 0; c < T.nx; c++) {
+    var o = ((T.ny - 1 - r) * T.nx + c) * 4, z0 = h(r, c);
+    if (z0 === null) { img.data[o + 3] = 0; continue; }
+    var e = h(r, c + 1), w = h(r, c - 1), n = h(r + 1, c), s = h(r - 1, c);
+    var dzdx = ((e === null ? z0 : e) - (w === null ? z0 : w)) / (2 * T.step) * zf;
+    var dzdy = ((n === null ? z0 : n) - (s === null ? z0 : s)) / (2 * T.step) * zf;
+    var v = (-dzdx * lx - dzdy * ly + lz) / Math.sqrt(1 + dzdx * dzdx + dzdy * dzdy);
+    var gray = Math.round(150 + 105 * Math.max(0, Math.min(1, v)));
+    img.data[o] = gray; img.data[o + 1] = gray; img.data[o + 2] = gray - 6; img.data[o + 3] = 255;
+  }
+  sc.putImageData(img, 0, 0);
+})();
+
+// 화면 = (x - cx) * s + W/2, (cy - y) * s + H/2
+var cv = document.getElementById("map"), ctx = cv.getContext("2d");
+var W = 0, H = 0, dpr = 1, cx = 0, cy = 0, s = 1, dirty = true;
+function sx(x) { return (x - cx) * s + W / 2; }
+function sy(y) { return (cy - y) * s + H / 2; }
+
+function home() {   // 강의 건물이 모두 보이게
+  var xs = B.map(function (b) { return b[2]; }), ys = B.map(function (b) { return b[3]; });
+  var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+  cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
+  s = Math.min(W / (x1 - x0 + 300), H / (y1 - y0 + 300));
+  dirty = true;
+}
+
+function draw() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = "#f4f4f4";
+  ctx.fillRect(0, 0, W, H);
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(shade, sx(T.x0 - T.step / 2), sy(T.y0 + (T.ny - 0.5) * T.step), T.nx * T.step * s, T.ny * T.step * s);
+  ctx.lineWidth = Math.max(0.8, Math.min(3, s * 1.2));
+  for (var g = 0; g <= 4; g++) {
+    ctx.beginPath();
+    for (var i = 0; i < codes.length; i++) {
+      if (codes[i] !== g) continue;
+      var u = edges[2 * i], v = edges[2 * i + 1];
+      ctx.moveTo(sx(nodes[3 * u] / 10), sy(nodes[3 * u + 1] / 10));
+      ctx.lineTo(sx(nodes[3 * v] / 10), sy(nodes[3 * v + 1] / 10));
+    }
+    ctx.strokeStyle = g < 4 ? COLORS[g] : "#888";
+    ctx.setLineDash(g < 4 ? [] : [4, 3]);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#000";
+  B.forEach(function (b) { ctx.beginPath(); ctx.arc(sx(b[2]), sy(b[3]), 3, 0, 2 * Math.PI); ctx.fill(); });
+}
+
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  dirty = true;
+}
+
+// 조작: 왼쪽·가운데 버튼 드래그 = 이동, 휠 = 커서 쪽으로 확대·축소(앞으로 굴리면 확대),
+// 가운데 버튼 두 번 = 처음 시점. 폰은 한 손가락 이동, 두 손가락 확대
+function zoomAt(px, py, f) {
+  var x = (px - W / 2) / s + cx, y = cy - (py - H / 2) / s;
+  s = Math.max(0.02, Math.min(40, s * f));
+  cx = x - (px - W / 2) / s; cy = y + (py - H / 2) / s;
+  dirty = true;
+}
+window.addEventListener("wheel", function (ev) {
+  ev.preventDefault();
+  zoomAt(ev.clientX, ev.clientY, ev.deltaY < 0 ? 1.2 : 1 / 1.2);
+}, { passive: false });
+
+var pointers = {}, lastMiddle = 0, pinch = null;
+cv.addEventListener("pointerdown", function (ev) {
+  if (ev.pointerType === "mouse") {
+    if (ev.button !== 0 && ev.button !== 1) return;   // 오른쪽 버튼은 쓰지 않는다
+    ev.preventDefault();   // 글자 선택·브라우저 자동 스크롤 막기
+    if (ev.button === 1) {
+      var now = Date.now();
+      if (now - lastMiddle < 400) { home(); lastMiddle = 0; return; }
+      lastMiddle = now;
+    }
+  }
+  cv.setPointerCapture(ev.pointerId);
+  pointers[ev.pointerId] = [ev.clientX, ev.clientY];
+  pinch = null;
+});
+cv.addEventListener("pointermove", function (ev) {
+  var p = pointers[ev.pointerId];
+  if (!p) return;
+  var ids = Object.keys(pointers);
+  if (ids.length === 1) {
+    cx -= (ev.clientX - p[0]) / s; cy += (ev.clientY - p[1]) / s;
+  } else if (ids.length === 2) {
+    pointers[ev.pointerId] = [ev.clientX, ev.clientY];
+    var a = pointers[ids[0]], b = pointers[ids[1]];
+    var d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    if (pinch) zoomAt((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, d / pinch);
+    pinch = d;
+  }
+  pointers[ev.pointerId] = [ev.clientX, ev.clientY];
+  dirty = true;
+});
+function up(ev) { delete pointers[ev.pointerId]; pinch = null; }
+cv.addEventListener("pointerup", up);
+cv.addEventListener("pointercancel", up);
+cv.addEventListener("contextmenu", function (ev) { ev.preventDefault(); });
+window.addEventListener("resize", resize);
+
+resize();
+home();
+(function frame() {
+  if (dirty) { draw(); dirty = false; }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

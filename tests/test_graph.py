@@ -1,6 +1,7 @@
 """도로 그래프 경사(graph_slopes.py), 건물쌍 거리표 변환(magicmap_travel.py), 경사 반영 이동시간(slope_travel.py) 테스트.
 DEM은 가짜 함수로 대신하거나 쓰지 않는다."""
 
+import base64
 import csv
 import json
 import math
@@ -17,6 +18,7 @@ be = pytest.importorskip("building_elevation")
 gs = pytest.importorskip("graph_slopes")
 import magicmap_travel as mt  # noqa: E402
 import slope_travel as st  # noqa: E402
+import campus_model as cm  # noqa: E402
 from ttwizard.travel import TravelMatrix  # noqa: E402
 
 PROJ = be.LocalProj()
@@ -185,3 +187,36 @@ def test_slope_travel(tmp_path):
     _write_csv(b, ["building", "name", "lat", "lon"], [("A", "a", *ll(0, 0)), ("B", "b", *ll(0, 200))])
     tm = TravelMatrix.load(b, out)
     assert tm.minutes("A", "B") > tm.minutes("B", "A")
+
+
+def test_campus_model(tmp_path):
+    g = _graph()
+    ele, res, index = gs.compute(g, FakeDem(), PROJ, _bridge_points(), np.zeros((0, 2)))
+    for n, zz in zip(g["nodes"], ele):
+        n["ele"] = None if np.isnan(zz) else float(zz)
+    for e in g["edges"]:
+        a, b = index[e["from"]], index[e["to"]]
+        e["surface"] = res[(min(a, b), max(a, b))]["surface"]
+    lon, lat = PROJ.inv(0.0, 50.0)
+    blat, blon = float(np.ravel(lat)[0]), float(np.ravel(lon)[0])
+    data = cm.build(g, FakeDem(), PROJ, {"A": ("가", blat, blon)}, step=10.0)
+    nodes = np.frombuffer(base64.b64decode(data["nodes"]), "<u2").reshape(-1, 3)
+    edges = np.frombuffer(base64.b64decode(data["edges"]), "<u2").reshape(-1, 2)
+    codes = np.frombuffer(base64.b64decode(data["codes"]), "<u1")
+    # 노드 10(DEM 밖)과 그 엣지는 빠진다
+    assert data["counts"] == {"nodes": 10, "nodes_all": 11, "edges": 8, "tunnel": 2}
+    assert len(nodes) == 10 and len(edges) == 8 and edges.max() < 10
+    # 엣지 순서: 1-2, 2-3, 3-4(동쪽 2 %), 3-5·5-6(터널), 6-7, 8-9(다리), 8-11. 북쪽 길은 10 %(경계라 1 또는 2)
+    assert codes[2] == 0 and codes[3] == 4 and codes[4] == 4
+    assert set(codes[[0, 1, 5, 6, 7]].tolist()) <= {1, 2}
+    ox, oy = data["origin"]
+    assert nodes[0].tolist() == [round((0 - ox) * 10), round((0 - oy) * 10), 1000]  # 노드 1: (0, 0), 100 m
+    t = data["terrain"]
+    grid = np.frombuffer(base64.b64decode(t["z"]), "<u2")
+    assert len(grid) == t["nx"] * t["ny"] and (grid != 65535).all()
+    assert data["buildings"][0][:2] == ["A", "가"] and data["buildings"][0][4] == pytest.approx(105, abs=0.1)
+    for name in ("campus_model_3d.html", "campus_model_2d.html"):
+        page = cm.render(ROOT / "scripts" / name, data, "<script></script>")
+        assert "__DATA__" not in page and "__LIBS__" not in page
+        payload = page.split('<script type="application/json" id="data">', 1)[1].split("</script>", 1)[0]
+        assert json.loads(payload)["counts"]["edges"] == 8

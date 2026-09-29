@@ -524,11 +524,15 @@ function renderTimetable(ev, day, [h0, h1]) {
 }
 
 let map = null, layer = null;
+let campusBounds = null;
 function ensureMap() {
   if (map || typeof L === "undefined") return map;
+  // 관악캠퍼스 밖으로 벗어나지 않게: 이동시간 자료가 있는 건물·정문·기숙사를 모두 담는 범위(+ 여유 10 %)
+  campusBounds = L.latLngBounds(state.campus.ids.map(coordOf).filter(Boolean)).pad(0.1);
   // 컴퓨터: 확대·축소 버튼 + 마우스 휠, 폰: 두 손가락으로
   const wide = window.matchMedia("(min-width: 600px)").matches;
-  map = L.map("map", { zoomControl: false, scrollWheelZoom: wide, attributionControl: true });
+  map = L.map("map", { zoomControl: false, scrollWheelZoom: wide, attributionControl: true,
+    maxBounds: campusBounds, maxBoundsViscosity: 1.0, zoomSnap: 0.25, zoomDelta: 0.5 });
   if (wide) L.control.zoom({ position: "topright", zoomInTitle: "확대", zoomOutTitle: "축소" }).addTo(map);
   map.attributionControl.setPrefix(false); // 좁은 지도라 Leaflet 표기는 빼고 OSM 출처만 (Leaflet 은 아래 소스 안내에)
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -536,8 +540,14 @@ function ensureMap() {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
   }).addTo(map);
   layer = L.layerGroup().addTo(map);
-  map.setView([37.4598, 126.9519], 15);
+  map.setView(campusBounds.getCenter(), 15);
   return map;
+}
+
+/** 지도 칸 크기에 맞춰, 캠퍼스 범위가 한 화면에 들어오는 배율보다 더 축소하지 못하게 한다. */
+function limitZoom() {
+  if (!map || !campusBounds) return;
+  map.setMinZoom(Math.max(12, map.getBoundsZoom(campusBounds, false)));
 }
 
 function coordOf(b) {
@@ -584,6 +594,7 @@ function renderMap(ev, day) {
   }
   legend.append(h("li", {}, h("span", { class: "num home", "aria-hidden": "true" }, svg(ICON_HOME)), h("span", {}, placeLabel(state.result.home))));
   map.invalidateSize();
+  limitZoom();
   const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#3182f6";
   const pts = [], labels = [];
   // 선: 수업으로 가는 길은 실선, 귀가는 점선
@@ -701,5 +712,6 @@ $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout
 $("mode-seg").addEventListener("click", (e) => { const b = e.target.closest("button[data-mode]"); if (b && !b.disabled) setMode(b.dataset.mode); });
 $("run").addEventListener("click", run);
 $("back").addEventListener("click", () => { if (history.state && history.state.view === "result") history.back(); else showView("input", false); });
+window.addEventListener("resize", () => { if (map) { map.invalidateSize(); limitZoom(); } });
 window.addEventListener("popstate", () => showView(location.hash === "#result" && state.result ? "result" : "input", false));
 load();

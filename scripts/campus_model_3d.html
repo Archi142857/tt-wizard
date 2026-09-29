@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>서울대학교 관악캠퍼스 3D 모델링</title>
+<!-- scripts/campus_model.py 가 만든 파일. 고칠 때는 scripts/campus_model_3d.html 을 고치고 다시 만든다 -->
+<style>
+html, body { margin: 0; height: 100%; overflow: hidden; background: #f4f4f4; font-family: sans-serif; }
+canvas { display: block; }
+#note { position: fixed; left: 6px; bottom: 4px; font-size: 11px; color: #333; }
+#note i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin: 0 2px 0 6px; }
+</style>
+</head>
+<body>
+<div id="note">
+  경사(길 방향 30 m):<i style="background:#5598e7"></i>5% 미만<i style="background:#2a78d6"></i>5~10%<i style="background:#1c5cab"></i>10~20%<i style="background:#0d366b"></i>20% 이상<i style="border-top:2px dashed #888;height:0"></i>터널 ·
+  도로 그래프: 캠퍼스 마법 지도 (https://moreadorecampus.com/) · 지형: 국토지리정보원 수치지형도(공공누리 제1유형)
+</div>
+<script type="application/json" id="data">__DATA__</script>
+__LIBS__
+<script>
+var D = JSON.parse(document.getElementById("data").textContent);
+function b64(s, T) { var bin = atob(s), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new T(u.buffer); }
+var nodes = b64(D.nodes, Uint16Array);   // x, y (0.1 m, 원점 기준), z (0.1 m)
+var edges = b64(D.edges, Uint16Array);   // 노드 번호 쌍
+var codes = b64(D.codes, Uint8Array);    // 0~3 경사 단계, 4 터널
+var EXAG = 2.5;                          // 높이 과장
+
+var renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+document.body.appendChild(renderer.domElement);
+var scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf4f4f4);
+var camera = new THREE.PerspectiveCamera(40, 1, 5, 40000);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x808080, 0.55));
+var sun = new THREE.DirectionalLight(0xffffff, 0.55);
+sun.position.set(-1, 1.4, -0.6);
+scene.add(sun);
+var world = new THREE.Group();
+world.scale.y = EXAG;
+scene.add(world);
+function P(x, y, z) { return [x, z, -y]; }   // x 동쪽, y 북쪽, z 고도 → three.js 좌표
+
+// 지형
+var T = D.terrain, tz = b64(T.z, Uint16Array);
+var pos = new Float32Array(T.nx * T.ny * 3);
+for (var r = 0; r < T.ny; r++) for (var c = 0; c < T.nx; c++) {
+  var k = r * T.nx + c;
+  var p = P(T.x0 + c * T.step, T.y0 + r * T.step, tz[k] === 65535 ? 0 : tz[k] / 10);
+  pos[3 * k] = p[0]; pos[3 * k + 1] = p[1]; pos[3 * k + 2] = p[2];
+}
+var idx = [];
+function ok(k) { return tz[k] !== 65535; }
+for (var r = 0; r < T.ny - 1; r++) for (var c = 0; c < T.nx - 1; c++) {
+  var a = r * T.nx + c, b = a + 1, d = a + T.nx, e = d + 1;
+  if (ok(a) && ok(b) && ok(d)) idx.push(a, b, d);
+  if (ok(b) && ok(d) && ok(e)) idx.push(b, e, d);
+}
+var tGeo = new THREE.BufferGeometry();
+tGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+tGeo.setIndex(idx);
+tGeo.computeVertexNormals();
+var terrain = new THREE.Mesh(tGeo, new THREE.MeshLambertMaterial({ color: 0xdadad2, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2 }));
+world.add(terrain);
+
+// 길: 경사 단계별 색, 터널은 점선
+var colors = [0x5598e7, 0x2a78d6, 0x1c5cab, 0x0d366b];
+var seg = [[], [], [], [], []];
+function X(i) { return nodes[3 * i] / 10; } function Y(i) { return nodes[3 * i + 1] / 10; } function Z(i) { return nodes[3 * i + 2] / 10 + 2.5; }
+for (var i = 0; i < codes.length; i++) {
+  var u = edges[2 * i], v = edges[2 * i + 1];
+  seg[codes[i]].push.apply(seg[codes[i]], P(X(u), Y(u), Z(u)).concat(P(X(v), Y(v), Z(v))));
+}
+for (var g = 0; g < 4; g++) {
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(seg[g], 3));
+  world.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: colors[g] })));
+}
+var tunGeo = new THREE.BufferGeometry();
+tunGeo.setAttribute("position", new THREE.Float32BufferAttribute(seg[4], 3));
+var tunnels = new THREE.LineSegments(tunGeo, new THREE.LineDashedMaterial({ color: 0x888888, dashSize: 8, gapSize: 6, depthTest: false }));
+tunnels.computeLineDistances();
+world.add(tunnels);
+
+// 강의 건물 점
+var B = D.buildings;
+var pins = new THREE.InstancedMesh(new THREE.SphereGeometry(6, 10, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }), B.length);
+var m4 = new THREE.Matrix4();
+for (var i = 0; i < B.length; i++) {
+  var q = P(B[i][2], B[i][3], B[i][4]);
+  m4.makeTranslation(q[0], (q[1] + 8) * EXAG, q[2]);
+  pins.setMatrixAt(i, m4);
+}
+scene.add(pins);
+
+// 조작: 왼쪽 버튼 드래그 = 이동, 오른쪽 버튼 드래그 = 회전, 휠 = 커서 쪽으로 확대·축소(앞으로 굴리면 확대),
+// 가운데 버튼 드래그 = 이동(Shift 를 누르면 회전), 가운데 버튼 두 번 = 처음 시점
+var controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.ROTATE };
+controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+controls.screenSpacePanning = true;
+controls.maxPolarAngle = Math.PI * 0.49;
+
+var ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+window.addEventListener("wheel", function (ev) {
+  ev.preventDefault();
+  ev.stopPropagation();   // OrbitControls 의 휠(화면 가운데 기준)은 막는다
+  var f = ev.deltaY < 0 ? 1 / 1.15 : 1.15;   // 앞으로(위로) 굴리면 가까이
+  ndc.set(ev.clientX / window.innerWidth * 2 - 1, -ev.clientY / window.innerHeight * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  var hit = ray.intersectObject(terrain)[0];
+  var at = hit ? hit.point : ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -controls.target.y), new THREE.Vector3());
+  if (!at) return;
+  var dist = camera.position.distanceTo(controls.target) * f;
+  if (dist < 60 || dist > 20000) return;
+  camera.position.sub(at).multiplyScalar(f).add(at);
+  controls.target.sub(at).multiplyScalar(f).add(at);
+  controls.update();
+}, { capture: true, passive: false });
+
+var lastMiddle = 0;
+window.addEventListener("pointerdown", function (ev) {
+  if (ev.pointerType !== "mouse" || ev.button !== 1) return;
+  ev.preventDefault();   // 브라우저 자동 스크롤 막기
+  var now = Date.now();
+  if (now - lastMiddle < 400) { home(); lastMiddle = 0; } else lastMiddle = now;
+}, true);
+
+function home() {   // 강의 건물 가운데를 북서쪽(정문 쪽) 위에서 본다
+  var xs = B.map(function (b) { return b[2]; }), ys = B.map(function (b) { return b[3]; });
+  var cx = (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2, cy = (Math.min.apply(null, ys) + Math.max.apply(null, ys)) / 2;
+  var t = new THREE.Vector3().fromArray(P(cx, cy - 300, 90 * EXAG));
+  controls.target.copy(t);
+  camera.position.set(t.x - 900, t.y + 1500, t.z - 2600);
+  controls.update();
+}
+
+function resize() {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener("resize", resize);
+resize();
+home();
+(function frame() {
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

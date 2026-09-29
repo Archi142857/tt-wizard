@@ -30,6 +30,8 @@ python -m http.server 8000 -d web
 | `js/app.js` | 화면 동작. 담은 과목·조건·직접 넣은 강의실과 시간은 브라우저(localStorage)에만 저장 |
 | `data/` | `scripts/export_web.py` 가 만든다. git 에는 올리지 않고, 배포 때 GitHub Actions 가 다시 만든다 |
 | `vendor/leaflet/` | Leaflet 1.9.4 (npm 배포본 그대로) |
+| `model/` | 서울대학교 관악캠퍼스 3D·2D 모델링 (`scripts/campus_model.py` 가 만든 결과, 커밋한다) |
+| `vendor/three/` | three.js r128 과 OrbitControls (npm 배포본 그대로, 3D 모델링용) |
 
 ## 배포
 

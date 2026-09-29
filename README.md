@@ -60,6 +60,22 @@ python -m http.server 8000 -d web            # http://localhost:8000
 
 자세한 내용은 `web/README.md`.
 
+## 서울대학교 관악캠퍼스 3D·2D 모델링
+
+캠퍼스 마법 지도 도로 그래프를 수치지형도로 만든 지형 위에 올리고, 길마다 경사(길 방향 30 m 구간)를 색으로 칠한 모형.
+`web/model/campus-3d.html`, `web/model/campus-2d.html` 을 브라우저로 바로 연다
+(GitHub Pages: https://archi142857.github.io/tt-wizard/model/campus-3d.html , `campus-2d.html`).
+
+```bash
+python scripts/campus_model.py                 # DEM(data/dem)이 있는 PC에서 → web/model/campus-3d.html, campus-2d.html
+python scripts/campus_model.py --standalone    # 3D 파일 하나만 보낼 때 (three.js 를 파일 안에 넣는다)
+```
+
+기본 기능만 있다: 지형·길(경사별 색)·강의 건물 점을 보여 준다. 높이는 2.5배 과장.
+조작: 왼쪽 버튼 드래그 이동, 오른쪽 버튼 드래그 회전(3D), 휠 확대·축소(앞으로 굴리면 확대), 가운데 버튼 두 번 처음 시점.
+가운데 버튼 드래그도 이동(3D 에서 Shift 를 누르면 회전).
+DEM이 git에 없어 GitHub Actions 에서 다시 만들 수 없으므로 결과 HTML 을 같이 커밋한다.
+
 ## 데이터 갱신 정책
 
 SNUTT와 같은 방식: 학기 전체 강좌 엑셀을 주기적으로 내려받아 이전 스냅샷과 (교과목번호, 강좌번호) 키로 비교하고
@@ -128,6 +144,7 @@ scripts/
   graph_slopes.py            마법 지도 도로 그래프에 노드 고도·구간별 경사
   slope_travel.py            경사 반영 건물쌍 이동시간 → travel_slope.csv, route_stats.csv, route_paths.json(지도용 경로)
   export_web.py              data/ → web/data/*.json (웹 화면 자료)
+  campus_model.py            관악캠퍼스 3D·2D 모델링 → web/model/*.html (템플릿: campus_model_3d.html, campus_model_2d.html)
   tmap_matrix.py       TMAP 보행자 API → travel.csv
 data/
   sample/              데모용 가짜 데이터
@@ -136,6 +153,7 @@ data/
   magicmap/            캠퍼스 마법 지도에서 받은 도로 그래프·건물쌍 거리표와 경사를 붙인 결과
   lectures.json, buildings.csv, travel.csv, travel_slope.csv, route_stats.csv, route_paths.json, results.json, stats.csv, changes/
 web/                 정적 웹 화면: 과목 검색 → 시간표 · 동선 지도(OpenStreetMap) · 순위 목록 (GitHub Pages)
+  model/               관악캠퍼스 3D·2D 모델링 (campus_model.py 가 만든 결과, 커밋한다)
 docs/                계획·결정 사항, 방법 설명(elevation_method.md, travel_time_method.md)
 tests/               pytest
 ```
@@ -157,3 +175,4 @@ tests/               pytest
 
 - [wafflestudio/snutt](https://github.com/wafflestudio/snutt) (MIT) — 수강편람 엑셀 엔드포인트, 파싱 규칙, 캠퍼스맵 API 활용을 참고했다.
 - [Leaflet](https://leafletjs.com) 1.9.4 (BSD-2) — 웹 화면 지도 (`web/vendor/leaflet`).
+- [three.js](https://threejs.org) r128 (MIT) — 3D 모델링 (`web/vendor/three`).
