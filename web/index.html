@@ -5,8 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TT Wizard</title>
 <meta name="description" content="서울대 관악캠퍼스 건물 사이 걷는 시간(경사 반영)으로 분반 조합을 골라 주는 시간표 도우미">
-<meta name="theme-color" content="#f2f4f6">
+<meta name="theme-color" content="#eef0ff">
+<meta name="color-scheme" content="light">
+<meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="TT Wizard">
@@ -18,14 +21,15 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<p class="net-note" id="net-note" role="status" hidden>인터넷에 연결되어 있지 않아요. 저장해 둔 자료로 찾고, 지도 바탕은 연결되면 보여요.</p>
 
 <main id="view-input" class="view">
   <header class="hero">
     <div class="brand-row">
-      <div class="brand">TT Wizard</div>
+      <img class="lockup" src="icons/lockup-horizontal.svg" alt="TT Wizard" width="161" height="40">
       <button type="button" class="pill-btn" id="install" hidden>앱으로 설치</button>
     </div>
-    <h1>걷는 시간이 가장 짧은<br>시간표를 찾아 드려요</h1>
+    <h1>걷는 시간이 가장 짧은 시간표를 만들어 드려요</h1>
     <p class="sub" id="data-note">자료를 불러오는 중…</p>
   </header>
 
@@ -69,7 +73,7 @@
   <p class="error" id="input-error" role="alert" hidden></p>
 
   <footer class="credits" id="credits-input"></footer>
-  <div class="bottom-bar"><button type="button" class="btn-primary" id="run" disabled>시간표 찾기</button></div>
+  <div class="bottom-bar"><button type="button" class="btn-primary" id="run" disabled>시간표 생성하기</button></div>
 </main>
 
 <main id="view-result" class="view" hidden>
@@ -85,7 +89,7 @@
   <div class="panes">
     <section class="card tt" id="tt" aria-label="하루 시간표"></section>
     <section class="card mapcard" aria-label="하루 동선 지도">
-      <div id="map"></div>
+      <div id="map" class="map"></div>
       <ol class="legend" id="legend"></ol>
     </section>
   </div>

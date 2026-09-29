@@ -2,13 +2,15 @@
 import { DAY_KO, parseCourses, TravelMatrix, search, routeLine } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
-// 색 = 교과구분 [블록 배경, 막대·점]
+// 색 = 교과구분 [이름, 블록 채움, 막대·점]. 값은 style.css 의 디자인 시스템 토큰(cls-*)
 const CLS_COLORS = [
-  ["전필", "#e8f3ff", "#4d94f5"],
-  ["전선", "#e3f6ec", "#34b37e"],
-  ["교양", "#fff0dc", "#f09a3e"],
-  ["그 외(일선 등)", "#eef1f4", "#9aa4af"],
+  ["전필", "var(--cls-req-bg)", "var(--cls-req)"],
+  ["전선", "var(--cls-elec-bg)", "var(--cls-elec)"],
+  ["교양", "var(--cls-gen-bg)", "var(--cls-gen)"],
+  ["그 외(일선 등)", "var(--cls-etc-bg)", "var(--cls-etc)"],
 ];
+// 개인정보처리방침 주소. 스토어 등록 때 정해지면 넣는다(비어 있으면 출처 아래 링크를 보이지 않는다)
+const PRIVACY_URL = "";
 const TOP_K = 5;
 const state = {
   courses: [], byId: new Map(), campus: null, routes: null, routesLoading: null,
@@ -45,7 +47,7 @@ function svg(markup) {
 
 const ICON_X = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
 const ICON_DOWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
-const ICON_HOME = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"></path><path d="M6 10v10h12V10"></path></svg>';
+const iconHome = (size) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"></path></svg>`;
 
 const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, "");
 const hm = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
@@ -190,19 +192,22 @@ function sectionFix(s) {
   const end = h("input", { type: "time", class: "select small", value: "10:15", step: "300", "aria-label": "끝" });
   let building = "";
   const bsel = buildingSelect("", (b) => { building = b; }, "건물");
+  bsel.classList.add("grow");
   const msg = h("span", { class: "fix-msg", role: "alert" });
   return h("div", { class: "sec-fix" },
     h("span", { class: "fix-label" }, "시간 미정 · 직접 넣으면 그 시간으로 찾아요"),
     times.length ? h("ul", { class: "fix-times" }, times.map((t, i) => h("li", {},
       `${DAY_KO[t[0]]} ${hm(t[1])}~${hm(t[2])} · ${buildingLabel(t[3])}`,
-      h("button", { type: "button", class: "icon-btn tiny", "aria-label": "이 시간 빼기",
+      h("button", { type: "button", class: "icon-btn", "aria-label": "이 시간 빼기",
         onclick: () => update({ times: times.filter((_, j) => j !== i) }) }, svg(ICON_X))))) : null,
-    h("div", { class: "fix-row" }, day, start, h("span", { class: "fix-sep" }, "~"), end, bsel,
-      h("button", { type: "button", class: "pill-btn", onclick: () => {
-        const a = parseHm(start.value), b = parseHm(end.value);
-        if (a === null || b === null || b <= a) { msg.textContent = "끝나는 시각이 시작보다 늦어야 해요"; return; }
-        update({ times: [...times, [Number(day.value), a, b, building]] });
-      } }, "추가")),
+    // 폰 폭에서도 넘치지 않게 세 줄: 요일·건물 / 시작~끝 / 추가
+    h("div", { class: "fix-row" }, day, bsel),
+    h("div", { class: "fix-when" }, start, h("span", { class: "fix-sep" }, "~"), end),
+    h("button", { type: "button", class: "btn-secondary", onclick: () => {
+      const a = parseHm(start.value), b = parseHm(end.value);
+      if (a === null || b === null || b <= a) { msg.textContent = "끝나는 시각이 시작보다 늦어야 해요"; return; }
+      update({ times: [...times, [Number(day.value), a, b, building]] });
+    } }, "추가"),
     msg);
 }
 
@@ -392,7 +397,7 @@ function renderPicked() {
   $("legend-input").replaceChildren(state.picks.length ? clsLegend() : "");
   $("picked-count").textContent = state.picks.length ? String(state.picks.length) : "";
   $("picked-empty").hidden = state.picks.length > 0;
-  $("run").disabled = state.picks.length === 0;
+  if (!running) $("run").disabled = state.picks.length === 0;
   state.picks.forEach((p) => {
     const c = state.byId.get(p.id);
     const [, bar] = colorOf(c.id);
@@ -406,8 +411,8 @@ function renderPicked() {
     };
     const list = h("ul", { class: "section-list", id: listId, hidden: !open },
       c.sections.length > 3 ? h("li", { class: "section-all" },
-        h("button", { type: "button", onclick: () => setAll(true) }, "모두 켜기"),
-        h("button", { type: "button", onclick: () => setAll(false) }, "모두 끄기")) : null,
+        h("button", { type: "button", class: "btn-tertiary", onclick: () => setAll(true) }, "모두 켜기"),
+        h("button", { type: "button", class: "btn-tertiary", onclick: () => setAll(false) }, "모두 끄기")) : null,
       c.sections.map((s) => h("li", {}, h("label", {},
         h("input", {
           type: "checkbox", checked: !p.excluded.has(s.key),
@@ -483,8 +488,9 @@ function setMode(m) {
 }
 
 function renderCredits() {
-  // iPhone Safari 는 설치 버튼이 없어서 방법만 알려 준다 (이미 홈 화면에서 열었으면 안 보인다)
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.standalone;
+  // iPhone Safari 는 설치 버튼이 없어서 방법만 알려 준다. navigator.standalone 은 Safari 탭에서만 false 다
+  // (홈 화면에서 연 앱은 true, 스토어 앱 껍데기(WKWebView)·다른 앱 안 브라우저는 없음) → 그곳들에서는 안 보인다
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && navigator.standalone === false;
   for (const id of ["credits-input", "credits-result"]) {
     $(id).replaceChildren(
       ios && id === "credits-input" ? h("p", { class: "tip" }, "공유 버튼 → '홈 화면에 추가'로 앱처럼 쓸 수 있어요.") : "",
@@ -492,7 +498,8 @@ function renderCredits() {
         "의 도로·건물 사이 거리 자료에 국토지리정보원 수치지형도로 잰 경사를 더해 계산했어요."),
       h("p", {}, "실제로 걸리는 시간과 다를 수 있어요."),
       h("p", {}, "강좌: 서울대학교 수강편람 · 건물 위치: 서울대학교 캠퍼스맵 · 지도: © ",
-        h("a", { href: "https://www.openstreetmap.org/copyright", target: "_blank", rel: "noopener" }, "OpenStreetMap"), " contributors"));
+        h("a", { href: "https://www.openstreetmap.org/copyright", target: "_blank", rel: "noopener" }, "OpenStreetMap"), " contributors"),
+      PRIVACY_URL ? h("p", {}, h("a", { href: PRIVACY_URL, target: "_blank", rel: "noopener" }, "개인정보처리방침")) : "");
   }
 }
 
@@ -520,7 +527,20 @@ function groupSections(sections) {
   return [...groups.values()];
 }
 
+const RUN_LABEL = "시간표 생성하기";
+let running = false;
+
+/** 찾는 동안: 버튼 색은 그대로 두고 도는 표시와 글자만 바꾼다(계산이 화면을 잠깐 멈춰도 표시는 돈다). */
+function setBusy(on) {
+  const btn = $("run");
+  running = on;
+  btn.setAttribute("aria-busy", on ? "true" : "false");
+  btn.replaceChildren(...(on ? [h("span", { class: "spinner", "aria-hidden": "true" }), "시간표를 만드는 중…"] : [RUN_LABEL]));
+  btn.disabled = !on && state.picks.length === 0;
+}
+
 function run() {
+  if (running) return;
   showError("");
   const courses = state.picks.map((p) => {
     const c = state.byId.get(p.id);
@@ -530,9 +550,7 @@ function run() {
   if (!courses.length) return;
   const empty = courses.find((c) => !c.sections.length);
   if (empty) { showError(`${empty.name}: 분반을 하나 이상 골라 주세요.`); return; }
-  const btn = $("run");
-  btn.disabled = true;
-  btn.textContent = "찾는 중…";
+  setBusy(true);
   loadRoutes();
   // 버튼 글자가 바뀐 뒤에 계산한다(과목·분반이 많으면 1~2초 걸린다)
   requestAnimationFrame(() => setTimeout(() => {
@@ -545,8 +563,7 @@ function run() {
       renderResult();
       loadRoutes().then(() => { if (state.result && !$("view-result").hidden) renderResult(); });
     } finally {
-      btn.disabled = state.picks.length === 0;
-      btn.textContent = "시간표 찾기";
+      setBusy(false);
     }
   }, 0));
 }
@@ -628,13 +645,15 @@ function renderTimetable(ev, day, [h0, h1]) {
     const late = leg && leg.slack !== null && leg.slack < -0.05 ? Math.ceil(-leg.slack) : 0;
     const heightPct = ((m.end - m.start) / span) * 100;
     const px = (heightPct / 100) * gridPx;
-    // 칸 높이에 맞춰 과목명을 몇 줄까지 보일지 정한다(줄 17px, 강의실 줄 16px, 위아래 여백 6px). 넘치면 마지막 줄에 말줄임.
+    const short = px < 38;
+    const badgeRow = late && !short ? 18 : 0; // 늦음 배지 줄(16px + 2px). 낮은 칸은 배지가 과목명 위에 겹친다
+    // 칸 높이에 맞춰 과목명을 몇 줄까지 보일지 정한다(줄 18px, 강의실 줄 16px, 위아래 여백 6px). 넘치면 마지막 줄에 말줄임.
     // 폰에서 75분 수업이면 과목명 2줄, 더 길면 강의실까지
-    const avail = px - 6;
+    const avail = px - 6 - badgeRow;
     const showRoom = avail >= 50;
-    const lines = Math.max(1, Math.min(3, Math.floor((avail - (showRoom ? 16 : 0)) / 17)));
+    const lines = Math.max(1, Math.min(3, Math.floor((avail - (showRoom ? 16 : 0)) / 18)));
     const block = h("div", {
-      class: `tt-block${px < 38 ? " short" : ""}`, style: { top: pct(m.start), height: `calc(${heightPct}% - 2px)`, background: bg },
+      class: `tt-block${short ? " short" : ""}${badgeRow ? " is-late" : ""}`, style: { top: pct(m.start), height: `calc(${heightPct}% - 2px)`, background: bg },
       title: `${m.section.name} ${hm(m.start)}~${hm(m.end)} ${roomLabel(m)}`,
     },
     late ? h("span", { class: "tt-late", title: lateWhy(leg) }, `${late}분 늦음`) : null,
@@ -658,9 +677,11 @@ function ensureMap() {
     maxBounds: campusBounds, maxBoundsViscosity: 1.0, zoomSnap: 0.25, zoomDelta: 0.5 });
   if (wide) L.control.zoom({ position: "topright", zoomInTitle: "확대", zoomOutTitle: "축소" }).addTo(map);
   map.attributionControl.setPrefix(false); // 좁은 지도라 Leaflet 표기는 빼고 OSM 출처만 (Leaflet 은 아래 소스 안내에)
+  // 지도 안 표기는 짧은 판 '© OpenStreetMap'(OSMF Attribution Guidelines 가 허용, 폰의 좁은 지도에서 12px 한 줄).
+  // 긴 판 '© OpenStreetMap contributors' 는 화면 아래 출처(renderCredits)에 그대로 둔다
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
   }).addTo(map);
   layer = L.layerGroup().addTo(map);
   map.setView(campusBounds.getCenter(), 15);
@@ -715,10 +736,9 @@ function renderMap(ev, day) {
     const at = coordOf(l.to);
     if (at && l.to !== state.result.home) stops.push({ at, nums: [n], b: l.to });
   }
-  legend.append(h("li", {}, h("span", { class: "num home", "aria-hidden": "true" }, svg(ICON_HOME)), h("span", {}, placeLabel(state.result.home))));
+  legend.append(h("li", {}, h("span", { class: "num home", "aria-hidden": "true" }, svg(iconHome(10))), h("span", {}, placeLabel(state.result.home))));
   map.invalidateSize();
   limitZoom();
-  const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#3182f6";
   const pts = [], labels = [];
   // 선: 수업으로 가는 길은 실선, 귀가는 점선
   for (const l of legs) {
@@ -731,7 +751,8 @@ function renderMap(ev, day) {
     }
     pts.push(...line);
     const home = !l.meeting;
-    L.polyline(line, home ? { color: "#8b95a1", weight: 3, dashArray: "4 6", opacity: 0.9 } : { color: accent, weight: 4, opacity: 0.9 }).addTo(layer);
+    L.polyline(line, home ? { className: "map-route-home", weight: 3, dashArray: "4 6", opacity: 0.9, interactive: false }
+      : { className: "map-route", weight: 4, opacity: 0.9, interactive: false }).addTo(layer);
     const mins = Math.round(l.minutes);
     if (mins > 0) labels.push({ at: midpoint(line), text: `${mins}분` });
   }
@@ -739,7 +760,7 @@ function renderMap(ev, day) {
   if (homeAt) {
     pts.push(homeAt);
     L.marker(homeAt, { keyboard: false, title: placeLabel(state.result.home),
-      icon: L.divIcon({ className: "", html: `<div class="pin home">${ICON_HOME}</div>`, iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(layer);
+      icon: L.divIcon({ className: "", html: `<div class="pin home">${iconHome(12)}</div>`, iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(layer);
   }
   for (const st of stops) pts.push(st.at);
   if (!pts.length) return;
@@ -850,6 +871,15 @@ $("install").addEventListener("click", async () => {
 });
 window.addEventListener("appinstalled", () => { $("install").hidden = true; });
 
+// ---------------------------------------------------------------- 연결 상태
+
+// 끊기면 맨 위에 안내를 띄운다(서비스 워커가 저장해 둔 자료로는 찾을 수 있고, 지도 바탕 그림만 안 온다)
+function renderNetwork() {
+  $("net-note").hidden = navigator.onLine !== false;
+}
+window.addEventListener("online", renderNetwork);
+window.addEventListener("offline", renderNetwork);
+
 // ---------------------------------------------------------------- 시작
 
 let timer = null;
@@ -861,4 +891,5 @@ $("term").addEventListener("change", () => switchSemester(`${$("year").value}-${
 $("back").addEventListener("click", () => { if (history.state && history.state.view === "result") history.back(); else showView("input", false); });
 window.addEventListener("resize", () => { if (map) { map.invalidateSize(); limitZoom(); } });
 window.addEventListener("popstate", () => showView(location.hash === "#result" && state.result ? "result" : "input", false));
+renderNetwork();
 load();
