@@ -6,6 +6,13 @@
 <title>TT Wizard</title>
 <meta name="description" content="서울대 관악캠퍼스 건물 사이 걷는 시간(경사 반영)으로 분반 조합을 골라 주는 시간표 도우미">
 <meta name="theme-color" content="#f2f4f6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="TT Wizard">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="style.css">
@@ -14,12 +21,22 @@
 
 <main id="view-input" class="view">
   <header class="hero">
-    <div class="brand">TT Wizard</div>
+    <div class="brand-row">
+      <div class="brand">TT Wizard</div>
+      <button type="button" class="pill-btn" id="install" hidden>앱으로 설치</button>
+    </div>
     <h1>걷는 시간이 가장 짧은<br>시간표를 찾아 드려요</h1>
     <p class="sub" id="data-note">자료를 불러오는 중…</p>
   </header>
 
   <div class="card search">
+    <div class="term-row" id="term-row" hidden>
+      <label for="year" class="sr-only">년도</label>
+      <select id="year" class="term-select"></select>
+      <label for="term" class="sr-only">학기</label>
+      <select id="term" class="term-select"></select>
+      <span class="term-tail">강좌에서 찾아요</span>
+    </div>
     <div class="searchbox">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
       <label for="q" class="sr-only">과목 검색</label>
@@ -60,7 +77,7 @@
     <button type="button" class="icon-btn" id="back" aria-label="과목 고르기로 돌아가기">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
     </button>
-    <div class="title">추천 시간표</div>
+    <div class="title" id="result-heading">추천 시간표</div>
     <span class="mode-chip" id="mode-chip"></span>
   </header>
 

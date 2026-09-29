@@ -52,10 +52,14 @@ python -m ttwizard search --lectures data/lectures.json \
 
 https://archi142857.github.io/tt-wizard/ — 과목을 검색해 담으면 브라우저에서 바로 분반 조합을 찾아 시간표 · 하루 동선 지도 · 순위를 보여 준다.
 서버 없이 정적 파일만 쓰고(GitHub Pages), 알고리즘은 `web/js/engine.js` 로 옮겨 두었다(파이썬과 같은 답인지 테스트로 확인).
+수강신청 사이트처럼 년도·학기를 골라 지난 학기(2021-1부터) 편람으로도 찾을 수 있다.
+폰 홈 화면에 설치할 수 있다(PWA: 안드로이드 크롬은 '앱으로 설치' 버튼, iPhone 은 공유 → '홈 화면에 추가').
+설치해도 같은 웹 화면이고, 한 번 연 자료는 네트워크 없이도 열린다(지도 타일은 브라우저에 맡긴다).
 
 ```bash
 python scripts/export_web.py                 # data/ → web/data/*.json
 python -m http.server 8000 -d web            # http://localhost:8000
+python scripts/build_history.py              # 지난 학기 엑셀(data/raw/history/) → data/history/*.json (새로 받은 학기가 있을 때만)
 ```
 
 자세한 내용은 `web/README.md`.
@@ -76,6 +80,17 @@ python scripts/campus_model.py --standalone    # 3D 파일 하나만 보낼 때 
 가운데 버튼 드래그도 이동(3D 에서 Shift 를 누르면 회전).
 DEM이 git에 없어 GitHub Actions 에서 다시 만들 수 없으므로 결과 HTML 을 같이 커밋한다.
 
+## 비교 실험
+
+분반 선택이 주간 이동시간을 얼마나 바꾸는지 잰다: 분반–건물 분산, 프로그램 1위 vs 무작위(가상 묶음), TSP 하한 대비,
+경사를 무시하고 고른 경우, 탐색 시간과 부하 시험, 실제 시간표 비교. 방법은 `docs/experiments.md`,
+결과(CSV·그림·요약)는 `results/experiments/`.
+
+```bash
+python scripts/experiments.py                                              # 2분 남짓
+python scripts/experiments.py --real data/experiments/real_timetables.csv  # 실제 시간표까지 (개인 자료라 git 에 올리지 않음)
+```
+
 ## 데이터 갱신 정책
 
 SNUTT와 같은 방식: 학기 전체 강좌 엑셀을 주기적으로 내려받아 이전 스냅샷과 (교과목번호, 강좌번호) 키로 비교하고
@@ -88,6 +103,7 @@ SNUTT와 같은 방식: 학기 전체 강좌 엑셀을 주기적으로 내려받
 | 수강신청 기간 (장바구니 시작 3일 전 ~ 수강신청변경 마감 3일 후, 첫 화면 일정표 파싱) | 6시간 |
 
 `scripts/sync.py` 가 이 정책을 구현하고, `.github/workflows/sync.yml` 이 6시간마다 그것을 부른다.
+학기가 바뀌면 끝난 학기의 `lectures.json` 을 `data/history/<학기>.json` 에 보관해 웹 화면에서 지난 학기로 고를 수 있게 한다.
 실행당 요청은 엑셀 1회 + 첫 화면 1회. 강좌별 상세 팝업은 호출하지 않는다.
 `data/stats.csv` 에 매 실행의 강의실 확정 비율이 쌓이므로 "정보가 얼마나 빨리 채워지는가" 그래프를 그릴 수 있다.
 
@@ -119,6 +135,14 @@ Tobler 보행 함수를 적용한 시간 ÷ 같은 경로의 평지 시간이다
 
 현장에서 확인한 출입구는 `data/entrances_manual.csv`(`building,lat,lon,floor,kind,note`)에 적으면 그 건물은 자동 후보 대신 그것을 쓴다.
 
+오르막 실측으로 경사 반영 시간을 검증한다. 측정 방법과 기록 양식(`data/field/*_template.csv`)은 `docs/field_measurement.md`.
+
+```bash
+python scripts/field_validation.py suggest                                # 잴 만한 구간 후보
+python scripts/field_validation.py plan --routes data/field/routes.csv    # 모형 경로·예측 → results/field/plan.*
+python scripts/field_validation.py check data/field/measurements.csv      # 실측 vs 모형 → results/field/
+```
+
 ## 구조
 
 ```
@@ -145,16 +169,24 @@ scripts/
   slope_travel.py            경사 반영 건물쌍 이동시간 → travel_slope.csv, route_stats.csv, route_paths.json(지도용 경로)
   export_web.py              data/ → web/data/*.json (웹 화면 자료)
   campus_model.py            관악캠퍼스 3D·2D 모델링 → web/model/*.html (템플릿: campus_model_3d.html, campus_model_2d.html)
+  build_history.py           지난 학기 편람 엑셀 → data/history/<학기>.json (웹 화면 학기 선택)
+  make_icons.py              웹 앱 아이콘 → web/icons/
+  experiments.py             비교 실험 → results/experiments/ (engine_bench.mjs 로 웹 엔진 시간도 잰다)
+  restrictions.py            수강편람 비고의 수강 제한(®) 읽기: 이 학생이 이 분반을 들을 수 있나
+  field_validation.py        오르막 실측 구간 고르기·경로 뽑기·실측 비교 → results/field/
   tmap_matrix.py       TMAP 보행자 API → travel.csv
 data/
   sample/              데모용 가짜 데이터
-  raw/                 엑셀 원본 (latest + 변경이 있던 날짜별)
+  raw/                 엑셀 원본 (latest + 변경이 있던 날짜별, history/ = 지난 학기)
+  history/             지난 학기 편람 (웹 화면 courses.json 형식, 학기 선택용)
   topo/                수치지형도 원자료 (등고선·표고점·건물 레이어) — 건물 고도용
   magicmap/            캠퍼스 마법 지도에서 받은 도로 그래프·건물쌍 거리표와 경사를 붙인 결과
+  field/               오르막 실측 구간·기록 (양식: *_template.csv)
   lectures.json, buildings.csv, travel.csv, travel_slope.csv, route_stats.csv, route_paths.json, results.json, stats.csv, changes/
 web/                 정적 웹 화면: 과목 검색 → 시간표 · 동선 지도(OpenStreetMap) · 순위 목록 (GitHub Pages)
   model/               관악캠퍼스 3D·2D 모델링 (campus_model.py 가 만든 결과, 커밋한다)
-docs/                계획·결정 사항, 방법 설명(elevation_method.md, travel_time_method.md)
+results/experiments/ 비교 실험 결과 (CSV, 그림, README.md 요약)
+docs/                계획·결정 사항, 방법 설명(elevation_method.md, travel_time_method.md, experiments.md)
 tests/               pytest
 ```
 

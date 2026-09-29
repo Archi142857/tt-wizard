@@ -11,7 +11,8 @@
 2. 정책상 아직 때가 아니면 종료 (GitHub Actions cron은 6시간마다 이 스크립트를 부르고, 실제 다운로드
    여부는 여기서 결정한다)
 3. 엑셀 다운로드 → 파싱 → 이전 lectures.json과 (교과목번호, 강좌번호) 키로 비교
-4. 바뀐 게 있으면 lectures.json 갱신 + changes/ 에 diff 기록 + raw/ 에 날짜별 원본 보관
+4. 바뀐 게 있으면 lectures.json 갱신 + changes/ 에 diff 기록 + raw/ 에 날짜별 원본 보관.
+   학기가 바뀌었으면 먼저 끝난 학기의 lectures.json 을 history/<학기>.json(웹 형식)에 보관한다(웹 화면 학기 선택)
 5. stats.csv 에 (시각, 분반 수, 강의실 확정 수) 한 줄 추가 — 보고서 그래프용
 
 사용법
@@ -34,6 +35,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from ttwizard.parse_sugang import location_stats, parse_sugang_excel, sections_from_json, sections_to_json  # noqa: E402
+import build_history  # noqa: E402
 import sugang_client as sc  # noqa: E402
 
 DATA = ROOT / "data"
@@ -42,6 +44,7 @@ LECTURES = DATA / "lectures.json"
 CHANGES = DATA / "changes"
 RAW = DATA / "raw"
 STATS = DATA / "stats.csv"
+HISTORY = DATA / "history"
 
 KST = timezone(timedelta(hours=9))
 BASE_INTERVAL = timedelta(hours=12)
@@ -111,6 +114,19 @@ def diff_sections(old: list, new: list) -> dict:
     return {"created": created, "deleted": deleted, "updated": updated}
 
 
+def previous_sections(state: dict, label: str, lectures: Path = LECTURES) -> list:
+    """비교할 이전 분반. lectures.json 이 다른 학기 것이면(새 학기 첫 다운로드) 빈 목록 → 전부 신설로 기록한다."""
+    if not lectures.exists() or state.get("lectures_semester", label) != label:
+        return []
+    return sections_from_json(lectures)
+
+
+def archive_semester(label: str, lectures: Path = LECTURES, history: Path = HISTORY, updated: str = "") -> Path:
+    """끝난 학기의 lectures.json → history/<학기>.json (웹 화면 형식). 웹 화면에서 지난 학기로 고를 수 있다."""
+    rows = json.loads(lectures.read_text(encoding="utf-8"))
+    return build_history.write_semester(label, rows, history, updated)
+
+
 def append_stats(ts: datetime, label: str, stats: dict) -> None:
     new_file = not STATS.exists()
     with open(STATS, "a", newline="", encoding="utf-8") as f:
@@ -135,6 +151,7 @@ def main() -> int:
     RAW.mkdir(exist_ok=True)
     now = now_kst()
     state = load_state()
+    state.setdefault("lectures_semester", state.get("semester"))  # lectures.json 이 담고 있는 학기
 
     s = sc.new_session()
     cb = sc.current_coursebook(s)
@@ -166,7 +183,7 @@ def main() -> int:
     latest = RAW / f"latest{ext}"
     latest.write_bytes(data)
     new_sections = parse_sugang_excel(latest)
-    old_sections = sections_from_json(LECTURES) if LECTURES.exists() else []
+    old_sections = previous_sections(state, cb.label)
     d = diff_sections(old_sections, new_sections)
     stats = location_stats(new_sections)
     print(f"분반 {stats['sections_total']}개 (학사·설강·시간 있음 {stats['sections_timed']}개, 강의실 확정 {stats['located_ratio']:.1%}) · "
@@ -178,7 +195,12 @@ def main() -> int:
     stamp = now.strftime("%Y-%m-%d_%H%M")
     changed = any(d[k] for k in ("created", "updated", "deleted")) or not LECTURES.exists()
     if changed:
+        done = state.get("lectures_semester")
+        if done and done != cb.label and LECTURES.exists():
+            path = archive_semester(done, updated=state.get("last_fetch", ""))
+            print(f"끝난 학기 보관: {path.relative_to(ROOT)}")
         sections_to_json(new_sections, LECTURES)
+        state["lectures_semester"] = cb.label
         (CHANGES / f"{stamp}.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
         (RAW / f"{cb.label}_{stamp}{ext}").write_bytes(data)  # 바뀐 때만 원본 보관 (용량 관리)
     append_stats(now, cb.label, stats)

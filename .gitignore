@@ -234,3 +234,6 @@ data/topo/*/*
 !data/topo/*/*F0010000.*
 !data/topo/*/*F0020000.*
 !data/topo/*/*B0010000.*
+# 실제 시간표(개인 자료)는 올리지 않는다. 결과 요약(results/experiments/README.md, fig7)만 올린다
+data/experiments/
+results/experiments/real.csv

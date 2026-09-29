@@ -7,6 +7,9 @@
   web/data/courses.json  과목 → 분반 → 수업(요일, 시작·끝 분, 동, 호실). 논문 과목은 뺀다
   web/data/campus.json   이동시간 행렬(평지 = 마법 지도 표, 경사 반영), 건물 이름·좌표, 출발 후보, 갱신 시각
   web/data/routes.json   지도에 그릴 경로 모양(data/route_paths.json 그대로. 없으면 화면이 직선으로 잇는다)
+  web/data/semesters.json, semesters/<학기>.json
+                         학기 선택: 지난 학기 편람(data/history/<학기>.json, 이미 courses.json 형식)과 목록.
+                         지금 학기는 courses.json. data/history/ 는 build_history.py(처음 한 번)와 sync.py(학기가 바뀔 때)가 채운다
 
 표준 라이브러리만 쓴다(GitHub Actions 에서 따로 설치 없이 돈다).
 """
@@ -46,7 +49,11 @@ def room_no(room: str) -> str:
 
 
 def export_courses(lectures: Path) -> dict:
-    data = json.loads(lectures.read_text(encoding="utf-8"))
+    return courses_from_rows(json.loads(lectures.read_text(encoding="utf-8")))
+
+
+def courses_from_rows(data: list[dict]) -> dict:
+    """lectures.json 형식(분반 목록) → 웹 화면 courses.json 형식(과목 → 분반 → 수업)."""
     courses: dict[str, list] = {}
     for d in data:
         if d.get("classification", "") in SKIP_CLASSIFICATION:
@@ -106,8 +113,41 @@ def export_campus(data: Path) -> dict:
         "buildings": buildings,
         "homes": [[b, label] for b, label in HOMES if b in buildings],
         "estimate": {"walk_kmh": 4.0, "detour": 1.35, "default_minutes": 15.0},  # ttwizard/travel.py 와 같은 값
-        "meta": {"semester": state.get("semester", ""), "updated": state.get("last_fetch", "")},
+        "meta": {"semester": state.get("lectures_semester") or state.get("semester", ""), "updated": state.get("last_fetch", "")},
     }
+
+
+TERMS = "1S2W"  # 1학기, 여름, 2학기, 겨울 순
+
+
+def semester_key(label: str) -> tuple[int, int]:
+    """'2026-2' → (2026, 2). 형식이 다르면 맨 뒤로."""
+    m = re.fullmatch(r"(\d{4})-([12SW])", label or "")
+    return (int(m.group(1)), TERMS.index(m.group(2))) if m else (-1, -1)
+
+
+def current_semester(data: Path) -> str:
+    """lectures.json 이 담고 있는 학기. 새 학기를 감지하고 아직 받기 전에는 state['semester'] 와 다를 수 있다."""
+    path = data / "sync_state.json"
+    state = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    return state.get("lectures_semester") or state.get("semester", "")
+
+
+def export_semesters(data: Path, out: Path, current: str) -> list[list[str]]:
+    """지난 학기(data/history/<학기>.json) → out/semesters/, 목록 → out/semesters.json. 최신 학기가 앞."""
+    items = [[current, "courses.json"]]
+    history = data / "history"
+    for path in sorted(history.glob("*.json")) if history.exists() else []:
+        label = path.stem
+        if label == current or semester_key(label) == (-1, -1):
+            continue
+        (out / "semesters").mkdir(exist_ok=True)
+        shutil.copyfile(path, out / "semesters" / path.name)
+        items.append([label, f"semesters/{path.name}"])
+    items.sort(key=lambda it: semester_key(it[0]), reverse=True)
+    (out / "semesters.json").write_text(json.dumps({"current": current, "list": items}, ensure_ascii=False,
+                                                   separators=(",", ":")), encoding="utf-8")
+    return items
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -132,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
         shutil.copyfile(routes, out / "routes.json")
     else:
         (out / "routes.json").write_text('{"ids":[],"paths":{}}', encoding="utf-8")
+    semesters = export_semesters(data, out, campus["meta"]["semester"])
 
     n_sec = sum(len(c[6]) for c in courses["courses"])
     print(f"저장: {out}")
@@ -140,6 +181,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  campus.json   지점 {len(campus['ids'])}개 · 평지 {'있음' if campus['flat'] else '없음'}"
           f" · 경사 반영 {'있음' if campus['slope'] else '없음'} · 건물 {len(campus['buildings'])}개")
     print(f"  routes.json   {'data/route_paths.json 복사' if routes.exists() else '없음 → 직선으로 표시'}")
+    print(f"  semesters.json 학기 {len(semesters)}개 ({semesters[0][0] or '학기 모름'}"
+          f"{' ~ ' + semesters[-1][0] if len(semesters) > 1 else ''})")
     return 0
 
 

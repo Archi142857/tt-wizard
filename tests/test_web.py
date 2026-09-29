@@ -68,3 +68,28 @@ def test_web_engine_matches_python(tmp_path):
     for case, got in zip(cases, js):
         res = search([courses[i] for i in case["ids"]], travel, case["home"], top_k=5)
         assert got == pytest.approx([e.cost for e in res.ranked], abs=1e-5), case
+
+
+def test_export_semesters(tmp_path):
+    """학기 선택: 지난 학기(data/history/<학기>.json)를 web/data/semesters/ 로, 목록은 최신 학기부터."""
+    data = tmp_path / "data"
+    shutil.copytree(SAMPLE, data)
+    (data / "sync_state.json").write_text(json.dumps({"semester": "2027-1", "lectures_semester": "2026-2"}), encoding="utf-8")
+    hist = data / "history"
+    hist.mkdir()
+    for label in ("2025-2", "2026-1"):
+        payload = ew.export_courses(SAMPLE / "lectures.json")
+        payload["meta"] = {"semester": label, "updated": ""}
+        (hist / f"{label}.json").write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    (hist / "2026-2.json").write_text("{}", encoding="utf-8")  # 지금 학기는 lectures.json 을 쓴다
+    (hist / "notes.json").write_text("{}", encoding="utf-8")  # 학기 이름이 아니면 무시
+    out = tmp_path / "web"
+    assert ew.main(["--data", str(data), "-o", str(out)]) == 0
+    idx = json.loads((out / "semesters.json").read_text(encoding="utf-8"))
+    # 새 학기(2027-1)를 감지했어도 아직 받기 전이면 lectures.json 은 2026-2 다
+    assert idx == {"current": "2026-2", "list": [["2026-2", "courses.json"], ["2026-1", "semesters/2026-1.json"],
+                                                  ["2025-2", "semesters/2025-2.json"]]}
+    assert json.loads((out / "courses.json").read_text(encoding="utf-8"))["meta"]["semester"] == "2026-2"
+    assert json.loads((out / "semesters" / "2025-2.json").read_text(encoding="utf-8"))["meta"]["semester"] == "2025-2"
+    assert sorted(ew.semester_key(x) for x in ("2026-W", "2026-1", "2026-S", "2026-2")) == [(2026, 0), (2026, 1), (2026, 2), (2026, 3)]
+

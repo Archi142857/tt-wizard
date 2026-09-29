@@ -204,7 +204,12 @@ def parse_sugang_excel(path: str | Path, campus: str | None = "관악") -> list[
 # ---------- JSON 저장/불러오기 (파싱은 학기당 몇 번, 탐색은 JSON에서) ----------
 
 def sections_to_json(sections: Iterable[Section], path: str | Path) -> None:
-    data = [
+    Path(path).write_text(json.dumps(sections_to_rows(sections), ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def sections_to_rows(sections: Iterable[Section]) -> list[dict]:
+    """Section 목록 → lectures.json 형식의 dict 목록."""
+    return [
         {
             "course_id": s.course_id,
             "section_no": s.section_no,
@@ -222,7 +227,6 @@ def sections_to_json(sections: Iterable[Section], path: str | Path) -> None:
         }
         for s in sections
     ]
-    Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 def sections_from_json(path: str | Path) -> list[Section]:

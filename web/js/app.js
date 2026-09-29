@@ -12,6 +12,8 @@ const CLS_COLORS = [
 const TOP_K = 5;
 const state = {
   courses: [], byId: new Map(), campus: null, routes: null, routesLoading: null,
+  current: "", semester: "", semesters: [], cache: new Map(), // 학기 선택: 지금 학기, 보는 학기, [[학기, 파일]], 불러온 편람
+  semesterMeta: {},
   picks: [], // [{id, excluded: Set<key>}]
   overrides: {}, // 분반 키 → {rooms: {수업 번호: 동}, times: [[요일, 시작, 끝, 동]]} 강의실·시간 미정을 직접 넣은 것
   expanded: new Set(),
@@ -50,7 +52,17 @@ const hm = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 6
 const store = {
   get(k, d) { try { const v = localStorage.getItem("ttw." + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem("ttw." + k, JSON.stringify(v)); } catch { /* 저장 안 돼도 화면은 돈다 */ } },
+  del(k) { try { localStorage.removeItem("ttw." + k); } catch { /* 무시 */ } },
 };
+// 담은 과목·직접 넣은 강의실은 학기마다 따로 둔다 (같은 교과목번호·분반 번호라도 학기마다 다른 강좌다)
+const semKey = (k) => `${k}@${state.semester}`;
+
+const TERMS = [["1", "1학기"], ["S", "여름학기"], ["2", "2학기"], ["W", "겨울학기"]];
+function semLabel(sem) {
+  const [y, t] = String(sem || "").split("-");
+  const term = TERMS.find(([k]) => k === t);
+  return term ? `${y}년 ${term[1]}` : sem || "";
+}
 
 function buildingLabel(b) {
   if (!b) return "강의실 미정";
@@ -69,6 +81,12 @@ function roomLabel(m) {
   if (m.manual) return `${m.building}동 (직접 입력)`;
   if (!m.room) return `${m.building}동`;
   return /^[A-Za-z]?\d/.test(m.room) ? `${m.building}동 ${m.room}호` : `${m.building}동 ${m.room}`;
+}
+
+/** 시간표 칸처럼 좁은 곳에 쓰는 과목명: 끝의 부제 괄호를 뺀다. '글로벌 공학기술 교류 특강 2 (국제 물류)' → '… 특강 2' */
+function shortName(name) {
+  const s = String(name || "").replace(/\s*\([^()]*\)\s*$/, "");
+  return s || name;
 }
 
 function describeMeetings(meetings) {
@@ -115,7 +133,7 @@ function needsInput(s) {
 }
 
 function saveOverrides() {
-  store.set("overrides", state.overrides);
+  store.set(semKey("overrides"), state.overrides);
 }
 
 let buildingOptions = null;
@@ -187,37 +205,123 @@ function fmtUpdated(iso) {
 
 // ---------------------------------------------------------------- 불러오기
 
+async function getJson(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${url} ${r.status}`);
+  return r.json();
+}
+
 async function load() {
   try {
-    const [cj, campus] = await Promise.all([
-      fetch("data/courses.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
-      fetch("data/campus.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
-    ]);
-    state.courses = parseCourses(cj);
-    state.byId = new Map(state.courses.map((c) => [c.id, c]));
-    for (const c of state.courses) {
-      c.hay = norm([c.name, c.id, c.dept, ...new Set(c.sections.map((s) => s.instructor))].join(" "));
-      c.nameKey = norm(c.name);
-    }
+    const [campus, index] = await Promise.all([getJson("data/campus.json"), getJson("data/semesters.json").catch(() => null)]);
     state.campus = campus;
-    const meta = campus.meta || {};
-    $("data-note").textContent = `서울대 관악캠퍼스 · ${meta.semester || ""} 수강편람${meta.updated ? " · " + fmtUpdated(meta.updated) : ""}`;
+    const cur = (index && index.current) || (campus.meta || {}).semester || "";
+    state.current = cur;
+    state.semesters = index && index.list && index.list.length ? index.list : [[cur, "courses.json"]];
+    migrateStore(cur);
+    // 지난번에 보던 학기로 연다. 그사이 새 학기가 올라왔으면 새 학기로
+    const saved = store.get("semester", null);
+    const pick = saved && saved.current === cur && state.semesters.some(([x]) => x === saved.id) ? saved.id : cur;
+    await loadSemester(pick);
   } catch (e) {
     $("data-note").textContent = "자료를 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.";
     return;
   }
-  state.overrides = store.get("overrides", {}) || {};
-  state.picks = store.get("picks", [])
-    .filter((p) => state.byId.has(p.id))
-    .map((p) => ({ id: p.id, excluded: new Set(p.excluded || []) }));
   const homes = new Set([...(state.campus.homes || []).map(([b]) => b), ...state.campus.ids]);
   state.home = homes.has(store.get("home", "919")) ? store.get("home", "919") : (state.campus.homes?.[0]?.[0] || state.campus.ids[0]);
   state.mode = state.campus.slope ? store.get("mode", "slope") : "flat";
   $("q").disabled = false;
+  renderTermPicker();
   renderSettings();
-  renderPicked();
   renderCredits();
   if (location.hash === "#result") history.replaceState(null, "", location.pathname + location.search);
+}
+
+/** 학기 선택 전에 저장한 담은 과목·직접 입력을 지금 학기 몫으로 옮긴다. */
+function migrateStore(cur) {
+  for (const k of ["picks", "overrides"]) {
+    const old = store.get(k, null);
+    if (old !== null && store.get(`${k}@${cur}`, null) === null) store.set(`${k}@${cur}`, old);
+    if (old !== null) store.del(k);
+  }
+}
+
+/** 학기 편람을 불러와 검색·담은 과목을 그 학기로 바꾼다. 그사이 다른 학기를 고르면 늦게 온 쪽은 버린다. */
+let loadSeq = 0;
+async function loadSemester(sem) {
+  const seq = ++loadSeq;
+  const entry = state.semesters.find(([x]) => x === sem) || state.semesters[0];
+  let cj = state.cache.get(entry[0]);
+  if (!cj) {
+    cj = await getJson(`data/${entry[1]}`);
+    state.cache.set(entry[0], cj);
+  }
+  if (seq !== loadSeq) return false;
+  state.semester = entry[0];
+  state.semesterMeta = cj.meta || {};
+  state.courses = parseCourses(cj);
+  state.byId = new Map(state.courses.map((c) => [c.id, c]));
+  for (const c of state.courses) {
+    c.hay = norm([c.name, c.id, c.dept, ...new Set(c.sections.map((s) => s.instructor))].join(" "));
+    c.nameKey = norm(c.name);
+  }
+  state.overrides = store.get(semKey("overrides"), {}) || {};
+  state.picks = store.get(semKey("picks"), [])
+    .filter((p) => state.byId.has(p.id))
+    .map((p) => ({ id: p.id, excluded: new Set(p.excluded || []) }));
+  state.expanded = new Set();
+  state.result = null;
+  renderNote();
+  renderResults();
+  renderPicked();
+  return true;
+}
+
+function renderNote() {
+  const past = state.current && state.semester !== state.current;
+  const parts = ["서울대 관악캠퍼스", `${semLabel(state.semester)} 수강편람`];
+  if (past) parts.push("지난 학기");
+  else if (state.semesterMeta.updated) parts.push(fmtUpdated(state.semesterMeta.updated));
+  // 줄은 ' · ' 에서만 바뀌게 (폰에서 '갱신'만 다음 줄로 떨어지지 않게)
+  $("data-note").replaceChildren(...parts.flatMap((t, i) => [i ? " · " : "", h("span", { class: "nowrap" }, t)]));
+}
+
+/** 수강신청 사이트처럼 년도 · 학기를 고른다. 편람이 있는 학기만. */
+function renderTermPicker() {
+  const row = $("term-row");
+  const valid = state.semesters.filter(([x]) => /^\d{4}-[12SW]$/.test(x));
+  row.hidden = valid.length < 2;
+  if (row.hidden) return;
+  const [y, t] = state.semester.split("-");
+  const years = [...new Set(valid.map(([x]) => x.split("-")[0]))];
+  $("year").replaceChildren(...years.map((v) => h("option", { value: v }, `${v}년`)));
+  $("year").value = y;
+  const terms = TERMS.filter(([k]) => valid.some(([x]) => x === `${y}-${k}`));
+  $("term").replaceChildren(...terms.map(([k, label]) => h("option", { value: k }, label)));
+  $("term").value = t;
+}
+
+async function switchSemester(sem) {
+  if (sem === state.semester || !state.semesters.some(([x]) => x === sem)) { renderTermPicker(); return; }
+  store.set("semester", { id: sem, current: state.current });
+  $("q").disabled = true;
+  $("data-note").textContent = `${semLabel(sem)} 수강편람을 불러오는 중…`;
+  try {
+    if (!(await loadSemester(sem))) return; // 더 나중에 고른 학기가 마무리한다
+  } catch (e) {
+    $("data-note").textContent = "그 학기 자료를 불러오지 못했어요. 다른 학기를 골라 보세요.";
+  }
+  $("q").disabled = false;
+  renderTermPicker();
+}
+
+function onYearChange() {
+  const y = $("year").value;
+  const t = state.semester.split("-")[1];
+  const has = (k) => state.semesters.some(([x]) => x === `${y}-${k}`);
+  // 같은 학기가 있으면 그대로, 없으면 그해의 가장 늦은 학기
+  const term = has(t) ? t : [...TERMS].reverse().map(([k]) => k).find(has);
+  if (term) switchSemester(`${y}-${term}`);
 }
 
 function loadRoutes() {
@@ -229,7 +333,7 @@ function loadRoutes() {
 }
 
 function savePicks() {
-  store.set("picks", state.picks.map((p) => ({ id: p.id, excluded: [...p.excluded] })));
+  store.set(semKey("picks"), state.picks.map((p) => ({ id: p.id, excluded: [...p.excluded] })));
 }
 
 // ---------------------------------------------------------------- 입력 화면
@@ -371,8 +475,11 @@ function setMode(m) {
 }
 
 function renderCredits() {
+  // iPhone Safari 는 설치 버튼이 없어서 방법만 알려 준다 (이미 홈 화면에서 열었으면 안 보인다)
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.standalone;
   for (const id of ["credits-input", "credits-result"]) {
     $(id).replaceChildren(
+      ios && id === "credits-input" ? h("p", { class: "tip" }, "공유 버튼 → '홈 화면에 추가'로 앱처럼 쓸 수 있어요.") : "",
       h("p", {}, "이동시간은 ", h("a", { href: "https://moreadorecampus.com/", target: "_blank", rel: "noopener" }, "캠퍼스 마법 지도"),
         "의 도로·건물 사이 거리 자료에 국토지리정보원 수치지형도로 잰 경사를 더해 계산했어요."),
       h("p", {}, "실제로 걸리는 시간과 다를 수 있어요."),
@@ -466,6 +573,7 @@ function hourRange(ranked) {
 function renderResult() {
   const { ranked, mode } = state.result;
   $("mode-chip").textContent = mode === "slope" ? "경사 반영" : "평지 기준";
+  $("result-heading").textContent = state.current && state.semester !== state.current ? `${semLabel(state.semester)} 시간표` : "추천 시간표";
   const tabs = $("daytabs");
   tabs.replaceChildren();
   if (!ranked.length) {
@@ -512,13 +620,20 @@ function renderTimetable(ev, day, [h0, h1]) {
     const late = leg && leg.slack !== null && leg.slack < -0.05 ? Math.ceil(-leg.slack) : 0;
     const heightPct = ((m.end - m.start) / span) * 100;
     const px = (heightPct / 100) * gridPx;
-    grid.append(h("div", {
+    // 칸 높이에 맞춰 과목명을 몇 줄까지 보일지 정한다(줄 17px, 강의실 줄 16px, 위아래 여백 6px). 넘치면 마지막 줄에 말줄임.
+    // 폰에서 75분 수업이면 과목명 2줄, 더 길면 강의실까지
+    const avail = px - 6;
+    const showRoom = avail >= 50;
+    const lines = Math.max(1, Math.min(3, Math.floor((avail - (showRoom ? 16 : 0)) / 17)));
+    const block = h("div", {
       class: `tt-block${px < 38 ? " short" : ""}`, style: { top: pct(m.start), height: `calc(${heightPct}% - 2px)`, background: bg },
       title: `${m.section.name} ${hm(m.start)}~${hm(m.end)} ${roomLabel(m)}`,
     },
     late ? h("span", { class: "tt-late", title: lateWhy(leg) }, `${late}분 늦음`) : null,
-    h("div", { class: "b-title" }, m.section.name),
-    h("div", { class: "b-room" }, roomLabel(m))));
+    h("div", { class: "b-title" }, shortName(m.section.name)),
+    showRoom ? h("div", { class: "b-room" }, roomLabel(m)) : null);
+    block.style.setProperty("--lines", String(lines));
+    grid.append(block);
   }
   $("tt").replaceChildren(hours, grid);
 }
@@ -705,12 +820,36 @@ function renderRanks(ranked, days, [h0, h1]) {
   });
 }
 
+// ---------------------------------------------------------------- 앱으로 설치 (PWA)
+
+// 서비스 워커: 설치한 앱이 네트워크 없이도 열리게 (web/sw.js). https 나 localhost 에서만 된다
+if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname))) {
+  navigator.serviceWorker.register("sw.js").catch(() => { /* 안 돼도 화면은 돈다 */ });
+}
+// 크롬·삼성 인터넷·엣지: 브라우저가 설치할 수 있다고 알려 주면 '앱으로 설치' 버튼을 보인다
+let installPrompt = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  installPrompt = e;
+  $("install").hidden = false;
+});
+$("install").addEventListener("click", async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice.catch(() => null);
+  installPrompt = null;
+  $("install").hidden = true;
+});
+window.addEventListener("appinstalled", () => { $("install").hidden = true; });
+
 // ---------------------------------------------------------------- 시작
 
 let timer = null;
 $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(renderResults, 80); });
 $("mode-seg").addEventListener("click", (e) => { const b = e.target.closest("button[data-mode]"); if (b && !b.disabled) setMode(b.dataset.mode); });
 $("run").addEventListener("click", run);
+$("year").addEventListener("change", onYearChange);
+$("term").addEventListener("change", () => switchSemester(`${$("year").value}-${$("term").value}`));
 $("back").addEventListener("click", () => { if (history.state && history.state.view === "result") history.back(); else showView("input", false); });
 window.addEventListener("resize", () => { if (map) { map.invalidateSize(); limitZoom(); } });
 window.addEventListener("popstate", () => showView(location.hash === "#result" && state.result ? "result" : "input", false));

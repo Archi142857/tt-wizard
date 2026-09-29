@@ -1,5 +1,6 @@
 """엑셀 파싱과 갱신 정책 테스트 (네트워크 없이)."""
 
+import json
 import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -9,7 +10,8 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from ttwizard.parse_sugang import location_stats, parse_sugang_excel  # noqa: E402
+from ttwizard.parse_sugang import location_stats, parse_sugang_excel, sections_to_json  # noqa: E402
+import build_history  # noqa: E402
 import sync  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
@@ -94,3 +96,31 @@ def test_diff_sections(tmp_path):
     assert d["deleted"] == ["M9999.000100-001"]
     assert d["created"] == []
     assert len(d["updated"]) == 1 and d["updated"][0]["fields"] == ["meetings"]
+
+
+def test_new_semester_archives_previous(tmp_path):
+    """학기가 바뀌면: 이전 학기 lectures.json 은 비교하지 않고(전부 신설), history/<학기>.json 에 웹 형식으로 보관한다."""
+    p = tmp_path / "a.xlsx"
+    _fake_excel(p)
+    secs = parse_sugang_excel(p)
+    lectures = tmp_path / "lectures.json"
+    sections_to_json(secs, lectures)
+    assert len(sync.previous_sections({"lectures_semester": "2026-2"}, "2026-2", lectures)) == len(secs)
+    assert sync.previous_sections({"lectures_semester": "2026-2"}, "2026-W", lectures) == []
+    path = sync.archive_semester("2026-2", lectures, tmp_path / "history", updated="2026-12-20T10:00+09:00")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert path.name == "2026-2.json" and payload["meta"] == {"semester": "2026-2", "updated": "2026-12-20T10:00+09:00"}
+    assert {c[0] for c in payload["courses"]} == {s.course_id for s in secs}
+
+
+def test_build_history(tmp_path):
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    _fake_excel(raw / "2025-2.xlsx")
+    _fake_excel(raw / "notes.xlsx")  # 학기 이름이 아니면 건너뛴다
+    out = tmp_path / "history"
+    assert build_history.main(["--raw", str(raw), "-o", str(out)]) == 0
+    assert [f.name for f in out.iterdir()] == ["2025-2.json"]
+    payload = json.loads((out / "2025-2.json").read_text(encoding="utf-8"))
+    assert payload["meta"]["semester"] == "2025-2" and len(payload["courses"]) == 3  # 관악만 (연건 해부학 제외)
+

@@ -40,12 +40,20 @@ a:hover { color: var(--accent-press); }
 
 /* ---------------------------------------------------------------- 입력 화면 */
 .hero { padding: 36px 0 20px; }
+.brand-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; }
 .brand { font-size: 15px; font-weight: 700; color: var(--accent); }
+.brand-row .pill-btn { border: 0; }
 .hero h1 { margin: 8px 0 8px; font-size: 26px; line-height: 1.35; font-weight: 700; letter-spacing: -0.6px; }
 .hero .sub { margin: 0; font-size: 14px; color: var(--text3); }
+.nowrap { white-space: nowrap; }
 
 .card { background: var(--card); border-radius: var(--radius); }
 .search { padding: 8px; }
+.term-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 6px 10px; }
+.term-select { height: 36px; padding: 0 30px 0 12px; border: 0; border-radius: 10px; background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7684' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
+  -webkit-appearance: none; appearance: none; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; }
+.term-select:hover { background-color: var(--muted-bg); }
+.term-tail { font-size: 14px; color: var(--text3); }
 .searchbox { display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 14px; border-radius: 14px; background: var(--bg); }
 .searchbox svg { flex-shrink: 0; color: var(--muted-text); }
 .searchbox input { flex: 1; min-width: 0; border: 0; background: transparent; font-size: 17px; outline: none; }
@@ -57,7 +65,8 @@ a:hover { color: var(--accent-press); }
   text-align: left; border-radius: 12px; min-height: 56px; }
 .result:hover { background: #f9fafb; }
 .result .r-body { flex: 1; min-width: 0; }
-.r-title { display: block; font-size: 16px; font-weight: 600; line-height: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 16px; font-weight: 600; line-height: 22px;
+  word-break: keep-all; overflow-wrap: anywhere; }
 .r-meta { display: block; font-size: 13px; line-height: 18px; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pill-btn { flex-shrink: 0; height: 32px; padding: 0 12px; border-radius: 10px; background: var(--accent-weak); color: var(--accent);
   font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; }
@@ -127,6 +136,7 @@ h2.result-title { display: flex; flex-wrap: wrap; align-items: baseline; justify
 .credits { margin: 32px 4px 0; font-size: 12px; line-height: 18px; color: var(--text3); }
 .credits p { margin: 0 0 4px; }
 .credits a { color: var(--text2); }
+.credits .tip { margin-bottom: 10px; color: var(--text2); }
 
 /* ---------------------------------------------------------------- 결과 화면 */
 .navbar { height: 56px; margin-top: 12px; display: flex; align-items: center; justify-content: space-between; }
@@ -148,8 +158,9 @@ h2.result-title { display: flex; flex-wrap: wrap; align-items: baseline; justify
 .tt-grid { flex: 1; position: relative; min-width: 0; height: var(--tt-h); margin-top: 8px; }
 .tt-hours { margin-top: 8px; height: var(--tt-h); }
 .tt-line { position: absolute; left: 0; right: 0; height: 1px; background: var(--bg); }
-.tt-block { position: absolute; left: 0; right: 0; border-radius: 10px; padding: 4px 8px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
-.tt-block .b-title { font-size: 14px; font-weight: 600; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tt-block { position: absolute; left: 0; right: 0; border-radius: 10px; padding: 3px 8px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+.tt-block .b-title { font-size: 14px; font-weight: 600; line-height: 17px; display: -webkit-box; -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--lines, 1); overflow: hidden; word-break: keep-all; overflow-wrap: anywhere; }
 .tt-block .b-room { font-size: 12px; line-height: 16px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tt-block.short { padding: 0 8px; }
 .tt-block.short .b-room { display: none; }

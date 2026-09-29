@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "TT Wizard",
+  "short_name": "TT Wizard",
+  "description": "서울대 관악캠퍼스 건물 사이 걷는 시간(경사 반영)으로 분반 조합을 골라 주는 시간표 도우미",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f4f6",
+  "theme_color": "#f2f4f6",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
