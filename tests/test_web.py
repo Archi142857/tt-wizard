@@ -2,6 +2,7 @@
 
 import json
 import random
+import re
 import shutil
 import subprocess
 import sys
@@ -113,3 +114,10 @@ def test_stamp_assets(tmp_path):
     # 레포의 원본은 판 없이 두고, 배포할 때만 붙인다
     assert "?v=" not in (ROOT / "web" / "index.html").read_text(encoding="utf-8")
     assert "export_web.py --stamp" in (ROOT / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
+
+
+def test_section_label_in_web():
+    """화면의 분반 표기도 061(나민애) 하나다. '061분반' 모양이 다시 생기지 않게."""
+    app = (ROOT / "web" / "js" / "app.js").read_text(encoding="utf-8")
+    assert "function sectionLabel" in app and '"교수 미정"' in app
+    assert not re.search(r"\$\{[^}]*\.no\}분반", app)

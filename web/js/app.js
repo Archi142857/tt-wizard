@@ -83,6 +83,14 @@ function roomLabel(m) {
   return /^[A-Za-z]?\d/.test(m.room) ? `${m.building}동 ${m.room}호` : `${m.building}동 ${m.room}`;
 }
 
+/** 분반 표기는 어디서나 061(나민애). 교수가 없으면 061(교수 미정). */
+function instructorOf(s) {
+  return String(s.instructor || "").trim() || "교수 미정";
+}
+function sectionLabel(s) {
+  return `${s.no}(${instructorOf(s)})`;
+}
+
 /** 시간표 칸처럼 좁은 곳에 쓰는 과목명: 끝의 부제 괄호를 뺀다. '글로벌 공학기술 교류 특강 2 (국제 물류)' → '… 특강 2' */
 function shortName(name) {
   const s = String(name || "").replace(/\s*\([^()]*\)\s*$/, "");
@@ -174,7 +182,7 @@ function sectionFix(s) {
     const current = o.rooms ? o.rooms[unknown[0]] : "";
     return h("div", { class: "sec-fix" },
       h("span", { class: "fix-label" }, "강의실 미정 · 아는 건물이 있으면"),
-      buildingSelect(current, (b) => update({ rooms: b ? Object.fromEntries(unknown.map((i) => [i, b])) : {} }), `${s.no}분반 강의실 건물`));
+      buildingSelect(current, (b) => update({ rooms: b ? Object.fromEntries(unknown.map((i) => [i, b])) : {} }), `${sectionLabel(s)} 강의실 건물`));
   }
   const times = o.times || [];
   const day = h("select", { class: "select small", "aria-label": "요일" }, [...DAY_KO.slice(0, 6)].map((d, i) => h("option", { value: String(i) }, d)));
@@ -410,7 +418,7 @@ function renderPicked() {
           },
         }),
         h("span", { class: "s-body" },
-          h("span", { class: "s-no" }, `${s.no}분반`), ` ${s.instructor || "교수 미정"}`,
+          h("span", { class: "s-no" }, s.no), `(${instructorOf(s)})`,
           s.status ? h("span", { class: "s-tag" }, s.status === "폐강대상" ? "폐강 대상" : s.status) : null,
           h("br"), h("span", { class: "s-when" }, describeMeetings(effMeetings(s))))),
       sectionFix(s))));
@@ -778,7 +786,7 @@ function renderDaySummary(ev, day) {
 }
 
 function twinText(twins) {
-  const shown = twins.slice(0, 3).map((t) => `${t.no}(${t.instructor || "미정"})`).join(", ");
+  const shown = twins.slice(0, 3).map((t) => sectionLabel(t)).join(", ");
   return twins.length > 3 ? `${shown} 외 ${twins.length - 3}개` : shown;
 }
 
@@ -814,7 +822,7 @@ function renderRanks(ranked, days, [h0, h1]) {
       week),
       selected ? h("ul", { class: "rank-picks" }, ev.sections.map((s) => h("li", {},
         h("span", { class: "swatch", style: { background: colorOf(s.courseId)[1] } }),
-        h("span", {}, `${s.name} `, h("span", { class: "p-sec" }, `${s.no}분반 · ${s.instructor || "교수 미정"}`),
+        h("span", {}, `${s.name} `, h("span", { class: "p-sec" }, sectionLabel(s)),
           s.twins && s.twins.length ? h("span", { class: "p-twins" }, `같은 시간·건물: ${twinText(s.twins)}`) : null)))) : null);
     box.append(card);
   });

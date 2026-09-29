@@ -91,6 +91,11 @@ class Section:
     def has_location(self) -> bool:
         return all(m.building for m in self.meetings) and len(self.meetings) > 0
 
+    @property
+    def label(self) -> str:
+        """분반 표기: 061(나민애). 교수가 없으면 061(교수 미정). 웹 화면(app.js 의 sectionLabel)과 같다."""
+        return f"{self.section_no}({(self.instructor or '').strip() or '교수 미정'})"
+
     def conflicts_with(self, other: "Section") -> bool:
         return any(a.overlaps(b) for a in self.meetings for b in other.meetings)
 

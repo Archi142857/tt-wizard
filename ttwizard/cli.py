@@ -40,7 +40,7 @@ def _print_result(result, travel: TravelMatrix, home: str, top: int) -> None:
         print(f"\n[{i}위] {ev.summary()}")
         for s in ev.sections:
             times = ", ".join(str(m) for m in s.meetings)
-            print(f"  - {s.course_name} ({s.section_no}분반, {s.instructor or '교수 미정'}): {times}")
+            print(f"  - {s.course_name} {s.label}: {times}")
         for d, meetings in ev.days.items():
             legs = [lg for lg in ev.legs if lg.day == d]
             route = " → ".join([home] + [lg.to for lg in legs])
@@ -84,9 +84,9 @@ def cmd_find(args) -> int:
     q = args.query.lower()
     courses = group_into_courses(s for s in sections if q in s.course_name.lower() or q in s.course_id.lower() or q in s.instructor.lower())
     for c in courses.values():
-        print(f"{c.course_id}  {c.name}  [{c.n_sections}분반]  {c.sections[0].department}")
+        print(f"{c.course_id}  {c.name}  [분반 {c.n_sections}개]  {c.sections[0].department}")
         for s in c.sections:
-            print(f"    {s.section_no}  {s.instructor or '-':10s}  " + ", ".join(str(m) for m in s.meetings))
+            print(f"    {s.label}  " + ", ".join(str(m) for m in s.meetings))
     if not courses:
         print("검색 결과 없음")
     return 0

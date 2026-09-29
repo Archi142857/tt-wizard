@@ -154,3 +154,10 @@ def test_unknown_room_adds_no_travel_or_lateness():
     b, u = sec("B", 540, 600, "b"), sec("U", 610, 700, "")
     assert evaluate([b, u, sec("A", 710, 800, "a")], travel, "h").late_minutes == 0
     assert evaluate([b, u, sec("A", 705, 800, "a")], travel, "h").late_minutes == pytest.approx(5)  # 10 + 5 < 20
+
+
+def test_section_label():
+    """분반 표기는 061(나민애). 교수가 없으면 061(교수 미정)."""
+    assert Section("X", "061", "과목", (), instructor="나민애").label == "061(나민애)"
+    assert Section("X", "002", "과목", ()).label == "002(교수 미정)"
+    assert Section("X", "003", "과목", (), instructor="  ").label == "003(교수 미정)"
