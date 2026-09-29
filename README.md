@@ -14,7 +14,8 @@
 문제는 **과목마다 분반 하나를 고르는 제약 만족 문제(CSP)**로 축소된다.
 
 - 변수: 과목 / 도메인: 분반 / 제약: 시간 겹침 없음 / 목적함수: 주간 총 이동시간(+ 지각 페널티)
-- 풀이: 백트래킹 + 분기 한정. 부분 조합의 비용이 완성 조합의 하한이라는 성질(삼각부등식)로 가지치기
+- 풀이: 백트래킹 + 분기 한정. 부분 조합의 비용을 하한으로 가지치기. 실제 이동시간 행렬은 출입구가 여러 곳인 건물을
+  거치는 지름길 때문에 삼각부등식을 어기므로, 하한은 다른 건물을 거치는 경우까지 줄인 행렬(Floyd–Warshall)로 잰다
 - TSP 하한(Held–Karp)은 가지치기와 보고서 지표로만 쓰고 화면에는 보여주지 않는다
 
 ## 빠른 시작
@@ -34,17 +35,30 @@ python -m ttwizard parse data/raw/latest.xls -o data/lectures.json
 # 2) 건물 좌표 (캠퍼스맵 API) → data/buildings.csv
 python scripts/fetch_buildings.py
 
-# 3) 이동시간 행렬 → data/travel.csv
+# 3) 이동시간 행렬 → data/travel.csv (평지), data/travel_slope.csv (경사 반영)
 #    '캠퍼스 마법 지도' 건물쌍 거리표(data/magicmap/)에서 만든다. 표에 없는 쌍만 TMAP 보행자 API로 (.env 에 TMAP_APP_KEY)
 python scripts/magicmap_travel.py
+python scripts/slope_travel.py
 
-# 4) 과목 찾기 → 탐색
+# 4) 과목 찾기 → 탐색 (--travel 을 빼면 평지 행렬 data/travel.csv)
 python -m ttwizard find --lectures data/lectures.json 생화학
 python -m ttwizard search --lectures data/lectures.json \
-    --courses M1101.000100,M1102.000100,L0444.000100 --home 919 --top 5 --json data/results.json
+    --courses M1101.000100,M1102.000100,L0444.000100 --home 919 --top 5 --travel data/travel_slope.csv --json data/results.json
 ```
 
 `--home` 은 출발/도착 건물 id (기숙사 `919`, 정문 `GATE` 등, `data/buildings.csv` 에 있어야 함).
+
+## 웹 화면
+
+https://archi142857.github.io/tt-wizard/ — 과목을 검색해 담으면 브라우저에서 바로 분반 조합을 찾아 시간표 · 하루 동선 지도 · 순위를 보여 준다.
+서버 없이 정적 파일만 쓰고(GitHub Pages), 알고리즘은 `web/js/engine.js` 로 옮겨 두었다(파이썬과 같은 답인지 테스트로 확인).
+
+```bash
+python scripts/export_web.py                 # data/ → web/data/*.json
+python -m http.server 8000 -d web            # http://localhost:8000
+```
+
+자세한 내용은 `web/README.md`.
 
 ## 데이터 갱신 정책
 
@@ -79,9 +93,13 @@ python scripts/building_elevation.py         # → data/buildings_elevation.csv,
 '캠퍼스 마법 지도'에서 받은 도로 그래프와 건물쌍 거리표(`data/magicmap/`, 출처·허락 범위는 그 폴더의 README)를 쓴다.
 
 ```bash
-python scripts/magicmap_travel.py            # 건물쌍 거리표 → data/travel.csv (알고리즘 입력)
+python scripts/magicmap_travel.py            # 건물쌍 거리표 → data/travel.csv (평지 1.1 m/s, 알고리즘 입력)
 python scripts/graph_slopes.py               # 그래프에 노드 고도·구간별 경사 → data/magicmap/roads_graph_slope.json, *.csv
+python scripts/slope_travel.py               # 경사 반영 이동시간(방향별) → data/travel_slope.csv, data/route_stats.csv
 ```
+
+경사 반영 시간 = 마법 지도 표 시간 × 경사 계수. 경사 계수는 우리 출입구에서 그래프 위 최단 경로를 찾아, 30 m 창으로 잰 경사에
+Tobler 보행 함수를 적용한 시간 ÷ 같은 경로의 평지 시간이다. 방법·결과·한계는 `docs/travel_time_method.md`.
 
 현장에서 확인한 출입구는 `data/entrances_manual.csv`(`building,lat,lon,floor,kind,note`)에 적으면 그 건물은 자동 후보 대신 그것을 쓴다.
 
@@ -108,15 +126,17 @@ scripts/
   building_elevation.py      DEM + 윤곽 + 출입구 → 건물별·출입구별 고도 (buildings_elevation.csv, building_entrances.csv)
   magicmap_travel.py         마법 지도 건물쌍 거리표 → travel.csv
   graph_slopes.py            마법 지도 도로 그래프에 노드 고도·구간별 경사
+  slope_travel.py            경사 반영 건물쌍 이동시간 → travel_slope.csv, route_stats.csv, route_paths.json(지도용 경로)
+  export_web.py              data/ → web/data/*.json (웹 화면 자료)
   tmap_matrix.py       TMAP 보행자 API → travel.csv
 data/
   sample/              데모용 가짜 데이터
   raw/                 엑셀 원본 (latest + 변경이 있던 날짜별)
   topo/                수치지형도 원자료 (등고선·표고점·건물 레이어) — 건물 고도용
   magicmap/            캠퍼스 마법 지도에서 받은 도로 그래프·건물쌍 거리표와 경사를 붙인 결과
-  lectures.json, buildings.csv, travel.csv, results.json, stats.csv, changes/
-web/                 3분할 화면 (시간표 · 동선 지도(OpenStreetMap) · 순위 목록) — 예정
-docs/                계획·결정 사항
+  lectures.json, buildings.csv, travel.csv, travel_slope.csv, route_stats.csv, route_paths.json, results.json, stats.csv, changes/
+web/                 정적 웹 화면: 과목 검색 → 시간표 · 동선 지도(OpenStreetMap) · 순위 목록 (GitHub Pages)
+docs/                계획·결정 사항, 방법 설명(elevation_method.md, travel_time_method.md)
 tests/               pytest
 ```
 
@@ -136,3 +156,4 @@ tests/               pytest
 ## 참고
 
 - [wafflestudio/snutt](https://github.com/wafflestudio/snutt) (MIT) — 수강편람 엑셀 엔드포인트, 파싱 규칙, 캠퍼스맵 API 활용을 참고했다.
+- [Leaflet](https://leafletjs.com) 1.9.4 (BSD-2) — 웹 화면 지도 (`web/vendor/leaflet`).

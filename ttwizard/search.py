@@ -5,7 +5,9 @@
 - 과목은 분반 수가 적은 순으로 고른다(MRV).
 - 분반을 고를 때마다 충돌 행렬로 겹침을 걸러낸다(forward checking).
 - 지금까지 고른 분반만으로 계산한 비용이 현재 K번째 해보다 크면 그 가지를 버린다.
-  (수업을 더 넣어도 비용이 줄지 않으므로 부분 비용이 하한 — evaluate.py 설명 참조)
+  이때 이동시간은 원래 행렬이 아니라 다른 건물을 거쳐 가는 경우까지 줄인 행렬(TravelMatrix.closure)로 잰다.
+  원래 행렬은 삼각부등식을 어길 수 있어 수업을 더 넣으면 비용이 줄 수도 있기 때문이다(evaluate.py 설명 참조).
+  공강 가중치(gap)를 쓰면 수업을 넣을 때 공강이 줄어 하한이 성립하지 않으므로 가지치기를 끈다.
 - 완성 조합은 상위 K개만 힙으로 유지한다.
 
 과목 5~7개 × 분반 2~4개면 조합이 수천~수만 개라 가지치기 없이도 1초 안에 끝난다.
@@ -60,6 +62,11 @@ def search(
     order = sorted(range(len(courses)), key=lambda i: courses[i].n_sections)  # MRV
     cm = ConflictMatrix(courses)
 
+    use_bound = use_bound and weights.gap == 0
+    if use_bound:
+        ids = {home} | {b for c in courses for s in c.sections for b in s.buildings}
+        bound_travel = travel.closure(sorted(ids))
+
     stats = SearchStats(n_courses=len(courses))
     stats.n_combinations = 1
     for c in courses:
@@ -97,7 +104,7 @@ def search(
             chosen_idx.append(gi)
             chosen_sec.append(s)
             if use_bound and len(heap) >= top_k:
-                partial = evaluate(chosen_sec, travel, home, weights)
+                partial = evaluate(chosen_sec, bound_travel, home, weights)
                 if partial.cost >= worst_kept():
                     stats.pruned_bound += 1
                     chosen_idx.pop()

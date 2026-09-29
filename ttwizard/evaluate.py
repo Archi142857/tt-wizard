@@ -6,9 +6,14 @@
 
 기본은 이동시간 단일 기준(late_weight만 켬). 나머지 가중치는 0으로 두고 확장 항목으로 남긴다.
 
+강의실 미정 수업은 어디서 열리는지 모르므로 이동도 지각도 만들지 않는다. 시간만 차지하고, 그 앞의 쉬는
+시간은 다음 위치 확정 수업으로 가는 길에 보탠다(가는 길 어딘가에서 열린다고 보는 셈). 그날 첫 위치 확정
+수업은 앞에 미정 수업이 있어도 집에서 오는 길이라 시간 제약이 없다.
+
 부분 조합(과목 일부만 고른 상태)에 대해서도 계산할 수 있고, 삼각부등식이 성립하는 이동시간
-행렬에서는 수업을 더 끼워 넣어도 비용이 줄지 않으므로 그 값이 완성 조합의 하한이 된다.
-탐색(search.py)의 가지치기가 이 성질에 의존한다.
+행렬에서는 수업을 더 끼워 넣어도 이동시간·지각이 줄지 않으므로 그 값이 완성 조합의 하한이 된다.
+실제 행렬은 출입구가 여러 곳인 건물을 거치는 지름길 때문에 삼각부등식을 어기므로, 탐색(search.py)은
+하한을 잴 때 TravelMatrix.closure() 로 만든 행렬을 넘긴다.
 """
 
 from __future__ import annotations
@@ -81,18 +86,25 @@ def evaluate(
 
     for d, meetings in ev.days.items():
         prev_loc, prev_end = home, None
+        placed = False  # 그날 위치 확정 수업을 이미 지났는지
+        spare = 0.0  # 마지막 위치 확정 수업 뒤, 강의실 미정 수업들 앞의 쉬는 시간 합
         for m in meetings:
-            loc = m.building or prev_loc  # 위치 미정 강의는 직전 위치에 있다고 가정(이동 0)
-            t = travel.minutes(prev_loc, loc)
-            slack = None if prev_end is None else (m.start - prev_end - t)
-            ev.legs.append(Leg(d, prev_loc, loc, prev_end, m.start, t, slack))
+            if not m.building:  # 강의실 미정 (모듈 설명 참조)
+                if placed:
+                    spare += m.start - prev_end
+                ev.legs.append(Leg(d, prev_loc, prev_loc, prev_end, m.start, 0.0, None))
+                prev_end = m.end
+                continue
+            t = travel.minutes(prev_loc, m.building)
+            slack = (spare + m.start - prev_end - t) if placed else None
+            ev.legs.append(Leg(d, prev_loc, m.building, prev_end, m.start, t, slack))
             ev.travel_minutes += t
             if slack is not None:
                 if slack < 0:
                     ev.late_minutes += -slack
                 else:
                     ev.gap_minutes += slack
-            prev_loc, prev_end = loc, m.end
+            prev_loc, prev_end, placed, spare = m.building, m.end, True, 0.0
         # 귀가
         t = travel.minutes(prev_loc, home)
         ev.legs.append(Leg(d, prev_loc, home, prev_end, None, t, None))

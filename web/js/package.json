@@ -1,0 +1,5 @@
+{
+  "type": "module",
+  "private": true,
+  "description": "web/js/*.js 는 ES 모듈 (node 로 테스트할 때 필요)"
+}

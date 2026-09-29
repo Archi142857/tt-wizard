@@ -1,0 +1,147 @@
+"""웹 화면(web/)이 읽는 자료를 만든다: data/ → web/data/.
+
+  python scripts/export_web.py
+  python -m http.server 8000 -d web      # 그다음 브라우저에서 http://localhost:8000
+
+출력 (화면과 알고리즘을 잇는 유일한 접점이라 형식을 바꾸면 web/js/ 도 같이 바꾼다)
+  web/data/courses.json  과목 → 분반 → 수업(요일, 시작·끝 분, 동, 호실). 논문 과목은 뺀다
+  web/data/campus.json   이동시간 행렬(평지 = 마법 지도 표, 경사 반영), 건물 이름·좌표, 출발 후보, 갱신 시각
+  web/data/routes.json   지도에 그릴 경로 모양(data/route_paths.json 그대로. 없으면 화면이 직선으로 잇는다)
+
+표준 라이브러리만 쓴다(GitHub Actions 에서 따로 설치 없이 돈다).
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import re
+import shutil
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+from ttwizard.models import Meeting, merge_duplicate_meetings  # noqa: E402
+
+DATA = ROOT / "data"
+OUT = ROOT / "web" / "data"
+HOMES = [("919", "기숙사"), ("GATE", "정문")]
+STAND_IN = {"71-1": "71"}  # 좌표가 없는 지점 → 지도에 대신 찍을 건물 (slope_travel.py 와 같게)
+SKIP_CLASSIFICATION = {"논문"}  # 논문연구 등: 수업 시간이 없어 시간표와 무관
+
+
+def _rows(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        return list(csv.DictReader(f))
+
+
+def room_no(room: str) -> str:
+    """'38-B105(무선랜제공)' → 'B105', '220-1-201' → '201', '083-302' → '302'."""
+    r = re.sub(r"\(.*?\)", "", room or "").strip()
+    return r.rsplit("-", 1)[1] if "-" in r else r
+
+
+def export_courses(lectures: Path) -> dict:
+    data = json.loads(lectures.read_text(encoding="utf-8"))
+    courses: dict[str, list] = {}
+    for d in data:
+        if d.get("classification", "") in SKIP_CLASSIFICATION:
+            continue
+        meetings = merge_duplicate_meetings(Meeting(**m) for m in d["meetings"])
+        c = courses.get(d["course_id"])
+        if c is None:
+            c = courses[d["course_id"]] = [d["course_id"], d["course_name"], d.get("department", ""),
+                                            d.get("credit", 0), d.get("classification", ""), d.get("program", ""), []]
+        c[6].append([d["section_no"], d.get("instructor", ""), "" if d.get("status", "설강") == "설강" else d["status"],
+                     [[m.day, m.start, m.end, m.building, room_no(m.room)] for m in meetings]])
+    for c in courses.values():
+        c[6].sort(key=lambda s: s[0])
+    return {"fields": {"course": ["id", "name", "dept", "credit", "cls", "program", "sections"],
+                       "section": ["no", "instructor", "status", "meetings"],
+                       "meeting": ["day", "start", "end", "building", "room"]},
+            "courses": sorted(courses.values(), key=lambda c: (c[1], c[0]))}
+
+
+def read_travel(path: Path) -> dict[tuple[str, str], float]:
+    return {(r["from"].strip(), r["to"].strip()): float(r["minutes"]) for r in _rows(path)}
+
+
+def export_campus(data: Path) -> dict:
+    flat = read_travel(data / "travel.csv")
+    slope = read_travel(data / "travel_slope.csv")
+    ids = sorted({a for a, _ in flat} | {b for _, b in flat} | {a for a, _ in slope} | {b for _, b in slope},
+                 key=lambda b: (not b[0].isdigit(), [int(x) if x.isdigit() else x for x in re.split(r"(\d+)", b)]))
+
+    def dense(table):
+        if not table:
+            return None
+        return [[0 if a == b else (round(table[(a, b)], 2) if (a, b) in table else None) for b in ids] for a in ids]
+
+    # 이름은 캠퍼스맵 목록을 먼저, 좌표는 알고리즘이 쓰는 buildings.csv 를 가장 앞세운다(없는 쌍의 추정에 쓰는 좌표).
+    # 마법 지도용 목록은 GATE 처럼 다른 데 없는 지점(근사 좌표)만 채운다
+    files = ["campus_buildings.csv", "buildings_elevation.csv", "buildings.csv", "buildings_for_magicmap.csv"]
+    names, coords = {}, {}
+    for path in files:
+        for r in _rows(data / path):
+            if r.get("name"):
+                names.setdefault(r["building"].strip(), re.sub(r"\s*\(.*\)$", "", r["name"].strip()))
+    for path in reversed(files):  # 뒤에 읽는 쪽이 우선
+        for r in _rows(data / path):
+            if r.get("lat") and r.get("lon"):
+                coords[r["building"].strip()] = (round(float(r["lat"]), 6), round(float(r["lon"]), 6))
+    for b, other in STAND_IN.items():
+        if b not in coords and other in coords:
+            coords[b] = coords[other]
+    buildings = {b: [names.get(b, ""), *coords[b]] if b in coords else [names.get(b, ""), None, None]
+                 for b in sorted(set(names) | set(coords) | set(ids))}
+    state = json.loads((data / "sync_state.json").read_text(encoding="utf-8")) if (data / "sync_state.json").exists() else {}
+    return {
+        "ids": ids,
+        "flat": dense(flat),
+        "slope": dense(slope),
+        "buildings": buildings,
+        "homes": [[b, label] for b, label in HOMES if b in buildings],
+        "estimate": {"walk_kmh": 4.0, "detour": 1.35, "default_minutes": 15.0},  # ttwizard/travel.py 와 같은 값
+        "meta": {"semester": state.get("semester", ""), "updated": state.get("last_fetch", "")},
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--data", default=str(DATA))
+    ap.add_argument("-o", "--output", default=str(OUT))
+    args = ap.parse_args(argv)
+    data, out = Path(args.data), Path(args.output)
+    out.mkdir(parents=True, exist_ok=True)
+
+    courses = export_courses(data / "lectures.json")
+    campus = export_campus(data)
+    courses["meta"] = campus["meta"]
+    compact = {"ensure_ascii": False, "separators": (",", ":")}
+    (out / "courses.json").write_text(json.dumps(courses, **compact), encoding="utf-8")
+    (out / "campus.json").write_text(json.dumps(campus, **compact), encoding="utf-8")
+    routes = data / "route_paths.json"
+    if routes.exists():
+        shutil.copyfile(routes, out / "routes.json")
+    else:
+        (out / "routes.json").write_text('{"ids":[],"paths":{}}', encoding="utf-8")
+
+    n_sec = sum(len(c[6]) for c in courses["courses"])
+    print(f"저장: {out}")
+    print(f"  courses.json  과목 {len(courses['courses']):,}개 · 분반 {n_sec:,}개"
+          f" ({(out / 'courses.json').stat().st_size / 1e6:.2f} MB)")
+    print(f"  campus.json   지점 {len(campus['ids'])}개 · 평지 {'있음' if campus['flat'] else '없음'}"
+          f" · 경사 반영 {'있음' if campus['slope'] else '없음'} · 건물 {len(campus['buildings'])}개")
+    print(f"  routes.json   {'data/route_paths.json 복사' if routes.exists() else '없음 → 직선으로 표시'}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

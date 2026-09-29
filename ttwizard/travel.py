@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import csv
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 
@@ -88,12 +88,31 @@ class TravelMatrix:
         est = self.estimate(a, b)
         return self.default_minutes if est is None else est
 
+    def closure(self, ids) -> "TravelMatrix":
+        """ids 사이를 다른 지점을 거쳐 가는 경우까지 본 최단 시간(Floyd–Warshall)을 표로 가진 새 행렬.
+
+        출입구가 여러 곳인 건물은 한쪽 출입구로 들어가 다른 쪽으로 나가는 지름길 구실을 해서, 건물별
+        최단 경로로 만든 행렬(마법 지도 표, 경사 반영 표)은 삼각부등식을 자주 어긴다. 그러면 '수업을 더 넣어도
+        비용이 줄지 않는다'가 깨져 부분 비용이 하한이 아니게 된다. 이 행렬로 잰 부분 비용은 늘 하한이다.
+        """
+        ids = list(dict.fromkeys(ids))
+        misses = set(self.misses)
+        d = {(a, b): 0.0 if a == b else self.minutes(a, b) for a in ids for b in ids}
+        self.misses = misses  # 하한 계산용 조회는 '추정으로 채운 쌍' 기록에 넣지 않는다
+        for k in ids:
+            for a in ids:
+                dak = d[(a, k)]
+                for b in ids:
+                    v = dak + d[(k, b)]
+                    if v < d[(a, b)]:
+                        d[(a, b)] = v
+        return replace(self, table={k: v for k, v in d.items() if k[0] != k[1]}, misses=set())
+
     def check_triangle(self, ids: list[str] | None = None, tolerance: float = 0.5) -> list[tuple[str, str, str, float]]:
         """삼각부등식 위반 쌍을 찾는다: t(a,c) > t(a,b) + t(b,c) + tolerance.
 
-        search.py의 하한 가지치기는 '수업을 더 넣어도 비용이 줄지 않는다'는 성질에 기대는데,
-        지도 API 값과 좌표 추정값이 섞이면 이 성질이 깨질 수 있다. 위반이 많으면
-        search(..., use_bound=False)로 돌리거나 행렬을 손봐야 한다. 보고서의 '행렬 검증' 항목.
+        출입구가 여러 곳인 건물을 거치는 지름길, 지도 API 값과 좌표 추정값의 혼합 등으로 깨진다.
+        search.py 는 closure() 행렬로 하한을 재므로 위반이 있어도 결과가 틀리지 않는다. 보고서의 '행렬 검증' 항목.
         """
         ids = ids or list(self.buildings)
         bad = []

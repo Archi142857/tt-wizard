@@ -5,6 +5,8 @@
 
 주간 시간표의 총 이동은 요일별 닫힌 경로(집→…→집)들의 합인데, 이를 집에서 이어 붙이면 모든
 과목을 방문하는 닫힌 경로 하나가 되고, 삼각부등식 아래에서 TSP 순회는 그런 경로 중 최단이다.
+그래서 거리는 다른 건물을 거치는 경우까지 줄인 행렬(TravelMatrix.closure)에서, 오가는 두 방향 중
+짧은 쪽으로 잰다(경사를 반영하면 방향마다 시간이 다르다).
 따라서 어떤 시간표도 이 값보다 짧을 수 없다. 탐색의 가지치기와 보고서의 '이상적 동선 대비 손해'
 지표에 쓴다(화면에는 표시하지 않음).
 
@@ -28,7 +30,7 @@ def cluster_distance(a: Course, b: Course, travel: TravelMatrix) -> float:
                 return 0.0  # 위치 미정이 있으면 하한은 0으로 (보수적)
             for x in ba:
                 for y in bb:
-                    best = min(best, travel.minutes(x, y))
+                    best = min(best, travel.minutes(x, y), travel.minutes(y, x))
     return 0.0 if best == float("inf") else best
 
 
@@ -38,7 +40,7 @@ def home_distance(c: Course, home: str, travel: TravelMatrix) -> float:
         if not s.buildings:
             return 0.0
         for x in s.buildings:
-            best = min(best, travel.minutes(home, x))
+            best = min(best, travel.minutes(home, x), travel.minutes(x, home))
     return 0.0 if best == float("inf") else best
 
 
@@ -47,6 +49,7 @@ def tsp_lower_bound(courses: list[Course], travel: TravelMatrix, home: str) -> f
     n = len(courses)
     if n == 0:
         return 0.0
+    travel = travel.closure(sorted({home} | {b for c in courses for s in c.sections for b in s.buildings}))
     # 노드 0 = 집, 1..n = 과목
     dist = [[0.0] * (n + 1) for _ in range(n + 1)]
     for i, c in enumerate(courses, start=1):
