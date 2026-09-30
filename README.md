@@ -170,7 +170,6 @@ scripts/
   export_web.py              data/ → web/data/*.json (웹 화면 자료)
   campus_model.py            관악캠퍼스 3D·2D 모델링 → web/model/*.html (템플릿: campus_model_3d.html, campus_model_2d.html)
   build_history.py           지난 학기 편람 엑셀 → data/history/<학기>.json (웹 화면 학기 선택)
-  make_icons.py              웹 앱 아이콘 → web/icons/
   experiments.py             비교 실험 → results/experiments/ (engine_bench.mjs 로 웹 엔진 시간도 잰다)
   restrictions.py            수강편람 비고의 수강 제한(®) 읽기: 이 학생이 이 분반을 들을 수 있나
   field_validation.py        오르막 실측 구간 고르기·경로 뽑기·실측 비교 → results/field/

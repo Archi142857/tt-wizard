@@ -153,14 +153,25 @@ export function conflicts(s, t) {
   return false;
 }
 
+const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+
 /**
  * 백트래킹 + 분기 한정. courses = [{sections: [...]}], 반환 {ranked, stats}.
  * 부분 비용은 closure() 행렬로 잰다: 원래 행렬은 삼각부등식을 어겨 수업을 더 넣으면 비용이 줄 수도 있다.
+ * onProgress(done) 를 주면 progressMs 마다 끝낸 몫(0~1, 탐색 나무의 앞 세 층 기준 추정)을 알린다. 결과는 같다.
  */
-export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, useBound = true } = {}) {
-  const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
+export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, useBound = true, onProgress = null, progressMs = 200 } = {}) {
+  const t0 = now();
   courses = courses.filter((c) => c.sections.length);
   const order = courses.map((_, i) => i).sort((i, j) => courses[i].sections.length - courses[j].sections.length); // MRV
+  const lens = order.map((i) => courses[i].sections.length);
+  const pos = order.map(() => 0); // 지금 가지의 층마다 몇 번째 분반인지
+  let lastTick = t0;
+  const done = (depth) => {
+    let f = 0, w = 1;
+    for (let d = 0; d < Math.min(depth, 3); d++) { w /= lens[d]; f += pos[d] * w; }
+    return f;
+  };
   useBound = useBound && weights.gap === 0;
   let boundTravel = null;
   if (useBound) {
@@ -187,13 +198,20 @@ export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, use
 
   function backtrack(depth) {
     stats.nodes++;
+    if (onProgress && (stats.nodes & 255) === 0) {
+      const t = now();
+      if (t - lastTick >= progressMs) { lastTick = t; onProgress(done(depth)); }
+    }
     if (depth === order.length) {
       const ev = evaluate(chosen, travel, home, weights);
       stats.leaves++;
       if (ev.cost < worst()) keep(ev);
       return;
     }
-    for (const s of courses[order[depth]].sections) {
+    const sections = courses[order[depth]].sections;
+    for (let i = 0; i < sections.length; i++) {
+      pos[depth] = i;
+      const s = sections[i];
       if (chosen.some((c) => conflicts(c, s))) { stats.prunedConflict++; continue; }
       chosen.push(s);
       if (useBound && kept.length >= topK) {
@@ -206,8 +224,46 @@ export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, use
   }
 
   backtrack(0);
-  stats.ms = (typeof performance !== "undefined" ? performance.now() : Date.now()) - t0;
+  stats.ms = now() - t0;
+  if (onProgress) onProgress(1);
   return { ranked: kept.sort((a, b) => a.cost - b.cost || a.seq - b.seq).map((k) => k.ev), stats };
+}
+
+/** 시간이 겹치지 않는 조합이 하나라도 있는지. 찾으면 바로 멈춘다. */
+export function feasible(courses) {
+  courses = courses.filter((c) => c.sections.length);
+  const order = courses.map((_, i) => i).sort((i, j) => courses[i].sections.length - courses[j].sections.length);
+  const chosen = [];
+  return (function rec(depth) {
+    if (depth === order.length) return true;
+    for (const s of courses[order[depth]].sections) {
+      if (chosen.some((c) => conflicts(c, s))) continue;
+      chosen.push(s);
+      if (rec(depth + 1)) return true;
+      chosen.pop();
+    }
+    return false;
+  })(0);
+}
+
+/**
+ * 겹치지 않는 조합이 없을 때 그 까닭인 과목들의 id. 이 과목들만 담아도 조합이 없고, 하나라도 빼면 생기는 가장 작은 묶음이다.
+ * 화면은 이 과목 행에 '시간 겹침' 을 단다. 모든 분반이 서로 겹치는 두 과목이 있으면 그 둘, 없으면 하나씩 빼 보며 줄인다.
+ * 조합이 있으면 [].
+ */
+export function findConflicts(courses) {
+  let set = courses.filter((c) => c.sections.length);
+  if (feasible(set)) return [];
+  for (let a = 0; a < set.length; a++) {
+    for (let b = a + 1; b < set.length; b++) {
+      if (set[a].sections.every((s) => set[b].sections.every((t) => conflicts(s, t)))) return [set[a].id, set[b].id];
+    }
+  }
+  for (const c of [...set]) {
+    const rest = set.filter((x) => x !== c);
+    if (!feasible(rest)) set = rest;
+  }
+  return set.map((c) => c.id);
 }
 
 /** 검증용 완전탐색 (search 와 결과가 같아야 한다). */

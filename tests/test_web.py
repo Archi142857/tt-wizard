@@ -99,7 +99,7 @@ def test_export_semesters(tmp_path):
 def test_stamp_assets(tmp_path):
     """배포 때 스크립트·스타일 주소에 판(?v=)을 붙인다: 내용이 바뀌면 판도 바뀌고, 두 번 해도 같다."""
     web = tmp_path / "web"
-    for name in ("index.html", "style.css", "js/app.js", "js/engine.js"):
+    for name in ("index.html", "style.css", "js/app.js", "js/engine.js", "js/search-worker.js"):
         (web / name).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / "web" / name, web / name)
     v = ew.stamp_assets(web)
@@ -107,6 +107,13 @@ def test_stamp_assets(tmp_path):
     app = (web / "js" / "app.js").read_text(encoding="utf-8")
     assert f'href="style.css?v={v}"' in html and f'src="js/app.js?v={v}"' in html
     assert f'from "./engine.js?v={v}"' in app
+    assert f'from "./engine.js?v={v}"' in (web / "js" / "search-worker.js").read_text(encoding="utf-8")
+    # 화면이 워커를 붙이면 그 주소에도 판이 붙는다(붙이기 전에는 건너뛴다)
+    (web / "js" / "app.js").write_text(app + '\nnew Worker(new URL("./search-worker.js", import.meta.url), { type: "module" });\n', encoding="utf-8")
+    v1 = ew.stamp_assets(web)
+    assert f'new URL("./search-worker.js?v={v1}"' in (web / "js" / "app.js").read_text(encoding="utf-8")
+    v = v1
+    html = (web / "index.html").read_text(encoding="utf-8")
     assert ew.stamp_assets(web) == v and (web / "index.html").read_text(encoding="utf-8") == html
     (web / "js" / "engine.js").write_text((web / "js" / "engine.js").read_text(encoding="utf-8") + "\n// 바뀜\n", encoding="utf-8")
     v2 = ew.stamp_assets(web)
@@ -121,3 +128,23 @@ def test_section_label_in_web():
     app = (ROOT / "web" / "js" / "app.js").read_text(encoding="utf-8")
     assert "function sectionLabel" in app and '"교수 미정"' in app
     assert not re.search(r"\$\{[^}]*\.no\}분반", app)
+
+
+def test_search_worker_contract():
+    """탐색 워커: 화면이 부를 때 쓰는 주소 모양 하나(배포 판이 붙게), 워커 파일이 엔진을 부르는지."""
+    app = (ROOT / "web" / "js" / "app.js").read_text(encoding="utf-8")
+    worker = (ROOT / "web" / "js" / "search-worker.js").read_text(encoding="utf-8")
+    if "search-worker.js" in app:  # 화면이 워커를 붙였으면
+        assert app.count('"./search-worker.js"') == 1, 'new Worker(new URL("./search-worker.js", import.meta.url), { type: "module" }) 모양으로'
+    assert 'from "./engine.js"' in worker and "findConflicts" in worker and '"progress"' in worker
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node 없음")
+def test_conflicts_and_progress():
+    """겹치지 않는 조합이 없을 때 까닭인 과목(가장 작은 묶음), 진행 알림(결과는 같다)."""
+    run = subprocess.run(["node", str(ROOT / "tests" / "conflict_runner.mjs")], capture_output=True, text=True,
+                         encoding="utf-8", check=True)
+    r = json.loads(run.stdout)
+    assert r["pair"] == ["A", "B"] and r["triple"] == ["A", "B", "C"] and r["ok"] == []
+    assert r["feasible"] == [False, False, True]
+    assert r["ticks"] >= 2 and r["ticksMonotone"] and r["lastTick"] == 1 and r["sameResult"]

@@ -35,7 +35,7 @@ def test_index_links_manifest_and_icons():
 def test_service_worker_precache_list():
     sw = (WEB / "sw.js").read_text(encoding="utf-8")
     shell = re.findall(r'"([^"]+)"', re.search(r"const SHELL = \[(.*?)\];", sw, re.S).group(1))
-    assert "./" in shell and "index.html" in shell and "js/engine.js" in shell
+    assert "./" in shell and "index.html" in shell and "js/engine.js" in shell and "js/search-worker.js" in shell
     for path in shell:
         if path == "./" or path.startswith("data/"):  # data/ 는 export_web.py 가 만든다
             continue
@@ -49,3 +49,12 @@ def test_service_worker_skips_stale_browser_cache():
     sw = (WEB / "sw.js").read_text(encoding="utf-8")
     assert 'fetch(req, { cache: "no-cache" })' in sw and 'cache: "reload"' in sw
     assert "cache.put(key," in sw and "cache.match(key)" in sw and 'u.search = ""' in sw
+
+
+def test_service_worker_caches_fonts():
+    """글꼴(Pretendard CDN)은 캐시 먼저, 셸 캐시 이름을 올려도 지우지 않는다. 화면이 부르는 주소와 같아야 한다."""
+    sw = (WEB / "sw.js").read_text(encoding="utf-8")
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    prefix = re.search(r'const FONT_PREFIX = "([^"]+)"', sw).group(1)
+    assert prefix in html, "index.html 의 글꼴 주소가 바뀌면 sw.js 의 FONT_PREFIX 도 바꾼다"
+    assert "k !== FONT_CACHE" in sw and "fontFirst(event)" in sw

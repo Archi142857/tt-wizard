@@ -11,9 +11,9 @@
                          학기 선택: 지난 학기 편람(data/history/<학기>.json, 이미 courses.json 형식)과 목록.
                          지금 학기는 courses.json. data/history/ 는 build_history.py(처음 한 번)와 sync.py(학기가 바뀔 때)가 채운다
 
-배포(GitHub Actions)에서는 --stamp 를 더 붙여 web/index.html·js/app.js 가 부르는 style.css·app.js·engine.js 주소에
+배포(GitHub Actions)에서는 --stamp 를 더 붙여 web/index.html·js/app.js·js/search-worker.js 가 부르는 스타일·스크립트 주소에
 ?v=<내용 해시> 를 붙인다. GitHub Pages 는 파일을 10분 동안 다시 묻지 않고 쓰게 해서, 주소가 그대로면 배포 직후 새로고침한
-화면에 옛 스크립트가 붙는다(새 화면 + 옛 동작). 로컬에서는 붙이지 않는다(붙이면 그 두 파일이 바뀐다).
+화면에 옛 스크립트가 붙는다(새 화면 + 옛 동작). 로컬에서는 붙이지 않는다(붙이면 그 파일들이 바뀐다).
 
 표준 라이브러리만 쓴다(GitHub Actions 에서 따로 설치 없이 돈다).
 """
@@ -157,12 +157,18 @@ def export_semesters(data: Path, out: Path, current: str) -> list[list[str]]:
 
 WEB = ROOT / "web"
 # 주소에 판(?v=)을 붙일 곳: 파일 → 그 안에서 부르는 주소
-STAMP_REFS = {"index.html": ("style.css", "js/app.js"), "js/app.js": ("./engine.js",)}
-STAMP_FILES = ("style.css", "js/app.js", "js/engine.js")  # 이 셋의 내용이 바뀌면 판이 바뀐다
+STAMP_REFS = {
+    "index.html": ("style.css", "js/app.js"),
+    "js/app.js": ("./engine.js", "./search-worker.js"),
+    "js/search-worker.js": ("./engine.js",),
+}
+# 아직 안 부를 수도 있는 주소(0곳이면 건너뛴다): 탐색 워커는 화면이 붙이기 전까지 app.js 에 없다
+STAMP_OPTIONAL = {("js/app.js", "./search-worker.js")}
+STAMP_FILES = ("style.css", "js/app.js", "js/engine.js", "js/search-worker.js")  # 이 파일들 내용이 바뀌면 판이 바뀐다
 
 
 def stamp_assets(web: Path = WEB) -> str:
-    """index.html·app.js 가 부르는 style.css·app.js·engine.js 주소에 ?v=<세 파일 내용 해시 8자리> 를 붙인다.
+    """index.html·app.js·search-worker.js 가 부르는 스타일·스크립트 주소에 ?v=<STAMP_FILES 내용 해시 8자리> 를 붙인다.
 
     여러 번 해도 같다(이미 붙은 ?v= 는 빼고 해시한 뒤 바꿔 쓴다). 줄바꿈은 건드리지 않는다. 판을 돌려준다.
     """
@@ -175,7 +181,7 @@ def stamp_assets(web: Path = WEB) -> str:
         text = path.read_bytes().decode("utf-8")
         for ref in refs:
             text, n = re.subn(rf'(["\']){re.escape(ref)}(?:\?v=[0-9a-f]+)?\1', rf"\g<1>{ref}?v={v}\g<1>", text)
-            if n != 1:
+            if n != 1 and not (n == 0 and (name, ref) in STAMP_OPTIONAL):
                 raise SystemExit(f"{path}: '{ref}' 을 부르는 곳이 {n}곳이다(한 곳이어야 판을 붙인다)")
         path.write_bytes(text.encode("utf-8"))
     return v
@@ -189,7 +195,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--data", default=str(DATA))
     ap.add_argument("-o", "--output", default=str(OUT))
     ap.add_argument("--stamp", action="store_true",
-                    help="배포용: web/index.html·js/app.js 의 파일 주소에 ?v=<내용 해시> 를 붙인다(파일이 바뀐다)")
+                    help="배포용: web/index.html·js/*.js 의 스타일·스크립트 주소에 ?v=<내용 해시> 를 붙인다(파일이 바뀐다)")
     args = ap.parse_args(argv)
     data, out = Path(args.data), Path(args.output)
     out.mkdir(parents=True, exist_ok=True)
@@ -217,7 +223,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  semesters.json 학기 {len(semesters)}개 ({semesters[0][0] or '학기 모름'}"
           f"{' ~ ' + semesters[-1][0] if len(semesters) > 1 else ''})")
     if args.stamp:
-        print(f"  화면 파일 주소에 판 ?v={stamp_assets()} 를 붙임 (index.html, js/app.js)")
+        print(f"  화면 파일 주소에 판 ?v={stamp_assets()} 를 붙임 (index.html, js/app.js, js/search-worker.js)")
     return 0
 
 
