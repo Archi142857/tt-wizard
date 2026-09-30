@@ -4,9 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TT Wizard</title>
-<meta name="description" content="서울대 관악캠퍼스 건물 사이 걷는 시간(경사 반영)으로 분반 조합을 골라 주는 시간표 도우미">
-<meta name="theme-color" content="#eef0ff">
-<meta name="color-scheme" content="light">
+<meta name="description" content="과목을 담으면 걷는 시간이 가장 짧은 분반 조합을 찾아요. 서울대 관악캠퍼스용.">
+<meta name="theme-color" content="#eef0ff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171b" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="text-scale" content="scale">
 <meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
@@ -16,89 +18,185 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" crossorigin>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<p class="net-note" id="net-note" role="status" hidden>인터넷에 연결되어 있지 않아요. 저장해 둔 자료로 찾고, 지도 바탕은 연결되면 보여요.</p>
+<div id="status" class="sr-only" role="status"></div>
+<div id="alert" class="sr-only" role="alert"></div>
 
-<main id="view-input" class="view">
-  <header class="hero">
-    <div class="brand-row">
-      <img class="lockup" src="icons/lockup-horizontal.svg" alt="TT Wizard" width="161" height="40">
-      <button type="button" class="pill-btn" id="install" hidden>앱으로 설치</button>
-    </div>
-    <h1>걷는 시간이 가장 짧은 시간표를 만들어 드려요</h1>
-    <p class="sub" id="data-note">자료를 불러오는 중…</p>
+<!-- 입력 화면 -->
+<div id="view-input" class="view">
+  <header class="topbar">
+    <picture>
+      <source srcset="icons/lockup-horizontal-dark.svg" media="(prefers-color-scheme: dark)">
+      <img class="lockup" src="icons/lockup-horizontal.svg" alt="TT Wizard" width="129" height="32">
+    </picture>
+    <span class="tag" id="offline-tag" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l20 20M5.8 9.3A5.5 5.5 0 0 0 7 20h10.5M20.9 17.3A4.5 4.5 0 0 0 17.5 10h-.9A7 7 0 0 0 9.9 5.2"></path></svg>오프라인</span>
+    <span class="spacer"></span>
+    <button type="button" class="btn-text small" id="install" hidden>설치</button>
+    <button type="button" class="icon-btn" id="open-info" aria-label="정보"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><circle cx="12" cy="7.8" r=".6" fill="currentColor"></circle></svg></button>
   </header>
-
-  <div class="card search">
-    <div class="term-row" id="term-row" hidden>
-      <label for="year" class="sr-only">년도</label>
-      <select id="year" class="term-select"></select>
-      <label for="term" class="sr-only">학기</label>
-      <select id="term" class="term-select"></select>
-      <span class="term-tail">강좌에서 찾아요</span>
+  <main>
+    <h1 class="sr-only">시간표 만들기</h1>
+    <div class="term-row">
+      <div class="term-left">
+        <select id="term" class="term-select" aria-label="학기" hidden></select>
+        <span class="tag" id="past-tag" hidden>지난 학기</span>
+      </div>
+      <span class="asof" id="asof"></span>
+    </div>
+    <div class="banner" id="banner" hidden>
+      <p id="banner-text"></p>
+      <button type="button" class="btn-text small" id="banner-retry">다시 시도</button>
     </div>
     <div class="searchbox">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
-      <label for="q" class="sr-only">과목 검색</label>
-      <input id="q" type="search" placeholder="과목명, 교과목번호, 교수 이름" autocomplete="off" disabled>
+      <input id="q" type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="불러오는 중" aria-label="과목 검색" disabled>
+      <span class="spinner small" id="q-spinner" aria-hidden="true"></span>
+      <button type="button" class="icon-btn" id="q-clear" aria-label="지우기" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
     </div>
-    <ul id="results" class="results" aria-live="polite"></ul>
+    <div class="card results" id="results" hidden>
+      <ul class="list" id="results-list"></ul>
+      <p class="empty" id="results-empty" hidden>검색 결과가 없어요</p>
+      <div class="more" id="results-more" hidden><button type="button" class="btn-text">더 보기</button></div>
+    </div>
+
+    <h2 class="section-title" id="picked-title">담은 과목 <span class="count" id="picked-count"></span></h2>
+    <div class="picked-error" id="picked-error" hidden>
+      <p class="error-line" id="picked-error-text"></p>
+      <button type="button" class="btn-text small" id="picked-retry" hidden>다시 시도</button>
+    </div>
+    <div class="card picked">
+      <ul class="list" id="picked-list"></ul>
+      <p class="empty" id="picked-empty">담은 과목이 없어요</p>
+    </div>
+
+    <h2 class="section-title">조건</h2>
+    <div class="card settings">
+      <fieldset>
+        <legend class="field-label">출발·도착</legend>
+        <div class="seg" id="home-seg" hidden></div>
+        <select id="home-select" class="select" aria-label="건물" hidden></select>
+      </fieldset>
+      <fieldset aria-labelledby="mode-legend">
+        <legend class="field-label"><span id="mode-legend">이동시간</span><button type="button" class="icon-btn" id="open-calc" aria-label="이동시간 계산 방법"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><circle cx="12" cy="7.8" r=".6" fill="currentColor"></circle></svg></button></legend>
+        <div class="seg">
+          <label><input type="radio" name="mode" value="slope" checked>경사 반영</label>
+          <label><input type="radio" name="mode" value="flat">평지</label>
+        </div>
+      </fieldset>
+    </div>
+  </main>
+  <div class="bottom-bar">
+    <button type="button" class="btn-primary" id="run" disabled>시간표 만들기</button>
+    <button type="button" class="btn-text" id="cancel" hidden>취소</button>
   </div>
+</div>
 
-  <h2 class="section-title">담은 과목 <span class="count" id="picked-count"></span><span class="legend-slot" id="legend-input"></span></h2>
-  <ul id="picked" class="picked"></ul>
-  <div id="picked-empty" class="card picked-empty">위에서 과목을 검색해 담아 주세요</div>
-
-  <h2 class="section-title">조건</h2>
-  <div class="card settings">
-    <div>
-      <div class="field-label" id="home-label">출발·도착</div>
-      <div class="seg" id="home-seg" role="group" aria-labelledby="home-label"></div>
-      <label for="home-select" class="sr-only">다른 건물</label>
-      <select id="home-select" class="select" hidden></select>
-    </div>
-    <div>
-      <div class="field-label" id="mode-label">이동시간</div>
-      <div class="seg" id="mode-seg" role="group" aria-labelledby="mode-label">
-        <button type="button" data-mode="slope" aria-pressed="true">경사 반영</button>
-        <button type="button" data-mode="flat" aria-pressed="false">평지 기준</button>
-      </div>
-      <p class="field-hint" id="mode-hint">오르막은 느리게, 완만한 내리막은 조금 빠르게 걷는다고 보고 계산해요.</p>
-    </div>
-  </div>
-  <p class="error" id="input-error" role="alert" hidden></p>
-
-  <footer class="credits" id="credits-input"></footer>
-  <div class="bottom-bar"><button type="button" class="btn-primary" id="run" disabled>시간표 생성하기</button></div>
-</main>
-
-<main id="view-result" class="view" hidden>
-  <header class="navbar">
-    <button type="button" class="icon-btn" id="back" aria-label="과목 고르기로 돌아가기">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
-    </button>
-    <div class="title" id="result-heading">추천 시간표</div>
-    <span class="mode-chip" id="mode-chip"></span>
+<!-- 결과 화면 -->
+<div id="view-result" class="view" hidden>
+  <header class="topbar">
+    <button type="button" class="icon-btn back" aria-label="뒤로" data-back><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+    <h1 class="title" id="result-title" tabindex="-1">추천 시간표</h1>
   </header>
+  <main hidden>
+    <div class="daytabs" id="daytabs" role="tablist" aria-label="요일"></div>
+    <div id="day-panel" role="tabpanel">
+      <div class="panes" id="panes">
+        <div class="card tt" id="tt"></div>
+        <div class="card mapcard">
+          <div class="map is-static" id="map" aria-hidden="true"></div>
+          <button type="button" class="icon-btn map-expand" id="map-expand" aria-label="지도 크게 보기"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path></svg></span></button>
+          <p class="map-note" hidden>지도 배경 없음</p>
+          <span class="map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
+        </div>
+      </div>
+      <div class="cls-legend" id="cls-legend"></div>
+      <p class="day-summary" id="day-summary"></p>
+    </div>
+    <div class="list-head result-head"><span id="rank-count"></span><span class="cond" id="rank-cond"></span></div>
+    <div class="card ranks">
+      <ol class="list" id="ranks"></ol>
+      <div class="more-row" id="ranks-more" hidden><button type="button" class="btn-text">더 보기</button></div>
+    </div>
+    <div class="footnote">
+      <p>추정값이라 실제로 걸리는 시간과 다를 수 있어요</p>
+      <button type="button" class="btn-text" id="open-sources">자료 출처</button>
+    </div>
+  </main>
+</div>
 
-  <div class="daytabs" id="daytabs" role="tablist" aria-label="요일"></div>
-  <div class="panes">
-    <section class="card tt" id="tt" aria-label="하루 시간표"></section>
-    <section class="card mapcard" aria-label="하루 동선 지도">
-      <div id="map" class="map"></div>
-      <ol class="legend" id="legend"></ol>
-    </section>
+<!-- 전체 화면 지도 -->
+<div id="view-map" class="view-map" hidden>
+  <header class="topbar">
+    <button type="button" class="icon-btn back" aria-label="뒤로" data-back><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+    <h1 class="title" id="map-title" tabindex="-1">지도</h1>
+  </header>
+  <main class="mapcard" hidden>
+    <div class="map" id="map-full"></div>
+    <p class="map-note" hidden>지도 배경 없음</p>
+    <span class="map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
+  </main>
+</div>
+
+<!-- 정보 화면 -->
+<div id="view-info" class="view" hidden>
+  <header class="topbar">
+    <button type="button" class="icon-btn back" aria-label="뒤로" data-back><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+    <h1 class="title" id="info-title" tabindex="-1">정보</h1>
+  </header>
+  <main hidden>
+    <ul class="card list info-list" id="info-list"></ul>
+    <p class="info-foot">서울대학교 공식 서비스가 아니에요</p>
+  </main>
+</div>
+
+<!-- 자료 출처, 오픈소스 라이선스 -->
+<div id="view-page" class="view" hidden>
+  <header class="topbar">
+    <button type="button" class="icon-btn back" aria-label="뒤로" data-back><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+    <h1 class="title" id="page-title" tabindex="-1"></h1>
+  </header>
+  <main hidden>
+    <div class="card page-card"><ul class="src" id="page-list"></ul></div>
+  </main>
+</div>
+
+<!-- 시트 -->
+<dialog class="sheet" id="course-sheet" aria-labelledby="cs-title">
+  <div class="sheet-head">
+    <div class="h"><h2 class="sheet-title" id="cs-title"></h2><p class="sheet-meta" id="cs-meta"></p></div>
+    <button type="button" class="btn-text" data-close>완료</button>
   </div>
-  <p class="day-summary" id="day-summary"></p>
+  <div class="sheet-body" id="cs-body"></div>
+</dialog>
 
-  <h2 class="result-title" id="result-title"></h2>
-  <div class="ranks" id="ranks"></div>
-  <footer class="credits" id="credits-result"></footer>
-</main>
+<dialog class="sheet" id="calc-sheet" aria-labelledby="calc-title">
+  <div class="sheet-head">
+    <div class="h"><h2 class="sheet-title" id="calc-title">이동시간 계산 방법</h2></div>
+    <button type="button" class="btn-text" data-close>닫기</button>
+  </div>
+  <div class="sheet-body">
+    <p>경사 반영: 오르막은 느리게, 완만한 내리막은 조금 빠르게 계산해요.</p>
+    <p>평지: 경사 없이 초속 1.1m로 계산해요.</p>
+    <p>시간이나 강의실이 미정인 수업은 이동과 지각 계산에서 빠져요.</p>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="a2hs-sheet" aria-labelledby="a2hs-title">
+  <div class="sheet-head">
+    <div class="h"><h2 class="sheet-title" id="a2hs-title">홈 화면에 추가</h2></div>
+    <button type="button" class="btn-text" data-close>닫기</button>
+  </div>
+  <div class="sheet-body">
+    <p>공유 버튼을 누른 뒤 홈 화면에 추가를 고르세요. 공유 버튼이 안 보이면 ⋯을 먼저 누르세요.</p>
+  </div>
+</dialog>
+
+<div class="snackbar" id="snackbar" hidden><p id="snackbar-text"></p><button type="button" id="snackbar-action"></button></div>
 
 <script src="vendor/leaflet/leaflet.js"></script>
 <script type="module" src="js/app.js"></script>

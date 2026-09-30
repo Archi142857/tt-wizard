@@ -108,8 +108,9 @@ def test_stamp_assets(tmp_path):
     assert f'href="style.css?v={v}"' in html and f'src="js/app.js?v={v}"' in html
     assert f'from "./engine.js?v={v}"' in app
     assert f'from "./engine.js?v={v}"' in (web / "js" / "search-worker.js").read_text(encoding="utf-8")
-    # 화면이 워커를 붙이면 그 주소에도 판이 붙는다(붙이기 전에는 건너뛴다)
-    (web / "js" / "app.js").write_text(app + '\nnew Worker(new URL("./search-worker.js", import.meta.url), { type: "module" });\n', encoding="utf-8")
+    # 화면이 워커를 붙이면 그 주소에도 판이 붙는다(붙이기 전에는 건너뛴다). 아직 안 붙였으면 붙인 셈 치고 본다
+    if "./search-worker.js" not in app:
+        (web / "js" / "app.js").write_text(app + '\nnew Worker(new URL("./search-worker.js", import.meta.url), { type: "module" });\n', encoding="utf-8")
     v1 = ew.stamp_assets(web)
     assert f'new URL("./search-worker.js?v={v1}"' in (web / "js" / "app.js").read_text(encoding="utf-8")
     v = v1

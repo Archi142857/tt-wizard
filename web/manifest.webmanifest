@@ -2,7 +2,7 @@
   "id": "./",
   "name": "TT Wizard",
   "short_name": "TT Wizard",
-  "description": "서울대 관악캠퍼스 건물 사이 걷는 시간(경사 반영)으로 분반 조합을 골라 주는 시간표 도우미",
+  "description": "과목을 담으면 걷는 시간이 가장 짧은 분반 조합을 찾아요. 서울대 관악캠퍼스용.",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
