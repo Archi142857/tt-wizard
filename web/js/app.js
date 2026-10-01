@@ -1344,7 +1344,31 @@ function hourRange(ranked) {
 }
 
 const lateOf = (l) => (l.slack !== null && l.slack < 0 ? Math.max(0, Math.round(-l.slack)) : 0); // 수치는 반올림한 정수 분
-const weekLate = (ev) => ev.legs.reduce((s, l) => s + lateOf(l), 0);
+
+/**
+ * 늦는 수업 요약(가이드 형식 '분 + 늦음'). 늦는 분을 더한 합은 뜻이 없어 쓰지 않고(10/1 사용자) 수업마다의 분을 쓴다(10/1 밤 사용자 결정).
+ * 한 주(후보 카드)는 같은 분끼리 요일을 묶어 '월수 2분·목 5분 늦음'(요일 글자는 '월화수목 등교'처럼 붙여 쓴다). 같은 요일들에서 늦는
+ * 분이 둘이면 요일을 한 번만: '화목 11분·17분 늦음'. 하루(하루 요약 태그)는 그날 늦는 분을 시각 순서로 '2분·5분 늦음'.
+ * 늦는 수업이 없으면 ''.
+ */
+function lateText(legs, withDays) {
+  const mins = new Map(); // 분 → 요일(처음 나온 순서). legs 는 요일·시각 순서
+  for (const l of legs) {
+    const m = lateOf(l);
+    if (!m) continue;
+    if (!mins.has(m)) mins.set(m, []);
+    if (!mins.get(m).includes(l.day)) mins.get(m).push(l.day);
+  }
+  if (!mins.size) return "";
+  if (!withDays) return `${[...mins.keys()].map((m) => `${m}분`).join("·")} 늦음`;
+  const byDays = new Map(); // '화목' → [11, 17]
+  for (const [m, ds] of mins) {
+    const k = ds.map((d) => DAY_KO[d]).join("");
+    if (!byDays.has(k)) byDays.set(k, []);
+    byDays.get(k).push(m);
+  }
+  return `${[...byDays].map(([k, ms]) => `${k} ${ms.map((m) => `${m}분`).join("·")}`).join("·")} 늦음`;
+}
 
 /** 다 못 센 조합 수(실제는 그보다 많다)의 어림수: 10000 → '1만 개', 3456 → '3천 개', 456 → '400개'. */
 const roughCount = (n) => (n >= 10000 ? `${Math.floor(n / 10000)}만 개` : n >= 1000 ? `${Math.floor(n / 1000)}천 개` : `${n >= 100 ? Math.floor(n / 100) * 100 : n}개`);
@@ -1545,9 +1569,9 @@ function renderSummary(ev, day) {
   if (!ev.days[day]) { box.replaceChildren(); return; }
   const legs = ev.legs.filter((l) => l.day === day);
   const walk = Math.round(legs.reduce((s, l) => s + l.minutes, 0));
-  const late = legs.reduce((s, l) => s + lateOf(l), 0);
+  const late = lateText(legs, false); // '2분 늦음', 그날 둘이면 '2분·5분 늦음'(더한 값은 쓰지 않는다)
   box.replaceChildren(...[h("span", {}, "걷기 ", h("b", {}, `${walk}분`)),
-    late ? h("span", { class: "tag danger" }, h("span", { class: "sr-only" }, ", "), "늦을 수 있음") : null].filter(Boolean)); // 그날 늦는 분을 더한 값은 쓰지 않는다
+    late ? h("span", { class: "tag danger" }, h("span", { class: "sr-only" }, ", "), late) : null].filter(Boolean));
 }
 
 // ---------------------------------------------------------------- 지도
@@ -1560,29 +1584,9 @@ function coordOf(b) {
   return v && v[1] !== null && v[1] !== undefined ? [v[1], v[2]] : null;
 }
 
-function midpoint(line) {
-  let total = 0;
-  const seg = [];
-  for (let i = 1; i < line.length; i++) {
-    const dy = line[i][0] - line[i - 1][0], dx = (line[i][1] - line[i - 1][1]) * Math.cos((line[i][0] * Math.PI) / 180);
-    const d = Math.hypot(dx, dy);
-    seg.push(d);
-    total += d;
-  }
-  let acc = 0;
-  for (let i = 0; i < seg.length; i++) {
-    if (acc + seg[i] >= total / 2) {
-      const t = seg[i] ? (total / 2 - acc) / seg[i] : 0;
-      return [line[i][0] + (line[i + 1][0] - line[i][0]) * t, line[i][1] + (line[i + 1][1] - line[i][1]) * t];
-    }
-    acc += seg[i];
-  }
-  return line[0];
-}
-
 // ---------------------------------------------------------------- 바탕 지도
 // 10/1 사용자 결정: OSM 타일 대신 우리 자료(data/basemap.json: 수치지형도 1:5,000 건물·도로·물·등고선 + OSM 숲·길)로 직접 그린다
-// (레포 docs/basemap.md, 참고 구현 docs/basemap_reference.html). 타일 서버를 안 써서 오프라인에서도 바탕이 있고, 다크 모드는 필터가 아니라
+// (자료 형식은 레포 docs/basemap.md, 그리는 법은 이 절이 기준). 타일 서버를 안 써서 오프라인에서도 바탕이 있고, 다크 모드는 필터가 아니라
 // 지도 색(--map-*)으로 그린다. 면·선은 처음 한 번 메르카토르 좌표(0~1)로 풀어 두고, 캔버스 하나에 화면에 걸리는 것만 그린다
 
 let basemap = null, basemapWait = null, dataBounds = null;
@@ -1686,7 +1690,7 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
 const ROAD_M = { service: 4.5, residential: 6, living_street: 5, unclassified: 6, tertiary: 7, tertiary_link: 6 };
 
 /** 바탕을 그린다. b = 캔버스가 덮는 범위(layer 좌표), m = 화소 배수. 순서: 땅 → 등고선 → 물 → 도로면 → 길(선) → 건물 → 등고선 높이.
- *  보행로·계단은 참고 구현의 주황 점선 대신 옅은 회색 점·사다리로, 확대했을 때만(10/1 사용자: 주황 점선이 너무 많아 시선을 빼앗는다).
+ *  보행로·계단은 처음 시안의 주황 점선 대신 옅은 회색 점·사다리로, 확대했을 때만(10/1 사용자: 주황 점선이 너무 많아 시선을 빼앗는다).
  *  산길은 15부터, 캠퍼스 안 보행로는 15.5부터, 계단은 16.25부터. 경로선(파랑)이 지도에서 가장 눈에 띄게 */
 function drawBasemap(ctx, map, b, m) {
   const size = b.getSize(), C = mapColors();
@@ -1872,10 +1876,11 @@ function makeMap(el, full) {
   map.setView(campusBounds.getCenter(), 15, { animate: false });
   const legend = el.closest(".mapcard").querySelector(".legend");
   const mp = { map, el, base, full, buttons, legend, back: L.layerGroup().addTo(map), lines: L.layerGroup().addTo(map), marks: L.layerGroup().addTo(map),
-    names: L.layerGroup().addTo(map), data: null };
-  // 배율이 바뀌면 붙어 보이는 번호를 다시 묶고, 옆으로 비킨 선을 그 배율의 화소 간격으로 다시 그린다. 건물 번호는 옮길 때마다(화면 가장자리)
+    legLabels: L.layerGroup().addTo(map), names: L.layerGroup().addTo(map), data: null };
+  // 배율이 바뀌면 붙어 보이는 번호를 다시 묶고, 옆으로 비킨 선을 그 배율의 화소 간격으로 다시 그린다.
+  // 구간 라벨과 건물 번호는 옮길 때마다(화면 가장자리·버튼에 걸리지 않게). 배율이 바뀌면 zoomend 다음에 moveend 가 온다
   map.on("zoomend", () => { if (mp.data) { placeMarks(mp); drawReturn(mp); } });
-  map.on("moveend", () => { if (mp.data) placeLabels(mp); });
+  map.on("moveend", () => { if (mp.data) { placeLegLabels(mp); placeLabels(mp); } });
   loadBasemap();
   return mp;
 }
@@ -1884,15 +1889,15 @@ function makeMap(el, full) {
 const RETURN_OFFSET = 7, RETURN_DASH = "8 6";
 const RETURN_KEY = '<svg class="line-key" width="20" height="8" viewBox="0 0 20 8" aria-hidden="true"><path d="M1 4H19" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="4 3"/></svg>';
 
-/** 선을 진행 방향 오른쪽으로 px 만큼 평행하게 옮긴다(지금 배율의 화면 좌표에서). 모서리는 두 변 법선의 이등분선, 뾰족하면 2px 배까지만. */
-function offsetLine(map, line, px) {
+/** 선을 진행 방향 오른쪽으로 px 만큼 평행하게 옮긴 점들(지금 배율의 layer 좌표). 모서리는 두 변 법선의 이등분선, 뾰족하면 2px 배까지만. */
+function offsetPoints(map, line, px) {
   const pts = [];
   for (const ll of line) {
     const p = map.latLngToLayerPoint(ll);
     const q = pts[pts.length - 1];
     if (!q || Math.hypot(p.x - q.x, p.y - q.y) > 0.5) pts.push(p);
   }
-  if (pts.length < 2) return line;
+  if (pts.length < 2) return pts;
   const normal = (a, b) => { const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy); return [-dy / d, dx / d]; };
   return pts.map((p, i) => {
     const n1 = i > 0 ? normal(pts[i - 1], p) : null;
@@ -1903,8 +1908,13 @@ function offsetLine(map, line, px) {
       if (s < 1) { ox = n2[0] * px; oy = n2[1] * px; } // 거의 되돌아가는 꺾임: 이음매 없이 다음 변 쪽으로
       else { const m = (2 * px) / s; ox = (sx / s) * m; oy = (sy / s) * m; }
     } else { const n = n1 || n2; ox = n[0] * px; oy = n[1] * px; }
-    return map.layerPointToLatLng(L.point(p.x + ox, p.y + oy));
+    return L.point(p.x + ox, p.y + oy);
   });
+}
+
+function offsetLine(map, line, px) {
+  const pts = offsetPoints(map, line, px);
+  return pts.length < 2 ? line : pts.map((p) => map.layerPointToLatLng(p));
 }
 
 function drawReturn(mp) {
@@ -1934,9 +1944,10 @@ function renderLegend(mp, legs, hasReturn) {
 function renderMap(mp, ev, day, { reveal = false } = {}) {
   const { map } = mp;
   const R = state.result;
+  mp.data = null; // 아래에서 배율을 맞추는 동안(zoomend·moveend) 앞 요일의 핀·라벨을 다시 놓지 않게
   const legs = ev.days[day] ? ev.legs.filter((l) => l.day === day) : [];
   // 선: 수업 가는 길(번호가 붙은 수업으로)은 실선, 마지막 수업 뒤 출발·도착 자리로 가는 길은 점선
-  const homeLines = [], classLines = [], labels = [];
+  const homeLines = [], classLines = [], legLines = [];
   for (const l of legs) {
     if (l.from === l.to) continue;
     let line = routeLine(state.routes, l.from, l.to);
@@ -1947,7 +1958,8 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
     }
     (l.meeting ? classLines : homeLines).push(line);
     const mins = Math.round(l.minutes);
-    if (mins > 0) labels.push({ at: midpoint(line), text: `${mins}분`, home: !l.meeting }); // 출발·도착 자리로 가는 구간은 ⌂ 를 붙인다
+    // 걷는 시간 라벨(출발·도착 자리로 가는 구간은 ⌂ 를 붙인다). 라벨 자리는 placeLegLabels 가 배율마다 고른다
+    legLines.push({ line, home: !l.meeting, text: mins > 0 ? `${mins}분` : "" });
   }
   renderLegend(mp, legs, homeLines.length > 0); // 번호표를 먼저 채워야 지도 칸 높이가 정해진다
   mp.el.setAttribute("aria-label", `${DAY_KO[day]}요일 지도`);
@@ -1978,14 +1990,15 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
     : mp.buttons ? { paddingTopLeft: [20, top], paddingBottomRight: [56, bottom] } : { paddingTopLeft: [20, top], paddingBottomRight: [20, bottom] };
   if (pts.length > 1) map.fitBounds(L.latLngBounds(pts), { ...pad, maxZoom: 17, animate: false });
   else if (pts.length) map.setView(pts[0], 16, { animate: false });
-  mp.data = { stops, labels, homeAt, homeLines };
+  mp.data = { stops, legs: legLines, homeAt, homeLines };
   drawReturn(mp);
   placeMarks(mp);
+  placeLegLabels(mp);
   placeLabels(mp);
   if (reveal && !reduceMotion.matches) revealRoute(mp, drawn);
 }
 
-/** 핀과 구간 라벨. 화면에서 겹치는 수업 핀은 1·2 로 묶고, 걷는 시간 라벨은 핀·다른 라벨과 겹치면 숨긴다. */
+/** 핀. 화면에서 겹치는 수업 핀은 1·2 로 묶는다(배율이 바뀔 때마다 다시). 구간 라벨은 placeLegLabels. */
 function placeMarks(mp) {
   const { map, marks, data } = mp;
   marks.clearLayers();
@@ -2011,20 +2024,158 @@ function placeMarks(mp) {
     L.marker(st.at, { keyboard: false, interactive: false, zIndexOffset: 100,
       icon: L.divIcon({ className: "", html: `<div class="pin" role="img" aria-label="${esc(name)}">${label}</div>`, iconSize: [w, 24], iconAnchor: [w / 2, 12] }) }).addTo(marks);
   }
-  const taken = [data.homeAt, ...merged.map((m) => m.at)].filter(Boolean).map((a) => map.latLngToContainerPoint(a));
-  // 건물 번호가 피할 자리(layer 좌표라 옮겨도 그대로): 핀, 구간 라벨
-  const boxes = [data.homeAt, ...merged.map((m) => m.at)].filter(Boolean).map((a) => { const p = map.latLngToLayerPoint(a); return [p.x - 16, p.y - 14, p.x + 16, p.y + 14]; });
-  for (const lb of data.labels) {
-    const pt = map.latLngToContainerPoint(lb.at);
-    if (taken.some((q) => Math.abs(q.x - pt.x) < 30 && Math.abs(q.y - pt.y) < 22)) continue;
-    taken.push(pt);
-    const p = map.latLngToLayerPoint(lb.at);
-    boxes.push([p.x - 28, p.y - 12, p.x + 28, p.y + 12]);
-    L.marker(lb.at, { interactive: false, keyboard: false,
-      icon: L.divIcon({ className: "", html: `<span class="leg-label${lb.home ? " to-home" : ""}" aria-hidden="true">${lb.home ? HOME_PIN.replace('width="12" height="12"', 'width="10" height="10"') : ""}${lb.text}</span>`, iconSize: [0, 0] }) }).addTo(marks);
-  }
   mp.pins = merged;
-  mp.boxes = boxes;
+}
+
+/** 수업이 있는 날 핀 옆 건물 번호: 글, (많이 확대하면) 이름, 어림 폭, 핀 왼쪽에 둘지(오른쪽 가장자리에 걸리면). */
+function pinTag(map, pin, withName) {
+  const B = state.campus.buildings || {};
+  const text = pin.bs.map((b) => (b === "GATE" ? "정문" : b)).join("·");
+  const name = withName ? pin.bs.map((b) => (B[b] || [])[0]).filter(Boolean).join("·") : "";
+  const x = map.latLngToContainerPoint(pin.at).x, lw = Math.max(7.6 * text.length + 4, 10.2 * name.length);
+  return { text, name, lw, left: x + pin.w / 2 + 3 + lw > map.getSize().x - 4 };
+}
+
+// ---- 구간 라벨 자리
+// 10/1 밤 사용자 제보: 두 구간이 함께 지나는 길에 놓인 '12분'이 어느 구간 것인지 한눈에 안 들어왔다(구간 길이의 가운데에 두던 때).
+// 이제 라벨은 그 구간만 지나는 자리(다른 구간 선에서 LABEL_SEP 넘게 떨어진 자리) 가운데 가장 긴 토막의 가운데에 둔다. 그런 자리가
+// 없으면(다른 구간과 같은 길만 지나면) 다른 선에서 가장 먼 자리. 목표는 선 모양으로만 정해서 지도를 옮겨도 그대로이고, 목표가 핀·핀 옆
+// 건물 번호·다른 라벨·지도 버튼·저작권 표기에 걸리거나 화면 밖이면 목표에서 가까운 자리를 고른다(그 구간만 지나는 자리부터).
+// 둘 데가 없으면 숨긴다(가이드: 다른 라벨·핀과 겹치면 숨긴다). 그 구간만 지나는 자리가 짧은 라벨부터 자리를 잡는다
+const LABEL_SEP = 8; // 다른 구간 선의 가운데에서 라벨 상자까지: 경로선 테두리 반폭 4px + 틈 4px
+const LABEL_H = 18; // .leg-label: 줄 16px + 위아래 1px
+
+const boxHit = (a, b) => !(a[2] <= b[0] || a[0] >= b[2] || a[3] <= b[1] || a[1] >= b[3]);
+
+/** 축에 맞춘 상자 r = [x0, y0, x1, y1] 과 선분 ab 사이 거리(겹치면 0). */
+function boxSegDist(r, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  let t0 = 0, t1 = 1; // Liang–Barsky: 선분이 상자를 지나는지
+  const clip = (p, q) => {
+    if (p === 0) return q >= 0;
+    const t = q / p;
+    if (p < 0) { if (t > t1) return false; if (t > t0) t0 = t; } else { if (t < t0) return false; if (t < t1) t1 = t; }
+    return true;
+  };
+  if (clip(-dx, a.x - r[0]) && clip(dx, r[2] - a.x) && clip(-dy, a.y - r[1]) && clip(dy, r[3] - a.y)) return 0;
+  const toBox = (p) => Math.hypot(Math.max(r[0] - p.x, 0, p.x - r[2]), Math.max(r[1] - p.y, 0, p.y - r[3]));
+  const l2 = dx * dx + dy * dy;
+  const toSeg = (x, y) => { const t = l2 ? Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / l2)) : 0; return Math.hypot(x - a.x - t * dx, y - a.y - t * dy); };
+  return Math.min(toBox(a), toBox(b), toSeg(r[0], r[1]), toSeg(r[2], r[1]), toSeg(r[0], r[3]), toSeg(r[2], r[3]));
+}
+
+function placeLegLabels(mp) {
+  const { map, data } = mp;
+  mp.legLabels.clearLayers();
+  mp.boxes = [];
+  if (!data) return;
+  const size = map.getSize(), o = map.containerPointToLayerPoint([0, 0]);
+  const withName = map.getZoom() >= 17.25;
+  // 피할 상자(layer 좌표): 핀과 핀 옆 건물 번호, 지도 위 버튼(크게 보기, 확대·축소)과 저작권 표기
+  const pins = [], avoid = [];
+  if (data.homeAt) { const p = map.latLngToLayerPoint(data.homeAt); pins.push([p.x - 14, p.y - 14, p.x + 14, p.y + 14]); }
+  for (const pin of mp.pins || []) {
+    const p = map.latLngToLayerPoint(pin.at), hw = pin.w / 2, t = pinTag(map, pin, withName), hh = t.name ? 15 : 9;
+    pins.push([p.x - hw - 2, p.y - 14, p.x + hw + 2, p.y + 14]);
+    avoid.push(t.left ? [p.x - hw - 5 - t.lw, p.y - hh, p.x - hw, p.y + hh] : [p.x + hw, p.y - hh, p.x + hw + 5 + t.lw, p.y + hh]);
+  }
+  avoid.push(...pins);
+  const host = mp.el.getBoundingClientRect();
+  for (const el of mp.el.parentElement.querySelectorAll(".map-expand, .leaflet-control-zoom, .map-attr")) {
+    const r = el.getBoundingClientRect();
+    if (r.width) avoid.push([o.x + r.left - host.left - 4, o.y + r.top - host.top - 4, o.x + r.right - host.left + 4, o.y + r.bottom - host.top + 4]);
+  }
+  const view = [o.x + 4, o.y + 4, o.x + size.x - 4, o.y + size.y - 4];
+  // 구간 선(layer 좌표). 출발·도착 자리로 가는 길은 그려진 대로 오른쪽으로 비킨 선
+  const lines = data.legs.map((lg) => (lg.home ? offsetPoints(map, lg.line, RETURN_OFFSET) : lg.line.map((ll) => map.latLngToLayerPoint(ll))));
+  const segs = lines.map((pts) => pts.slice(1).map((b, k) => {
+    const a = pts[k];
+    return [a, b, Math.min(a.x, b.x), Math.min(a.y, b.y), Math.max(a.x, b.x), Math.max(a.y, b.y)];
+  }));
+  const isHome = data.legs.map((lg) => lg.home);
+  const CAP = 32; // 이보다 먼 선은 볼 필요가 없다
+  /** 상자 r 에서 i 아닌 구간 선까지 가장 가까운 거리: [모든 선, 수업 가는 길(실선)만]. */
+  const sepOf = (i, r) => {
+    let all = CAP, cls = CAP;
+    for (let j = 0; j < segs.length; j++) {
+      if (j === i) continue;
+      for (const [a, b, x0, y0, x1, y1] of segs[j]) {
+        const d0 = isHome[j] ? all : cls; // 이 선이 줄일 수 있는 값
+        if (x0 > r[2] + d0 || x1 < r[0] - d0 || y0 > r[3] + d0 || y1 < r[1] - d0) continue;
+        const d = boxSegDist(r, a, b);
+        all = Math.min(all, d);
+        if (!isHome[j]) cls = Math.min(cls, d);
+        if (!cls) return [0, 0];
+      }
+    }
+    return [all, cls];
+  };
+  /** 구간 i 의 선이 다른 수업 구간 선과 3px 안에 겹치는 길이 비율. 거의 1 이면 같은 길을 되짚는 구간(301 → 83 → 301). */
+  const overlap = (i) => {
+    const pts = lines[i];
+    let tot = 0, hit = 0;
+    for (let k = 1; k < pts.length; k++) {
+      const a = pts[k - 1], b = pts[k], len = Math.hypot(b.x - a.x, b.y - a.y), n = Math.max(1, Math.ceil(len / 4));
+      for (let m = 0; m < n; m++) {
+        const t = (m + 0.5) / n, p = L.point(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+        tot += len / n;
+        if (segs.some((sg, j) => j !== i && !isHome[j] && sg.some(([c, d, x0, y0, x1, y1]) => p.x >= x0 - 3 && p.x <= x1 + 3 && p.y >= y0 - 3 && p.y <= y1 + 3
+          && L.LineUtil.pointToSegmentDistance(p, c, d) <= 3))) hit += len / n;
+      }
+    }
+    return tot ? hit / tot : 1;
+  };
+  canvas.font = `500 12px ${getComputedStyle(mp.el).fontFamily}`;
+  const items = [];
+  data.legs.forEach((lg, i) => {
+    const pts = lines[i];
+    if (!lg.text || pts.length < 2) return;
+    const cum = [0];
+    for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pts[k].x - pts[k - 1].x, pts[k].y - pts[k - 1].y));
+    const len = cum[cum.length - 1];
+    const hw = (Math.ceil(canvas.measureText(lg.text).width) + 12 + (lg.home ? 12 : 0)) / 2 + 1, hh = LABEL_H / 2 + 1; // 좌우 6px, ⌂ 10px + 2px
+    const step = Math.max(3, len / 160), end = Math.min(12, len / 2);
+    const cands = [];
+    for (let s = end, k = 1; s <= len - end + 1e-6; s += step) {
+      while (k < cum.length - 1 && cum[k] < s) k++;
+      const seg = cum[k] - cum[k - 1], t = seg ? (s - cum[k - 1]) / seg : 0;
+      const x = pts[k - 1].x + (pts[k].x - pts[k - 1].x) * t, y = pts[k - 1].y + (pts[k].y - pts[k - 1].y) * t;
+      const box = [x - hw, y - hh, x + hw, y + hh];
+      const [sep, cls] = sepOf(i, box);
+      cands.push({ s, x, y, box, sep, cls });
+    }
+    // 목표: 그 구간만 지나는 토막(이어진 후보) 가운데 가장 긴 것의 가운데. 없으면 다른 선에서 가장 먼 자리(같으면 구간 가운데에 가까운 쪽)
+    const runs = [];
+    let first = -1;
+    cands.forEach((c, n) => {
+      const own = c.sep >= LABEL_SEP;
+      if (own && first < 0) first = n;
+      if (first >= 0 && (!own || n === cands.length - 1)) { runs.push([cands[first].s, cands[own ? n : n - 1].s]); first = -1; }
+    });
+    const longest = runs.reduce((a, r) => (!a || r[1] - r[0] > a[1] - a[0] ? r : a), null);
+    const mid = (c) => Math.abs(c.s - len / 2);
+    const target = longest ? (longest[0] + longest[1]) / 2 : cands.reduce((a, c) => (c.sep > a.sep || (c.sep === a.sep && mid(c) < mid(a)) ? c : a)).s;
+    // 다른 수업 실선이 지나가는 자리에도 둘 수 있는 라벨: ⌂ 라벨(⌂ 가 어느 선인지 말한다), 같은 길을 되짚는 구간(어디 두어도 그 길뿐)
+    const anywhere = lg.home || (!longest && overlap(i) >= 0.9);
+    items.push({ i, lg, cands, target, anywhere, own: runs.reduce((t, r) => t + r[1] - r[0] + step, 0) });
+  });
+  const placed = [];
+  const free = (bx) => bx[0] >= view[0] && bx[1] >= view[1] && bx[2] <= view[2] && bx[3] <= view[3]
+    && !avoid.some((q) => boxHit(bx, q)) && !placed.some((q) => boxHit(bx, q));
+  items.sort((a, b) => a.own - b.own || a.i - b.i);
+  for (const it of items) {
+    const near = (a, b) => Math.abs(a.s - it.target) - Math.abs(b.s - it.target);
+    const loose = (a, b) => b.sep - a.sep || near(a, b);
+    // 1) 그 구간만 지나는 자리, 2) 다른 수업 실선이 라벨 밑으로 지나가지는 않는 자리, 3) (anywhere 일 때만) 아무 자리
+    const c = it.cands.filter((x) => x.sep >= LABEL_SEP).sort(near).find((x) => free(x.box))
+      || it.cands.filter((x) => x.sep < LABEL_SEP && x.cls > 0).sort(loose).find((x) => free(x.box))
+      || (it.anywhere ? it.cands.filter((x) => x.sep < LABEL_SEP && !x.cls).sort(loose).find((x) => free(x.box)) : null);
+    if (!c) continue; // 둘 데가 없거나 어느 구간 것인지 헷갈리는 자리뿐이면 숨긴다(크게 보기에서 확대하면 보인다)
+    placed.push([c.box[0] - 2, c.box[1] - 2, c.box[2] + 2, c.box[3] + 2]);
+    L.marker(map.layerPointToLatLng([c.x, c.y]), { interactive: false, keyboard: false,
+      icon: L.divIcon({ className: "", html: `<span class="leg-label${it.lg.home ? " to-home" : ""}" aria-hidden="true">${it.lg.home ? HOME_PIN.replace('width="12" height="12"', 'width="10" height="10"') : ""}${it.lg.text}</span>`, iconSize: [0, 0] }) }).addTo(mp.legLabels);
+  }
+  mp.boxes = pins.concat(placed); // 수업이 없는 날 건물 번호가 피할 자리(placeLabels)
 }
 
 /**
@@ -2036,18 +2187,14 @@ function placeLabels(mp) {
   const { map, names, data } = mp;
   names.clearLayers();
   if (!data || !state.campus) return;
-  const z = map.getZoom(), withName = z >= 17.25, B = state.campus.buildings || {};
+  const z = map.getZoom(), withName = z >= 17.25;
   const icon = (html) => L.divIcon({ className: "", html, iconSize: [0, 0] });
   const size = map.getSize();
   if (data.stops.length) {
     for (const pin of mp.pins || []) {
-      const text = pin.bs.map((b) => (b === "GATE" ? "정문" : b)).join("·");
-      const name = withName ? pin.bs.map((b) => (B[b] || [])[0]).filter(Boolean).join("·") : "";
-      // 오른쪽 가장자리에 걸리면 핀 왼쪽에
-      const x = map.latLngToContainerPoint(pin.at).x, lw = Math.max(7.6 * text.length + 4, 10.2 * name.length);
-      const side = x + pin.w / 2 + 3 + lw > size.x - 4 ? " left" : "";
+      const { text, name, left } = pinTag(map, pin, withName); // 오른쪽 가장자리에 걸리면 핀 왼쪽에
       L.marker(pin.at, { interactive: false, keyboard: false, zIndexOffset: 50,
-        icon: icon(`<div class="blabel day${side}" style="--pin-half:${pin.w / 2}px" aria-hidden="true"><b>${esc(text)}</b>${name ? `<span>${esc(name)}</span>` : ""}</div>`) }).addTo(names);
+        icon: icon(`<div class="blabel day${left ? " left" : ""}" style="--pin-half:${pin.w / 2}px" aria-hidden="true"><b>${esc(text)}</b>${name ? `<span>${esc(name)}</span>` : ""}</div>`) }).addTo(names);
     }
     return;
   }
@@ -2098,8 +2245,9 @@ function twinText(twins) {
   return twins.length > 3 ? `${shown} 외 ${twins.length - 3}개` : shown;
 }
 
-/** 후보 카드: 순위, 한 주 걷는 시간·등교 요일(늦는 수업이 있으면 빨간 '늦을 수 있음'), 요일별 미리보기. 고른 카드는 테두리와 담은 분반 목록.
- *  늦는 시간을 한 주치 더한 분(예전 ' · 10분 늦음')은 뜻이 없어서 쓰지 않는다(10/1 사용자). 몇 분인지는 시간표 칸의 알약이 알린다 */
+/** 후보 카드: 순위, 한 주 걷는 시간·등교 요일(늦는 수업이 있으면 빨간 ' · 월수 2분 늦음'), 요일별 미리보기. 고른 카드는 테두리와 담은 분반 목록.
+ *  늦는 분을 한 주치 더한 값(예전 ' · 10분 늦음')은 뜻이 없어서 쓰지 않는다(10/1 사용자). 그 뒤 '늦을 수 있음'(앱 말투에 안 맞음),
+ *  '늦음'(가이드 형식 '분 + 늦음'·원칙 '늦음은 분으로'에 안 맞음)을 거쳐 늦는 요일과 그 분으로(10/1 밤 사용자 결정, lateText) */
 function rankItem(ev, i) {
   const R = state.result;
   const [h0, h1] = R.axis;
@@ -2107,9 +2255,12 @@ function rankItem(ev, i) {
   const pct = (x) => `${(x / span) * 100}%`;
   const cur = i === state.rank;
   const walk = Math.round(ev.travel);
-  const late = weekLate(ev);
+  const late = lateText(ev.legs, true);
   const days = R.days.filter((d) => (ev.days[d] || []).length).map((d) => DAY_KO[d]).join("");
-  const sum = days ? `걷기 주 ${walk}분 · ${days} 등교` : `걷기 주 ${walk}분`; // 시간이 모두 미정이면 등교 요일이 없다
+  // 요약은 덩이 사이(' · ' 의 가운뎃점 앞)에서만 줄을 바꾼다('늦음'만 다음 줄로 떨어지지 않게, 줄 끝에 점이 남지 않게).
+  // 시간이 모두 미정이면 등교 요일이 없다
+  const nw = (t) => h("span", { class: "nw" }, t);
+  const sum = [nw(`걷기 주 ${walk}분`), days ? [" ·\u00a0", nw(`${days} 등교`)] : null];
   const clsOf = (courseId) => state.byId.get(courseId)?.cls || "";
   const week = h("span", { class: "week", "aria-hidden": "true", style: { "--days": String(R.days.length) } },
     R.days.map((d) => h("span", { class: "wd" }, DAY_KO[d])),
@@ -2118,10 +2269,10 @@ function rankItem(ev, i) {
     })))));
   const btn = h("button", {
     type: "button", class: "rank-hit", "data-rank": String(i), "aria-current": cur ? "true" : null,
-    "aria-label": [`${i + 1}위`, `걷기 주 ${walk}분`, days ? `${days} 등교` : "", late ? "늦을 수 있는 수업 있음" : ""].filter(Boolean).join(", "),
+    "aria-label": [`${i + 1}위`, `걷기 주 ${walk}분`, days ? `${days} 등교` : "", late].filter(Boolean).join(", "),
   },
   h("span", { class: "rank-head" }, h("span", { class: "rank-no" }, `${i + 1}위`),
-    h("span", { class: "rank-sum" }, sum, late ? h("span", { class: "late" }, " · 늦을 수 있음") : null)),
+    h("span", { class: "rank-sum" }, sum, late ? h("span", { class: "late" }, " ·\u00a0", nw(late)) : null)),
   week);
   return h("li", { class: cur ? "rank selected" : "rank" }, btn, cur ? rankPicks(ev) : null);
 }
