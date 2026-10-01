@@ -1,0 +1,5 @@
+# Windows 에서 커밋해도 리눅스(GitHub Actions)에서 돌도록 줄 끝을 고정한다
+android/gradlew text eol=lf
+android/gradlew.bat text eol=crlf
+*.jar binary
+*.png binary

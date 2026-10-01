@@ -1,0 +1,27 @@
+{
+  "name": "tt-wizard-app",
+  "version": "0.6.0",
+  "private": true,
+  "description": "TT Wizard 스토어 앱(Capacitor): web/ 화면을 www/ 로 옮겨 안드로이드·iOS 앱으로 감싼다",
+  "scripts": {
+    "build": "cd .. && python scripts/build_app.py",
+    "sync": "cap sync",
+    "android": "cap open android",
+    "ios": "cap open ios"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.2",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/browser": "8.0.4",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/haptics": "8.0.2",
+    "@capacitor/ios": "8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.2",
+    "pretendard": "1.3.9"
+  }
+}

@@ -1,0 +1,103 @@
+# 스토어 앱(Capacitor, app/) 빌드 확인. 방법은 docs/app.md.
+# - 안드로이드: 디버그 APK 를 만들어 올린다(Actions 실행 화면 아래 Artifacts 에서 받아 안드로이드 폰에 설치해 볼 수 있다)
+# - iOS: 시뮬레이터용으로 서명 없이 빌드해 컴파일이 되는지만 본다(기기 설치·TestFlight 는 Apple 개발자 계정과 서명 키가 있어야 한다)
+# 출시용(서명한 AAB·IPA)은 서명 키를 저장소 비밀값으로 넣은 뒤 더한다.
+# web/ 화면이나 app/ 이 바뀌어 main 에 올라갈 때, 그리고 Actions 화면에서 손으로(Run workflow) 돌린다.
+
+name: app
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "web/**"
+      - "scripts/build_app.py"
+      - "scripts/export_web.py"
+      - ".github/workflows/app.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - name: Web data
+        run: python scripts/export_web.py
+      - name: Install Capacitor
+        working-directory: app
+        run: npm ci
+      - name: Bundle web screens into the app
+        run: python scripts/build_app.py
+      - name: Sync Android project
+        working-directory: app
+        run: npx cap sync android
+      - name: Build debug APK
+        working-directory: app/android
+        # Windows 에서 올린 파일은 실행 권한이 빠질 수 있다
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tt-wizard-android-debug
+          path: app/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+          if-no-files-found: error
+
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          # Capacitor 8 은 Xcode 26 이상
+          xcode-version: latest-stable
+      - name: Xcode version
+        run: xcodebuild -version
+      - name: Web data
+        run: python scripts/export_web.py
+      - name: Install Capacitor
+        working-directory: app
+        run: npm ci
+      - name: Bundle web screens into the app
+        run: python scripts/build_app.py
+      - name: Sync iOS project
+        working-directory: app
+        run: npx cap sync ios
+      - name: Build for iOS Simulator (no signing)
+        working-directory: app/ios/App
+        run: >
+          xcodebuild -project App.xcodeproj -scheme App -configuration Debug
+          -sdk iphonesimulator -destination "generic/platform=iOS Simulator"
+          -derivedDataPath build CODE_SIGNING_ALLOWED=NO build

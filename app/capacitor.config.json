@@ -1,0 +1,18 @@
+{
+  "appId": "io.github.archi142857.ttwizard",
+  "appName": "TT Wizard",
+  "webDir": "www",
+  "appendUserAgent": "TTWizardApp (+https://archi142857.github.io/tt-wizard/)",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "DEFAULT"
+    }
+  }
+}

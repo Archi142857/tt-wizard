@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 시작 화면(시스템 스플래시)과 웹뷰 바탕: 디자인 규칙 '스토어 출시' > '시작 화면'의 bg. 다크는 values-night -->
+<resources>
+    <color name="launch_background">#EEF0FF</color>
+</resources>

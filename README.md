@@ -64,6 +64,20 @@ python scripts/build_history.py              # 지난 학기 엑셀(data/raw/his
 
 자세한 내용은 `web/README.md`.
 
+## 스토어 앱 (안드로이드·iOS)
+
+같은 웹 화면을 Capacitor 8 로 감싼 앱(`app/`)이다. 화면 파일·글꼴·과목 자료 스냅샷을 앱에 넣어 첫 실행부터 오프라인으로 돌고,
+자료(JSON)만 웹 서버에서 새로 받는다. GitHub Actions(`app.yml`)가 안드로이드 디버그 APK 와 iOS 시뮬레이터 빌드를 만든다.
+구조·빌드·출시 전 할 일은 `docs/app.md`.
+
+```bash
+python scripts/export_web.py                 # web/data/
+cd app && npm ci && cd ..                    # Capacitor (Node 22 이상)
+python scripts/build_app.py                  # web/ → app/www/ (서비스 워커·모델·실측 페이지 빼고, 글꼴 내장, js/native.js)
+cd app && npx cap sync && npx cap open android   # 또는 ios (Mac, Xcode 26 이상)
+python scripts/app_icons.py                  # 아이콘을 바꿀 때만: app/assets/icons/ → 안드로이드 mipmap·iOS AppIcon
+```
+
 ## 서울대학교 관악캠퍼스 3D·2D 모델링
 
 캠퍼스 마법 지도 도로 그래프를 수치지형도로 만든 지형 위에 올리고, 길마다 경사(길 방향 30 m 구간)를 색으로 칠한 모형.
@@ -176,6 +190,8 @@ scripts/
   experiments.py             비교 실험 → results/experiments/ (engine_bench.mjs 로 웹 엔진 시간도 잰다)
   restrictions.py            수강편람 비고의 수강 제한(®) 읽기: 이 학생이 이 분반을 들을 수 있나
   field_validation.py        오르막 실측 구간 고르기·경로 뽑기·실측 비교, 측정 페이지 GPS 기록 분석 → results/field/
+  build_app.py               web/ → app/www/ (스토어 앱 묶음)
+  app_icons.py               디자인 아이콘 → 안드로이드 mipmap·iOS AppIcon
   tmap_matrix.py       TMAP 보행자 API → travel.csv
 data/
   sample/              데모용 가짜 데이터
@@ -188,8 +204,9 @@ data/
 web/                 정적 웹 화면: 과목 검색 → 시간표 · 동선 지도(OpenStreetMap) · 순위 목록 (GitHub Pages)
   model/               관악캠퍼스 3D·2D 모델링 (campus_model.py 가 만든 결과, 커밋한다)
   field/               오르막 실측 페이지 (폰 GPS 기록, 앱에서 링크하지 않음)
+app/                 스토어 앱 (Capacitor 8): android/, ios/ 네이티브 프로젝트, src/native.js(앱 연결), assets/icons/ — docs/app.md
 results/experiments/ 비교 실험 결과 (CSV, 그림, README.md 요약)
-docs/                계획·결정 사항, 방법 설명(elevation_method.md, travel_time_method.md, experiments.md)
+docs/                계획·결정 사항, 방법 설명(elevation_method.md, travel_time_method.md, experiments.md, app.md)
 tests/               pytest
 ```
 
