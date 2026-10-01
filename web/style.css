@@ -334,13 +334,15 @@ body.is-typing .bottom-bar { display: none; }
     right: max(var(--gutter-right), calc((100% - var(--width-result)) / 2 + var(--gutter-right))); }
 }
 /* 넓은 화면 결과 카드(검색 결과, 검색 전의 최근 검색어·과목 둘러보기)는 카드 안에서만 스크롤한다(10/2 사용자: 과목 스크롤은 그 카드
-   안에서만). 왼쪽 칸을 상단 바 아래 화면 높이로 묶고 카드가 남은 높이 안에서 줄어든다. 목록은 더 보기 없이 이어 붙는다(app.js feedList).
-   둘러보기의 선택칸(목록 제목)은 카드 위에 붙어 있다. 화면이 아주 낮으면(가로로 눕힌 폰에 화상 키보드) 카드가 너무 작아지므로
-   예전처럼 페이지가 스크롤한다 */
+   안에서만). 왼쪽 칸을 상단 바 아래 화면 높이로 묶고 카드만 남은 높이 안에서 줄어든다(학기 줄은 min-height 가 있어 함께 줄면 위아래 여백이
+   사라져 선택칸이 검색창에 붙었다). 스크롤 막대는 두지 않는다(10/2 사용자: 굳이 없어도 된다. 카드 끝에서 잘린 행이 더 있음을 보인다).
+   목록은 더 보기 없이 이어 붙는다(app.js feedList). 둘러보기의 선택칸(목록 제목)은 카드 위에 붙어 있다. 화면이 아주 낮으면(가로로 눕힌 폰에
+   화상 키보드) 카드가 너무 작아지므로 예전처럼 페이지가 스크롤한다 */
 @media (min-width: 42.5em) and (min-height: 25em), (horizontal-viewport-segments: 2) and (min-height: 25em) {
   .input-left { max-height: calc(100vh - var(--topbar-h) - var(--safe-top)); max-height: calc(100dvh - var(--topbar-h) - var(--safe-top)); }
-  .input-left .results { flex: 0 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
-    scrollbar-width: thin; scrollbar-gutter: stable; }
+  .input-left > * { flex-shrink: 0; }
+  .input-left .results { flex: 0 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .input-left .results::-webkit-scrollbar { display: none; }
   .input-left .results:has(> .browse:not([hidden])) { scroll-padding-top: calc(var(--touch) + var(--space-1) + 1px); } /* 붙어 있는 선택칸 밑으로 초점이 숨지 않게 */
   .browse-head { position: sticky; top: 0; z-index: 1; background: var(--card); }
 }
