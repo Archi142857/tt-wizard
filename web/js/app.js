@@ -5,23 +5,15 @@ import { DAY_KO, parseCourses, TravelMatrix, search, findConflicts, countFeasibl
 
 const $ = (id) => document.getElementById(id);
 
-// ---------------------------------------------------------------- 어디서 도는지: 웹, 설치한 PWA, Android 앱(TWA), iOS 앱(Capacitor)
-// 앱마다 다른 것(설치 안내, 새 버전 알림, 외부 링크, 햅틱)은 이 값으로만 가른다. CSS 는 html[data-shell] 을 본다
-const session = {
-  get(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { sessionStorage.setItem(k, v); } catch { /* 없어도 된다 */ } },
-};
-const query = new URLSearchParams(location.search);
-if (document.referrer.startsWith("android-app://") || query.get("src") === "twa") session.set("twa", "1");
-const SHELL = window.Capacitor?.isNativePlatform?.() ? "ios"
-  : session.get("twa") ? "twa"
+// ---------------------------------------------------------------- 어디서 도는지: 웹, 설치한 PWA, 스토어 앱(Capacitor 의 android·ios)
+// 앱마다 다른 것(설치 안내, 서비스 워커와 새 버전 알림, 외부 링크, 햅틱)은 이 값으로만 가른다. CSS 는 html[data-shell] 을 본다.
+// 스토어 앱은 안드로이드·iOS 모두 Capacitor 다(10/1 update34, TWA 는 쓰지 않는다). 앱 연결 스크립트(js/native.js, 백엔드 몫)가
+// 이 파일보다 먼저 돌며 자료 받기, 안드로이드 뒤로 가기(열린 시트 닫기 → 이전 화면 → 앱 내리기), <html data-platform> 을 맡는다
+const capacitor = window.Capacitor;
+const SHELL = capacitor?.isNativePlatform?.() ? (capacitor.getPlatform?.() === "android" ? "android" : "ios")
   : (matchMedia("(display-mode: standalone)").matches || navigator.standalone) ? "pwa" : "web";
+const IN_APP = SHELL === "android" || SHELL === "ios"; // 스토어 앱: 서비스 워커·설치 안내·새 버전 알림 없음, 외부 링크는 Capacitor Browser
 document.documentElement.dataset.shell = SHELL;
-if (query.has("src")) { // TWA 시작 주소의 ?src=twa 는 판별에만 쓰고 지운다
-  query.delete("src");
-  const rest = query.toString();
-  history.replaceState(null, "", location.pathname + (rest ? `?${rest}` : ""));
-}
 
 // ---------------------------------------------------------------- 설정
 
@@ -29,7 +21,7 @@ const APP_VERSION = "0.6.0";
 // 정보 화면 링크. 주소가 정해지면 넣는다(비어 있으면 그 행을 보이지 않는다)
 const PRIVACY_URL = ""; // 개인정보 처리방침 공개 페이지(스토어에 적는 주소와 같게)
 const CONTACT_URL = ""; // 문의 페이지(App Store 지원 URL과 같은 곳)
-const REVIEW_URL = { twa: "", ios: "" }; // 스토어 앱 페이지(스토어 앱에서만 '리뷰 남기기')
+const REVIEW_URL = { android: "", ios: "" }; // 스토어 앱 페이지(스토어 앱에서만 '리뷰 남기기')
 const TOP_K = 20; // 한 번에 찾는 조합 수. 후보 카드는 6개씩 보인다(넓은 화면의 2·3열이 꽉 차게)
 const RESULTS_STEP = 8;
 const RANKS_STEP = 6; // 후보 카드 처음 개수이자 '더 보기' 한 번에 더 보이는 개수
@@ -323,6 +315,7 @@ async function loadSemester(sem) {
   state.loaded = true;
   for (const p of state.picks) { const c = state.byId.get(p.id); if (c) Object.assign(p, snapshot(c)); }
   savePicks();
+  checkOverlap(); // 지난번에 담아 둔 과목끼리 겹치면 열자마자 보인다
   renderTerm();
   renderLoadState();
   renderResults();
@@ -499,10 +492,18 @@ function marked(text, q, skip = /\s/, cho = false) {
 const isPicked = (id) => state.picks.some((p) => p.id === id);
 
 /** 담기 버튼과 그 행. 누르는 영역은 행 전체(style.css), 담은 과목의 행은 어두운 바탕. */
+/** 담기 버튼과 행: 담았으면 어두운 바탕에 '✓ 담음'. 담은 과목이 다른 과목과 시간이 겹쳐 조합을 막으면 버튼 앞에 '시간 겹침'. */
 function setAddButton(b, name, picked) {
+  const clash = picked && state.errors.overlap.has(b.dataset.id);
   b.classList.toggle("is-on", picked);
-  b.closest(".result")?.classList.toggle("is-picked", picked);
-  b.setAttribute("aria-label", `${name} ${picked ? "담음" : "담기"}`);
+  const row = b.closest(".result");
+  if (row) {
+    row.classList.toggle("is-picked", picked);
+    const tag = row.querySelector(".r-clash");
+    if (clash && !tag) b.before(h("span", { class: "tag danger r-clash", "aria-hidden": "true" }, "시간 겹침"));
+    else if (!clash && tag) tag.remove();
+  }
+  b.setAttribute("aria-label", `${name} ${picked ? "담음" : "담기"}${clash ? ", 시간 겹침" : ""}`);
   b.replaceChildren(...(picked ? [icon(I.check, 16), "담음"] : ["담기"]));
 }
 
@@ -552,13 +553,15 @@ function syncAddButtons() {
 
 // ---------------------------------------------------------------- 담은 과목
 
-/** 담은 과목·분반·직접 입력이 바뀐 뒤: 저장하고, 그 조합에 대한 오류와 결과를 비운다. */
+/** 담은 과목·분반·직접 입력이 바뀐 뒤: 저장하고, 그 조합에 대한 오류와 결과를 비운 뒤 겹침을 다시 본다. 새로 겹치게 됐으면 true. */
 function changed() {
+  const had = state.errors.overlap.size > 0;
   cancelCompute();
   savePicks();
   saveOverrides();
   clearErrors();
   state.result = null;
+  return checkOverlap() && !had;
 }
 
 function clearErrors() {
@@ -566,13 +569,32 @@ function clearErrors() {
   state.errors.general = null;
 }
 
+const OVERLAP_TEXT = "겹치지 않는 조합이 없어요";
+
+/**
+ * 켠 분반으로 겹치지 않는 조합이 하나도 없으면 시간표 만들기를 누르기 전에, 담을 때 바로 알린다(10/1 사용자).
+ * 서로 막는 과목(가장 작은 묶음)에 '시간 겹침'(담은 과목 행과 검색 결과 행), 담은 과목 제목 아래 '겹치지 않는 조합이 없어요'.
+ * 50ms 안에 판단이 안 서면(분반이 아주 많을 때) 넘어가고, 그때는 시간표 만들기에서 워커가 알린다. 겹치면 true.
+ */
+function checkOverlap() {
+  if (!state.loaded) return false;
+  const live = collectCourses().courses;
+  if (live.length < 2) return false;
+  const r = countFeasible(live, { limit: 1, budgetMs: 50 });
+  if (r.count > 0 || !r.exact) return false;
+  state.errors.overlap = new Set(findConflicts(live));
+  state.errors.general = { text: OVERLAP_TEXT };
+  return true;
+}
+
 function addCourse(id) {
   const c = state.byId.get(id);
   if (!c || isPicked(id)) return;
   state.picks.push({ id, excluded: new Set(), ...snapshot(c) });
-  changed();
+  const clash = changed();
   renderPicked({ added: id });
-  announce(`${c.name} 담았어요`);
+  if (clash) announce(`${c.name} 담았어요. ${OVERLAP_TEXT}`, "alert");
+  else announce(`${c.name} 담았어요`);
 }
 
 function removeCourse(id, { fromList = false } = {}) {
@@ -590,7 +612,7 @@ function removeCourse(id, { fromList = false } = {}) {
   const nextId = sib ? sib.dataset.id : null;
   state.picks.splice(i, 1);
   changed();
-  $("picked-count").textContent = state.picks.length ? String(state.picks.length) : "";
+  renderPickedHead();
   let done = false;
   const finish = () => {
     if (done) return;
@@ -666,13 +688,28 @@ function courseRow(p, isNew) {
     h("button", { type: "button", class: "icon-btn remove", "data-remove": p.id, "aria-label": `${name} 빼기` }, icon(I.x, 20)));
 }
 
-function renderPicked({ added = "" } = {}) {
+/** 담은 과목 제목 옆: 과목 수와 총 학점(이번 자료에 없는 과목은 빼고 센다). */
+function renderPickedHead() {
   const n = state.picks.length;
   $("picked-count").textContent = n ? String(n) : "";
+  let sum = 0;
+  for (const p of state.picks) {
+    const c = state.loaded ? state.byId.get(p.id) : null;
+    if (state.loaded && !c) continue;
+    sum += Number((c ? c.credit : p.credit) || 0);
+  }
+  sum = Math.round(sum * 10) / 10;
+  $("picked-credits").textContent = n && sum ? `총 ${sum}학점` : "";
+}
+
+function renderPicked({ added = "" } = {}) {
+  const n = state.picks.length;
+  renderPickedHead();
   $("picked-empty").hidden = n > 0;
   $("picked-legend").hidden = n === 0; // 점 색 풀이는 담은 과목이 있을 때만
   $("picked-list").replaceChildren(...state.picks.map((p) => courseRow(p, p.id === added)));
   renderPickedError();
+  syncAddButtons(); // 검색 결과 행의 '시간 겹침'도 같이
   updateRun();
   if (sheetId && $("course-sheet").open) refreshSheetHead();
 }
@@ -1231,7 +1268,8 @@ function showResult(res, courses) {
   store.set("made", true);
   updateInstall();
   go("result");
-  if (SHELL === "ios") window.Capacitor?.Plugins?.Haptics?.notification?.({ type: "SUCCESS" })?.catch?.(() => null);
+  // 성공 햅틱은 iOS 앱에서만(디자인 규칙 '햅틱': 안드로이드는 아직 없음. 정하면 조건만 넓힌다)
+  if (SHELL === "ios") capacitor?.Plugins?.Haptics?.notification?.({ type: "SUCCESS" })?.catch?.(() => null);
 }
 
 // ---------------------------------------------------------------- 결과 화면
@@ -1385,13 +1423,27 @@ function renderTimetable(ev, day) {
     const px = (heightPct / 100) * gridPx;
     // 칸 높이에 맞춰 과목명을 몇 줄까지 보일지 정한다(줄 18, 강의실 줄 16, 늦음 줄 18, 위아래 여백 6). 넘치면 마지막 줄에 말줄임.
     // 과목명이 먼저다: 과목명을 다 보이고도 남으면 강의실(폰에서 75분 수업은 과목명이 한 줄이면 강의실까지).
-    // 낮은 칸은 늦음 표시가 과목명 위 오른쪽에 겹친다
     const short = px < 38 * k;
-    const lateRow = late && !short ? 18 * k : 0;
-    const avail = px - 6 - lateRow;
-    const need = Math.min(3, textLines(shortName(m.section.name), titleFont, textW));
-    const showRoom = !short && (avail >= 50 * k || avail - 16 * k >= need * 18 * k);
-    const lines = Math.max(1, Math.min(3, Math.floor((avail - (showRoom ? 16 * k : 0)) / (18 * k))));
+    const title = shortName(m.section.name);
+    const need = Math.min(3, textLines(title, titleFont, textW));
+    const fit = (avail) => {
+      const showRoom = !short && (avail >= 50 * k || avail - 16 * k >= need * 18 * k);
+      const lines = Math.max(1, Math.min(3, Math.floor((avail - (showRoom ? 16 * k : 0)) / (18 * k))));
+      return { showRoom, lines, used: Math.min(lines, need) * 18 * k + (showRoom ? 16 * k : 0) };
+    };
+    // 늦음 알약은 오른쪽 위. 과목명 첫 줄 옆에 들어가거나(넓은 칸) 가운데 놓인 글이 알약 아래에서 시작하면(높은 칸) 그대로 두고,
+    // 둘 다 아니면 과목명 위에 알약 줄을 따로 둔다(과목명이 한 줄 밀린다). 낮은 칸은 과목명 위 오른쪽에 겹친다
+    let lateRow = 0, pillW = 0;
+    if (late) {
+      canvas.font = `700 ${12 * k}px ${getComputedStyle(grid).fontFamily}`;
+      pillW = canvas.measureText(`${late}분 늦음`).width + 12;
+    }
+    if (late && !short) {
+      const beside = firstLineWidth(title, titleFont, textW) + pillW + 4 <= textW;
+      const below = (px - 6 - fit(px - 6).used) / 2 >= 16 * k + 2;
+      if (!beside && !below) lateRow = 18 * k;
+    }
+    const { showRoom, lines } = fit(px - 6 - lateRow);
     const cls = state.byId.get(m.section.courseId)?.cls || "";
     const nx = legs[i + 1];
     let next = "";
@@ -1402,14 +1454,29 @@ function renderTimetable(ev, day) {
     const said = [`${n}. ${hm(m.start)}~${hm(m.end)} ${m.section.name}`, roomLabel(m), late ? `${late}분 늦음(${lateWhy(l)})` : "", next].filter(Boolean).join(", ");
     grid.append(h("li", {
       class: `tt-block${short ? " short" : ""}${lateRow ? " is-late" : ""}`,
-      style: { top: top(m.start), height: `calc(${heightPct}% - 2px)`, background: clsFill(cls), "--lines": String(lines) },
+      style: { top: top(m.start), height: `calc(${heightPct}% - 2px)`, background: clsFill(cls), "--lines": String(lines),
+        ...(late && short ? { "--late-w": `${Math.ceil(pillW + 6)}px` } : {}) }, // 낮은 칸: 과목명이 알약 밑으로 들어가지 않고 그 앞에서 말줄임
       title: `${m.section.name} ${hm(m.start)}~${hm(m.end)} ${roomLabel(m)}`,
     },
     h("span", { class: "sr-only" }, said),
     late ? h("span", { class: "tt-late", "aria-hidden": "true", title: lateWhy(l) }, `${late}분 늦음`) : null,
-    h("span", { class: "b-title", "aria-hidden": "true" }, shortName(m.section.name)),
+    h("span", { class: "b-title", "aria-hidden": "true" }, title),
     showRoom ? h("span", { class: "b-room", "aria-hidden": "true" }, roomLabel(m)) : null));
   });
+}
+
+/** 첫 줄의 폭 어림(textLines 와 같은 방식으로 줄을 바꾼다). */
+function firstLineWidth(text, font, width) {
+  canvas.font = font;
+  const space = canvas.measureText(" ").width;
+  let cur = 0;
+  for (const word of String(text).split(/\s+/).filter(Boolean)) {
+    const w = canvas.measureText(word).width;
+    if (!cur) { if (w >= width) return width; cur = w; continue; }
+    if (cur + space + w > width) break;
+    cur += space + w;
+  }
+  return cur;
 }
 
 /** 글자가 폭 안에서 몇 줄이 되는지 어림한다(띄어쓰기에서 줄을 바꾸고, 폭보다 긴 낱말은 쪼갠다). */
@@ -1435,7 +1502,7 @@ function renderSummary(ev, day) {
   const walk = Math.round(legs.reduce((s, l) => s + l.minutes, 0));
   const late = legs.reduce((s, l) => s + lateOf(l), 0);
   box.replaceChildren(...[h("span", {}, "걷기 ", h("b", {}, `${walk}분`)),
-    late ? h("span", { class: "tag danger" }, h("span", { class: "sr-only" }, ", "), `${late}분 늦음`) : null].filter(Boolean));
+    late ? h("span", { class: "tag danger" }, h("span", { class: "sr-only" }, ", "), "늦을 수 있음") : null].filter(Boolean)); // 그날 늦는 분을 더한 값은 쓰지 않는다
 }
 
 // ---------------------------------------------------------------- 지도
@@ -1673,7 +1740,8 @@ function twinText(twins) {
   return twins.length > 3 ? `${shown} 외 ${twins.length - 3}개` : shown;
 }
 
-/** 후보 카드: 순위, 한 주 걷는 시간·등교 요일(늦으면 빨간 'N분 늦음'), 요일별 미리보기. 고른 카드는 테두리와 담은 분반 목록. */
+/** 후보 카드: 순위, 한 주 걷는 시간·등교 요일(늦는 수업이 있으면 빨간 '늦을 수 있음'), 요일별 미리보기. 고른 카드는 테두리와 담은 분반 목록.
+ *  늦는 시간을 한 주치 더한 분(예전 ' · 10분 늦음')은 뜻이 없어서 쓰지 않는다(10/1 사용자). 몇 분인지는 시간표 칸의 알약이 알린다 */
 function rankItem(ev, i) {
   const R = state.result;
   const [h0, h1] = R.axis;
@@ -1692,10 +1760,10 @@ function rankItem(ev, i) {
     })))));
   const btn = h("button", {
     type: "button", class: "rank-hit", "data-rank": String(i), "aria-current": cur ? "true" : null,
-    "aria-label": [`${i + 1}위`, `걷기 주 ${walk}분`, days ? `${days} 등교` : "", late ? `${late}분 늦음` : ""].filter(Boolean).join(", "),
+    "aria-label": [`${i + 1}위`, `걷기 주 ${walk}분`, days ? `${days} 등교` : "", late ? "늦을 수 있는 수업 있음" : ""].filter(Boolean).join(", "),
   },
   h("span", { class: "rank-head" }, h("span", { class: "rank-no" }, `${i + 1}위`),
-    h("span", { class: "rank-sum" }, sum, late ? h("span", { class: "late" }, ` · ${late}분 늦음`) : null)),
+    h("span", { class: "rank-sum" }, sum, late ? h("span", { class: "late" }, " · 늦을 수 있음") : null)),
   week);
   return h("li", { class: cur ? "rank selected" : "rank" }, btn, cur ? rankPicks(ev) : null);
 }
@@ -1890,8 +1958,21 @@ function showSnackbar(text, action, fn) {
   bar.hidden = true;
   void bar.offsetWidth; // 다시 올라오게
   bar.hidden = false;
+  placeSnackbar();
   armSnackbar();
 }
+// 넓은 화면의 입력 화면은 시간표 만들기가 오른쪽 칸 안에 있어(sticky) 높이가 그때그때 달라서, 스낵바를 그 버튼 바로 위에 띄운다
+const wideInput = matchMedia("(min-width: 52.5em)"); // bp-expanded 840px, style.css 의 두 칸과 같다
+function placeSnackbar() {
+  const bar = $("snackbar");
+  bar.style.bottom = "";
+  if (bar.hidden || screen !== "input" || !wideInput.matches) return;
+  const r = $("run").getBoundingClientRect();
+  if (r.bottom <= 0 || r.top >= innerHeight) return;
+  bar.style.bottom = `${Math.round(innerHeight - r.top + 8)}px`;
+}
+window.addEventListener("scroll", placeSnackbar, { passive: true });
+window.addEventListener("resize", placeSnackbar);
 function armSnackbar() {
   clearTimeout(snackTimer);
   snackTimer = setTimeout(hideSnackbar, 5000);
@@ -1912,9 +1993,10 @@ function hideSnackbar() {
 
 // ---------------------------------------------------------------- 설치(웹), 새 버전, 연결 상태
 
-// 서비스 워커: 설치한 앱이 네트워크 없이도 열리게(web/sw.js). https 나 localhost 에서만 된다. iOS 앱은 파일을 앱에 넣는다
+// 서비스 워커: 설치한 앱이 네트워크 없이도 열리게(web/sw.js). https 나 localhost 에서만 된다. 스토어 앱(안드로이드·iOS)은 화면 파일이
+// 앱에 들어 있어 쓰지 않는다(새 버전도 스토어 업데이트라 스낵바가 없다)
 let updateReady = false, updateShown = false;
-if (SHELL !== "ios" && "serviceWorker" in navigator && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname))) {
+if (!IN_APP && "serviceWorker" in navigator && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname))) {
   const hadController = Boolean(navigator.serviceWorker.controller);
   navigator.serviceWorker.register("sw.js").catch(() => null);
   // 새 워커가 이 화면을 맡으면 새 버전이 올라온 것(처음 설치될 때는 빼고)
@@ -1963,10 +2045,10 @@ window.addEventListener("online", () => {
   for (const mp of [maps.small, maps.full]) if (mp) mp.tiles.redraw();
 });
 
-// 외부 링크(처리방침·문의·출처)는 앱 밖으로. iOS 앱은 인앱 Safari(Capacitor Browser), 웹·TWA 는 새 탭·Custom Tab
+// 외부 링크(처리방침·문의·출처)는 앱 밖으로. 스토어 앱은 Capacitor Browser(iOS 인앱 Safari, 안드로이드 Custom Tab), 웹은 새 탭
 document.addEventListener("click", (e) => {
   const a = e.target.closest('a[target="_blank"]');
-  const browser = SHELL === "ios" && window.Capacitor?.Plugins?.Browser;
+  const browser = IN_APP && capacitor?.Plugins?.Browser;
   if (!a || !browser) return;
   e.preventDefault();
   browser.open({ url: a.href });
@@ -2008,7 +2090,8 @@ q.addEventListener("focus", () => { typingGrace = performance.now() + 800; updat
 q.addEventListener("blur", () => { typingGrace = 0; updateTyping(); });
 (vv || window).addEventListener("resize", updateTyping);
 const onRotate = () => { fullH = 0; updateTyping(); };
-if (screen.orientation) screen.orientation.addEventListener("change", onRotate); else window.addEventListener("orientationchange", onRotate);
+if (window.screen.orientation) window.screen.orientation.addEventListener("change", onRotate); // screen 은 이 파일에서 지금 화면 이름이라 window.screen
+else window.addEventListener("orientationchange", onRotate);
 updateTyping();
 $("q-clear").addEventListener("click", () => {
   q.value = "";

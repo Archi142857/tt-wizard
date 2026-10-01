@@ -41,6 +41,7 @@
   </header>
   <main>
     <h1 class="sr-only">시간표 만들기</h1>
+    <div class="input-left">
     <div class="term-row">
       <div class="term-left">
         <select id="year" class="term-select" aria-label="연도" hidden></select>
@@ -64,8 +65,10 @@
       <p class="empty" id="results-empty" hidden>검색 결과가 없어요</p>
       <div class="more" id="results-more" hidden><button type="button" class="btn-text">더 보기</button></div>
     </div>
+    </div>
 
-    <h2 class="section-title" id="picked-title">담은 과목 <span class="count" id="picked-count"></span></h2>
+    <div class="input-right">
+    <h2 class="section-title" id="picked-title">담은 과목 <span class="count" id="picked-count"></span> <span class="credits" id="picked-credits"></span></h2>
     <div class="picked-error" id="picked-error" hidden>
       <p class="error-line" id="picked-error-text"></p>
       <button type="button" class="btn-text small" id="picked-retry" hidden>다시 시도</button>
@@ -91,11 +94,12 @@
         </div>
       </fieldset>
     </div>
+    <div class="bottom-bar">
+      <button type="button" class="btn-primary" id="run" disabled>시간표 만들기</button>
+      <button type="button" class="btn-text" id="cancel" hidden>취소</button>
+    </div>
+    </div>
   </main>
-  <div class="bottom-bar">
-    <button type="button" class="btn-primary" id="run" disabled>시간표 만들기</button>
-    <button type="button" class="btn-text" id="cancel" hidden>취소</button>
-  </div>
 </div>
 
 <!-- 결과 화면 -->

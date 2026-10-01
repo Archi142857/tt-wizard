@@ -105,10 +105,10 @@
 
   /* 화면 전용: 시간표 격자 높이(app.js 가 블록 줄 수를 정할 때 읽는다), 폰 가장자리(노치·홈 막대) */
   --tt-h: 316px;
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --gutter-left: max(var(--space-5), env(safe-area-inset-left, 0px));
-  --gutter-right: max(var(--space-5), env(safe-area-inset-right, 0px));
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --gutter-left: max(var(--space-5), var(--safe-area-inset-left, env(safe-area-inset-left, 0px)));
+  --gutter-right: max(var(--space-5), var(--safe-area-inset-right, env(safe-area-inset-right, 0px)));
   --bottom-bar-h: calc(var(--cta-height) + var(--space-3) * 2 + var(--safe-bottom));
   color-scheme: light;
 }
@@ -170,7 +170,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 html { background: var(--bg); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
   scroll-padding-top: calc(var(--topbar-h) + var(--safe-top)); scroll-padding-bottom: var(--bottom-bar-h); }
-html[data-shell="pwa"], html[data-shell="twa"], html[data-shell="ios"] { overscroll-behavior-y: none; }
+html[data-shell="pwa"], html[data-shell="android"], html[data-shell="ios"] { overscroll-behavior-y: none; }
 html:has(dialog[open]) { overflow: hidden; }
 body { margin: 0; min-height: 100vh; min-height: 100dvh; font-family: var(--font-sans); font-size: 1rem; line-height: 1.5rem; color: var(--text);
   background: var(--bg); -webkit-font-smoothing: antialiased; word-break: keep-all; overflow-wrap: break-word; }
@@ -206,6 +206,9 @@ html[data-nav="back"]::view-transition-new(root) { animation: none; }
 h2.section-title { display: flex; align-items: baseline; gap: var(--space-2); margin: var(--space-8) var(--space-1) var(--space-3);
   font-size: 1.25rem; line-height: 1.75rem; font-weight: 700; letter-spacing: -0.01em; color: var(--heading); }
 h2.section-title .count { color: var(--text3); }
+/* 담은 과목 제목 오른쪽 '총 18학점'(t-body-strong text). 좁으면 다음 줄 오른쪽으로 */
+#picked-title { flex-wrap: wrap; row-gap: 0; }
+#picked-title .credits { margin-left: auto; font-size: 1rem; line-height: 1.5rem; font-weight: 500; letter-spacing: 0; color: var(--text); font-variant-numeric: tabular-nums; }
 .empty { margin: 0; padding: var(--space-5) var(--space-4); font-size: 1rem; line-height: 1.5rem; color: var(--text3); }
 
 /* ---------------------------------------------------------------- 상단 바 */
@@ -247,6 +250,19 @@ h2.section-title .count { color: var(--text3); }
   padding: var(--space-3) var(--gutter-right) calc(var(--space-3) + var(--safe-bottom)) var(--gutter-left); background: linear-gradient(transparent, var(--bg) 24%); }
 body.is-typing .bottom-bar { display: none; }
 .bottom-bar .btn-text { flex-shrink: 0; min-height: var(--cta-height); }
+/* 넓은 화면(태블릿 가로·펼친 폴더블·PC, bp-expanded 840px~): 입력 화면을 두 칸으로(10/1 사용자). 왼쪽은 학기·검색, 오른쪽은 담은 과목·조건.
+   시간표 만들기는 오른쪽 칸 맨 아래(조건 밑)에 칸 폭으로 두고, 오른쪽 칸이 화면보다 길면 화면 아래에 붙는다(sticky) */
+@media (min-width: 52.5em) {
+  #view-input { max-width: var(--width-result); padding-bottom: 0; }
+  #view-input > main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--space-8); align-items: start; }
+  .input-right > h2.section-title:first-child { margin-top: var(--space-2); }
+  .input-right .bottom-bar { position: sticky; z-index: 1; margin-top: var(--space-4);
+    padding: var(--space-3) 0 calc(var(--space-6) + var(--safe-bottom)); }
+  .input-right .btn-primary { max-width: none; }
+  /* 되돌리기 스낵바는 오른쪽 칸(담은 과목) 폭에 맞춰 시간표 만들기 위에 띄운다 */
+  #view-input:not([hidden]) ~ .snackbar { left: calc(50% + var(--space-4)); max-width: none; margin: 0;
+    right: max(var(--gutter-right), calc((100% - var(--width-result)) / 2 + var(--gutter-right))); }
+}
 .spinner { flex-shrink: 0; width: 20px; height: 20px; border: 2px solid currentColor; border-right-color: transparent;
   border-radius: 50%; animation: tt-spin .8s linear infinite; will-change: transform; }
 .spinner.small { width: 16px; height: 16px; }
@@ -282,11 +298,18 @@ body.is-typing .bottom-bar { display: none; }
 .searchbox input:disabled { opacity: 1; background: transparent; -webkit-text-fill-color: currentColor; }
 .searchbox .spinner { margin-right: var(--space-2); color: var(--text3); }
 .searchbox .icon-btn { margin-right: calc(var(--space-2) * -1); }
-.results { margin-top: var(--space-2); overflow: hidden; }
+.results { margin-top: var(--space-2); overflow: hidden; container-type: inline-size; }
 .result { position: relative; display: flex; align-items: center; gap: var(--space-3); min-height: 64px; padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
   cursor: pointer; transition: background-color var(--dur-fade) var(--ease-standard); }
 /* 담기·빼기는 행 어디를 눌러도 된다: 버튼의 누르는 영역(::before)을 행 전체로 넓힌다. 초점 테두리도 행에 */
 .result .btn-add { position: static; }
+/* 담은 과목이 다른 과목과 겹쳐 조합을 막을 때 버튼 앞 '시간 겹침'. 좁은 칸·큰 글자에서는 과목명 아래 줄로 */
+.result:has(.r-clash) { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: var(--space-3); }
+.result .r-clash { margin-right: calc(var(--space-2) - var(--space-3)); }
+@container (max-width: 20em) {
+  .result:has(.r-clash) { grid-template-columns: minmax(0, 1fr) auto; row-gap: var(--space-1); }
+  .result .r-clash { grid-area: 2 / 1; justify-self: start; margin-right: 0; }
+}
 .result .btn-add::before { top: 0; left: 0; width: 100%; height: 100%; transform: none; }
 .result .btn-add:focus-visible { outline: none; }
 .result:has(.btn-add:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
@@ -437,10 +460,12 @@ dialog.sheet.is-dragging { transition: none; }
 .tt-block.short { padding: 0 var(--space-2); }
 .tt-block.short .b-room { display: none; }
 .tt-block.short .b-title { -webkit-line-clamp: 1; font-size: 0.75rem; line-height: 1rem; }
-/* 늦는 수업: 빨간 'N분 늦음'. 낮은 칸은 과목명 위 오른쪽에 겹치고, 그 밖에는 과목명 위에 한 줄 */
+/* 늦는 수업: 빨간 'N분 늦음'을 오른쪽 위에. 과목명 첫 줄 옆이나 글 위에 자리가 있으면 그대로 두고, 없을 때만 과목명 위에 한 줄(.is-late,
+   app.js 가 재어 정한다). 낮은 칸은 과목명 위 오른쪽에 겹친다 */
 .tt-late { position: absolute; top: 3px; right: 4px; z-index: 1; padding: 0 6px; border-radius: var(--radius-full); background: var(--danger); color: var(--on-danger);
   font-size: 0.75rem; line-height: 1rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tt-block.is-late .tt-late { position: static; align-self: flex-end; margin-bottom: 2px; }
+.tt-block.short .b-title { padding-right: var(--late-w, 0px); } /* 낮은 칸의 늦음 알약 자리(app.js 가 잰 폭) */
 .tt-empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; line-height: 1.25rem; color: var(--text3); }
 .mapcard { display: flex; flex-direction: column; gap: var(--space-2); }
 .map-box { position: relative; display: flex; flex: 1; min-height: 0; }
@@ -501,7 +526,7 @@ dialog.sheet.is-dragging { transition: none; }
 .view-map { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; padding: 0 var(--gutter-right) 0 var(--gutter-left); background: var(--bg); }
 .view-map .mapcard { flex: 1; min-height: 0; gap: 0; margin: 0 calc(var(--gutter-right) * -1) 0 calc(var(--gutter-left) * -1); }
 .view-map .map { border-radius: 0; }
-.view-map .map-box > .map-attr { right: env(safe-area-inset-right, 0px); border-bottom-right-radius: 0; }
+.view-map .map-box > .map-attr { right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px)); border-bottom-right-radius: 0; }
 .view-map .map-box > .map-note { left: var(--gutter-left); top: var(--space-3); }
 .view-map .legend { grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); padding: var(--space-3) var(--gutter-right) calc(var(--space-3) + var(--safe-bottom)) var(--gutter-left); }
 .view-map .legend li.line { grid-column: auto; }
@@ -516,7 +541,7 @@ dialog.sheet.is-dragging { transition: none; }
 .leaflet-container .leaflet-bar a:first-child { border-top-left-radius: var(--radius-sm); border-top-right-radius: var(--radius-sm); }
 .leaflet-container .leaflet-bar a:last-child { border-bottom-left-radius: var(--radius-sm); border-bottom-right-radius: var(--radius-sm); }
 .leaflet-container .leaflet-bar a.leaflet-disabled { background: var(--card); color: var(--text3); }
-.leaflet-top.leaflet-right { top: var(--space-1); right: env(safe-area-inset-right, 0px); }
+.leaflet-top.leaflet-right { top: var(--space-1); right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px)); }
 
 /* ---------------------------------------------------------------- 순위 */
 .result-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; column-gap: var(--space-3); row-gap: var(--space-1);
