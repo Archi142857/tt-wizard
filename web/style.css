@@ -528,7 +528,8 @@ dialog.sheet.is-dragging { transition: none; }
 .result-head .cond { font-size: 0.875rem; line-height: 1.25rem; color: var(--text3); }
 /* 후보 카드: 순위와 한 주 요약, 요일별 미리보기(칸마다 수업 막대). 고른 카드는 테두리와 담은 분반 목록 */
 .ranks { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
-.rank { overflow: hidden; border: 2px solid transparent; border-radius: var(--radius-lg); background: var(--card); transition: border-color var(--dur-fade) var(--ease-standard); }
+.rank { overflow: hidden; border: 2px solid transparent; border-radius: var(--radius-lg); background: var(--card); transition: border-color var(--dur-fade) var(--ease-standard);
+  container-type: inline-size; }
 .rank.selected { border-color: var(--accent); }
 .rank:has(.rank-hit:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .rank-hit { display: flex; flex-direction: column; gap: var(--space-2); width: 100%; padding: var(--space-3); border: 0; background: transparent; color: var(--text); text-align: left;
@@ -544,11 +545,27 @@ dialog.sheet.is-dragging { transition: none; }
 .week .wd { font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text3); text-align: center; }
 .week .wc { position: relative; height: 48px; border-radius: var(--radius-xs); background: var(--bg); }
 .week .wb { position: absolute; left: 0; right: 0; min-height: 4px; border-radius: var(--radius-2xs); }
-.rank-picks { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0 var(--space-3) var(--space-3); list-style: none; }
-.rank-picks li { display: flex; align-items: flex-start; gap: var(--space-2); font-size: 0.875rem; line-height: 1.25rem; word-break: keep-all; }
+/* 고른 카드의 분반 목록: 과목명 | 분반 두 열(행마다 subgrid 로 열을 맞춰 번호를 세로로 훑게). 번호만 진하게, 교수는 흐리게.
+   같은 시간·건물 분반은 아래 줄에 '같은 시간·건물'(과목명 열)과 그 분반(분반 열) */
+.rank-picks { display: grid; grid-template-columns: 12px minmax(0, 1fr) fit-content(48%); column-gap: var(--space-2); row-gap: 6px; margin: 0;
+  padding: 0 var(--space-3) var(--space-3); list-style: none; }
+.rank-picks li { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: baseline; font-size: 0.875rem; line-height: 1.25rem; word-break: keep-all; }
 .swatch { flex-shrink: 0; width: 12px; height: 12px; margin-top: 4px; border-radius: var(--radius-2xs); }
-.rank-picks .p-sec { color: var(--text2); }
-.rank-picks .p-twins { display: block; font-size: 0.8125rem; line-height: 1.125rem; color: var(--text3); }
+.rank-picks .swatch { grid-area: 1 / 1; align-self: start; }
+.rank-picks .p-name { grid-column: 2; }
+.rank-picks .p-sec { grid-column: 3; color: var(--text3); font-variant-numeric: tabular-nums; }
+.rank-picks .p-sec .no { font-weight: 500; color: var(--text); }
+.rank-picks .pf { white-space: nowrap; } /* 넘치면 번호 뒤에서 줄을 바꾸고 교수 이름은 자르지 않는다 */
+.rank-picks .p-twins { display: contents; font-size: 0.8125rem; line-height: 1.125rem; color: var(--text3); }
+.rank-picks .p-tl { grid-column: 2; }
+.rank-picks .p-tw { grid-column: 3; inline-size: 0; min-inline-size: 100%; font-variant-numeric: tabular-nums; } /* 여럿이어도 열을 넓히지 않고 줄을 바꾼다 */
+@supports not (grid-template-columns: subgrid) { .rank-picks li { grid-template-columns: 12px minmax(0, 1fr) auto; column-gap: var(--space-2); } }
+@container (max-width: 16em) { /* 좁은 카드·큰 글자: 분반을 과목명 아래 줄로, 같은 시간·건물은 그 아래 한 줄 글로 */
+  .rank-picks { grid-template-columns: 12px minmax(0, 1fr); }
+  .rank-picks .p-sec { grid-column: 2; }
+  .rank-picks .p-twins { display: block; grid-column: 2; }
+  .rank-picks .p-tw { inline-size: auto; min-inline-size: 0; }
+}
 .ranks-more { display: flex; justify-content: center; margin-top: var(--space-2); }
 @media (min-width: 56.25em) { .ranks { /* bp-cards 900px */ display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); align-items: start; } }
 

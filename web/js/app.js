@@ -148,12 +148,15 @@ function roomLabel(m) {
 }
 const daysLabel = (days) => days.map((d) => DAY_KO[d]).join("·");
 
-/** 분반 표기는 어디서나 061(나민애). 교수가 없으면 061(교수 미정). */
+/** 분반 표기는 어디서나 061(나민애). 교수가 없으면 061(교수 미정). 번호와 교수를 따로 칠할 때는 sectionParts(이어 붙이면 같다). */
 function instructorOf(s) {
   return String(s.instructor || "").trim() || "교수 미정";
 }
+function sectionParts(s) {
+  return [String(s.no), `(${instructorOf(s)})`];
+}
 function sectionLabel(s) {
-  return `${s.no}(${instructorOf(s)})`;
+  return sectionParts(s).join("");
 }
 
 /** 시간표 칸처럼 좁은 곳에 쓰는 과목명: 끝의 부제 괄호를 뺀다. '글로벌 공학기술 교류 특강 2 (국제 물류)' → '… 특강 2' */
@@ -1697,13 +1700,20 @@ function rankItem(ev, i) {
   return h("li", { class: cur ? "rank selected" : "rank" }, btn, cur ? rankPicks(ev) : null);
 }
 
+/**
+ * 고른 카드의 분반 목록: 과목명 | 분반 두 열(수강신청 때 분반 열만 내려 읽게). 분반은 번호만 진하게, 교수는 흐리게.
+ * 같은 시간·건물의 다른 분반은 아래 줄에 '같은 시간·건물'(과목명 열)과 그 분반(분반 열). 좁은 카드·큰 글자면 분반이 과목명 아래로 간다(CSS).
+ */
 function rankPicks(ev) {
   return h("ul", { class: "rank-picks" }, ev.sections.map((s) => {
     const c = state.byId.get(s.courseId);
+    const [no, prof] = sectionParts(s);
+    const twins = s.twins && s.twins.length ? s.twins : null;
     return h("li", {},
       h("span", { class: "swatch", "aria-hidden": "true", style: { background: clsColor(c ? c.cls : "") } }),
-      h("span", {}, `${s.name} `, h("span", { class: "p-sec" }, sectionLabel(s)),
-        s.twins && s.twins.length ? h("span", { class: "p-twins" }, `같은 시간·건물: ${twinText(s.twins)}`) : null));
+      h("span", { class: "p-name" }, s.name), " ",
+      h("span", { class: "p-sec" }, h("span", { class: "no" }, no), h("wbr"), h("span", { class: "pf" }, prof)),
+      twins ? [" ", h("span", { class: "p-twins" }, h("span", { class: "p-tl" }, "같은 시간·건물"), " ", h("span", { class: "p-tw" }, twinText(twins)))] : null);
   }));
 }
 
@@ -1981,9 +1991,25 @@ q.addEventListener("keydown", (e) => {
   e.preventDefault();
   q.blur(); // 키보드만 닫는다
 });
-// 가상 키보드가 뜬 동안에는 하단 주요 버튼을 숨긴다
-q.addEventListener("focus", () => { if (coarsePointer.matches) document.body.classList.add("is-typing"); });
-q.addEventListener("blur", () => document.body.classList.remove("is-typing"));
+// 가상 키보드가 떠 있는 동안에만 하단 주요 버튼을 숨긴다. 초점만 보면 키보드를 내려도(안드로이드 뒤로, 키보드 내림 버튼)
+// 검색창에 초점이 남아 버튼이 계속 안 보였다(10/1 사용자 제보). 키보드는 보이는 높이가 키보드 없을 때보다 크게 줄어든 것으로 안다:
+// 브라우저(iOS Safari·Chrome)는 visual viewport 만, 앱 껍데기(WebView)는 창 높이가 줄어든다. 주소창이 접히고 펴지는 차이(~80px)는 넘지 않는다
+const vv = window.visualViewport;
+const viewH = () => (vv ? vv.height * vv.scale : window.innerHeight);
+let fullH = 0; // 키보드 없을 때의 높이. 화면을 돌리면 다시 잰다
+let typingGrace = 0; // 초점을 받은 뒤 키보드가 올라오는 동안(버튼이 키보드를 따라 올라왔다 사라지지 않게 먼저 숨긴다)
+function updateTyping() {
+  const cur = viewH();
+  if (cur > fullH) fullH = cur;
+  const typing = document.activeElement === q && coarsePointer.matches && (fullH - cur > 120 || performance.now() < typingGrace);
+  document.body.classList.toggle("is-typing", typing);
+}
+q.addEventListener("focus", () => { typingGrace = performance.now() + 800; updateTyping(); setTimeout(updateTyping, 850); });
+q.addEventListener("blur", () => { typingGrace = 0; updateTyping(); });
+(vv || window).addEventListener("resize", updateTyping);
+const onRotate = () => { fullH = 0; updateTyping(); };
+if (screen.orientation) screen.orientation.addEventListener("change", onRotate); else window.addEventListener("orientationchange", onRotate);
+updateTyping();
 $("q-clear").addEventListener("click", () => {
   q.value = "";
   renderResults();
