@@ -147,6 +147,13 @@ function roomLabel(m) {
   return /^[A-Za-z]?\d/.test(m.room) ? `${m.building}동 ${m.room}호` : `${m.building}동 ${m.room}`;
 }
 const daysLabel = (days) => days.map((d) => DAY_KO[d]).join("·");
+/** 받침에 맞춘 '로/으로': 기숙사로, 정문으로, 301동으로(ㄹ 받침은 '로'). */
+function withRo(word) {
+  const code = String(word).trim().slice(-1).charCodeAt(0) - 0xac00;
+  if (!(code >= 0 && code <= 11171)) return `${word}(으)로`;
+  const jong = code % 28;
+  return `${word}${jong === 0 || jong === 8 ? "로" : "으로"}`;
+}
 
 /** 분반 표기는 어디서나 061(나민애). 교수가 없으면 061(교수 미정). */
 function instructorOf(s) {
@@ -1471,16 +1478,53 @@ function makeMap(el, full) {
   tiles.on("tileerror", () => { if (!ok) note.hidden = false; });
   tiles.addTo(map);
   map.setView(campusBounds.getCenter(), 15, { animate: false });
+  // 수업 뒤 출발·도착 자리로 가는 길은 경로선(overlayPane, 400) 아래 칸에 그린다: 겹치는 길에서 경로를 덮지 않게
+  map.createPane("ttw-back").style.zIndex = "390";
   const legend = el.closest(".mapcard").querySelector(".legend");
-  const mp = { map, el, tiles, full, buttons, legend, lines: L.layerGroup().addTo(map), marks: L.layerGroup().addTo(map), data: null };
-  map.on("zoomend", () => { if (mp.data) placeMarks(mp); }); // 배율이 바뀌면 붙어 보이는 번호를 다시 묶는다
+  const mp = { map, el, tiles, full, buttons, legend, back: L.layerGroup().addTo(map), lines: L.layerGroup().addTo(map), marks: L.layerGroup().addTo(map), data: null };
+  // 배율이 바뀌면 붙어 보이는 번호를 다시 묶고, 옆으로 비킨 선을 그 배율의 화소 간격으로 다시 그린다
+  map.on("zoomend", () => { if (mp.data) { placeMarks(mp); drawReturn(mp); } });
   return mp;
 }
 
-// 점선 견본(지도의 돌아가는 길과 같은 모양: 둥근 점 5px 간격)
-const RETURN_KEY = '<svg class="line-key" width="20" height="8" viewBox="0 0 20 8" aria-hidden="true"><path d="M2.5 4H17.6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 4.9"/></svg>';
+// 수업 뒤 출발·도착 자리로 가는 길: ⌂ 핀과 같은 색(home) 파선 + 흰 테두리, 경로선 옆으로 7px 비켜서(같은 길을 되짚어도 경로선이 가려지지 않게)
+const RETURN_OFFSET = 7, RETURN_DASH = "8 6";
+const RETURN_KEY = '<svg class="line-key" width="20" height="8" viewBox="0 0 20 8" aria-hidden="true"><path d="M1 4H19" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="4 3"/></svg>';
 
-/** 지도 아래 번호표: 수업 순서 번호와 건물, 출발·도착, 돌아가는 길(점선)이 있으면 그 견본. */
+/** 선을 진행 방향 오른쪽으로 px 만큼 평행하게 옮긴다(지금 배율의 화면 좌표에서). 모서리는 두 변 법선의 이등분선, 뾰족하면 2px 배까지만. */
+function offsetLine(map, line, px) {
+  const pts = [];
+  for (const ll of line) {
+    const p = map.latLngToLayerPoint(ll);
+    const q = pts[pts.length - 1];
+    if (!q || Math.hypot(p.x - q.x, p.y - q.y) > 0.5) pts.push(p);
+  }
+  if (pts.length < 2) return line;
+  const normal = (a, b) => { const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy); return [-dy / d, dx / d]; };
+  return pts.map((p, i) => {
+    const n1 = i > 0 ? normal(pts[i - 1], p) : null;
+    const n2 = i < pts.length - 1 ? normal(p, pts[i + 1]) : null;
+    let ox, oy;
+    if (n1 && n2) {
+      const sx = n1[0] + n2[0], sy = n1[1] + n2[1], s = Math.hypot(sx, sy);
+      if (s < 1) { ox = n2[0] * px; oy = n2[1] * px; } // 거의 되돌아가는 꺾임: 이음매 없이 다음 변 쪽으로
+      else { const m = (2 * px) / s; ox = (sx / s) * m; oy = (sy / s) * m; }
+    } else { const n = n1 || n2; ox = n[0] * px; oy = n[1] * px; }
+    return map.layerPointToLatLng(L.point(p.x + ox, p.y + oy));
+  });
+}
+
+function drawReturn(mp) {
+  mp.back.clearLayers();
+  for (const line of mp.data.homeLines || []) {
+    const off = offsetLine(mp.map, line, RETURN_OFFSET);
+    L.polyline(off, { pane: "ttw-back", className: "map-route-home-case", weight: 7, dashArray: RETURN_DASH, lineCap: "butt", lineJoin: "round", interactive: false }).addTo(mp.back);
+    L.polyline(off, { pane: "ttw-back", className: "map-route-home", weight: 3, dashArray: RETURN_DASH, lineCap: "butt", lineJoin: "round", interactive: false }).addTo(mp.back);
+  }
+}
+
+/** 지도 아래 번호표: 수업 순서 번호와 건물, 출발·도착, 점선(마지막 수업 뒤 출발·도착 자리로 가는 길)이 있으면 그 견본.
+ *  '돌아가는 길'은 '빙 돌아가는 길(우회로)'로도 읽혀서 쓰지 않는다: '수업 뒤 기숙사로' */
 function renderLegend(mp, legs, hasReturn) {
   const items = [];
   let n = 0;
@@ -1490,7 +1534,7 @@ function renderLegend(mp, legs, hasReturn) {
     items.push(h("li", {}, h("span", { class: "num" }, String(n)), h("span", {}, l.meeting.building ? buildingLabel(l.meeting.building) : "강의실 미정")));
   }
   if (items.length) items.push(h("li", {}, h("span", { class: "num home", "aria-hidden": "true" }, svg(HOME_PIN.replace('width="12" height="12"', 'width="10" height="10"'))), h("span", {}, placeLabel(state.result.home))));
-  if (items.length && hasReturn) items.push(h("li", { class: "line" }, svg(RETURN_KEY), h("span", {}, "돌아가는 길")));
+  if (items.length && hasReturn) items.push(h("li", { class: "line" }, svg(RETURN_KEY), h("span", {}, `수업 뒤 ${withRo(placeLabel(state.result.home))}`)));
   mp.legend.replaceChildren(...items);
 }
 
@@ -1498,7 +1542,7 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
   const { map } = mp;
   const R = state.result;
   const legs = ev.days[day] ? ev.legs.filter((l) => l.day === day) : [];
-  // 선: 수업 가는 길(번호가 붙은 수업으로)은 실선, 마지막 수업에서 출발·도착 자리로 돌아가는 길은 점선
+  // 선: 수업 가는 길(번호가 붙은 수업으로)은 실선, 마지막 수업 뒤 출발·도착 자리로 가는 길은 점선
   const homeLines = [], classLines = [], labels = [];
   for (const l of legs) {
     if (l.from === l.to) continue;
@@ -1510,7 +1554,7 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
     }
     (l.meeting ? classLines : homeLines).push(line);
     const mins = Math.round(l.minutes);
-    if (mins > 0) labels.push({ at: midpoint(line), text: `${mins}분` });
+    if (mins > 0) labels.push({ at: midpoint(line), text: `${mins}분`, home: !l.meeting }); // 출발·도착 자리로 가는 구간은 ⌂ 를 붙인다
   }
   renderLegend(mp, legs, homeLines.length > 0); // 번호표를 먼저 채워야 지도 칸 높이가 정해진다
   mp.el.setAttribute("aria-label", `${DAY_KO[day]}요일 지도`);
@@ -1527,12 +1571,10 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
     if (at && l.meeting.building !== R.home) stops.push({ at, nums: [n], names: [l.meeting.section.name], b: l.meeting.building });
   }
   for (const line of [...classLines, ...homeLines]) pts.push(...line);
-  // 선 모양: 수업 가는 길은 route 4px 실선 + card 2px 테두리, 돌아가는 길은 route-home 4px 점선.
-  // 돌아가는 길은 실선 위에 그린다(같은 길을 되짚어 갈 때 점선이 실선 밑에 숨지 않고 ⌂ 까지 이어 보이게)
+  // 선 모양: 수업 가는 길은 route 4px 실선 + card 2px 테두리. 출발·도착 자리로 가는 길은 경로선 아래 칸에 ⌂ 색 파선(drawReturn, 배율이 정해진 뒤)
   const drawn = [];
   for (const line of classLines) drawn.push(L.polyline(line, { className: "map-route-case", weight: 8, lineCap: "round", lineJoin: "round", interactive: false }).addTo(mp.lines));
   for (const line of classLines) drawn.push(L.polyline(line, { className: "map-route", weight: 4, lineCap: "round", lineJoin: "round", interactive: false }).addTo(mp.lines));
-  for (const line of homeLines) L.polyline(line, { className: "map-route-home", weight: 4, dashArray: "0.1 8", lineCap: "round", interactive: false }).addTo(mp.lines);
   for (const st of stops) pts.push(st.at);
   // 요일·순위를 바꾸면 그날 경로 전체가 들어오게(애니메이션 없이). 핀이 오른쪽 위 버튼(크게 보기, 확대·축소), 왼쪽 위 '지도 배경 없음',
   // 오른쪽 아래 저작권 표기에 가리지 않게 가장자리를 비운다. 폰의 작은 지도는 폭이 좁아 위쪽을 비운다
@@ -1542,7 +1584,8 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
     : mp.buttons ? { paddingTopLeft: [20, top], paddingBottomRight: [56, bottom] } : { paddingTopLeft: [20, top], paddingBottomRight: [20, bottom] };
   if (pts.length > 1) map.fitBounds(L.latLngBounds(pts), { ...pad, maxZoom: 17, animate: false });
   else if (pts.length) map.setView(pts[0], 16, { animate: false });
-  mp.data = { stops, labels, homeAt };
+  mp.data = { stops, labels, homeAt, homeLines };
+  drawReturn(mp);
   placeMarks(mp);
   if (reveal && !reduceMotion.matches) revealRoute(mp, drawn);
 }
@@ -1578,7 +1621,7 @@ function placeMarks(mp) {
     if (taken.some((q) => Math.abs(q.x - pt.x) < 30 && Math.abs(q.y - pt.y) < 22)) continue;
     taken.push(pt);
     L.marker(lb.at, { interactive: false, keyboard: false,
-      icon: L.divIcon({ className: "", html: `<span class="leg-label" aria-hidden="true">${lb.text}</span>`, iconSize: [0, 0] }) }).addTo(marks);
+      icon: L.divIcon({ className: "", html: `<span class="leg-label${lb.home ? " to-home" : ""}" aria-hidden="true">${lb.home ? HOME_PIN.replace('width="12" height="12"', 'width="10" height="10"') : ""}${lb.text}</span>`, iconSize: [0, 0] }) }).addTo(marks);
   }
 }
 
