@@ -43,6 +43,7 @@
     <h1 class="sr-only">시간표 만들기</h1>
     <div class="term-row">
       <div class="term-left">
+        <select id="year" class="term-select" aria-label="연도" hidden></select>
         <select id="term" class="term-select" aria-label="학기" hidden></select>
         <span class="tag" id="past-tag" hidden>지난 학기</span>
       </div>
@@ -108,20 +109,21 @@
       <div class="panes" id="panes">
         <div class="card tt" id="tt"></div>
         <div class="card mapcard">
-          <div class="map is-static" id="map" aria-hidden="true"></div>
-          <button type="button" class="icon-btn map-expand" id="map-expand" aria-label="지도 크게 보기"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path></svg></span></button>
-          <p class="map-note" hidden>지도 배경 없음</p>
-          <span class="map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
+          <div class="map-box">
+            <button type="button" class="icon-btn map-expand" id="map-expand" aria-label="지도 크게 보기"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path></svg></span></button>
+            <div class="map" id="map"></div>
+            <p class="map-note" hidden>지도 배경 없음</p>
+            <span class="map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
+          </div>
+          <ul class="legend" id="map-legend"></ul>
         </div>
       </div>
       <div class="cls-legend" id="cls-legend"></div>
       <p class="day-summary" id="day-summary"></p>
     </div>
-    <div class="list-head result-head"><span id="rank-count"></span><span class="cond" id="rank-cond"></span></div>
-    <div class="card ranks">
-      <ol class="list" id="ranks"></ol>
-      <div class="more-row" id="ranks-more" hidden><button type="button" class="btn-text">더 보기</button></div>
-    </div>
+    <div class="result-head"><h2 class="section-title" id="rank-count"></h2><span class="cond" id="rank-cond"></span></div>
+    <ol class="ranks" id="ranks"></ol>
+    <div class="ranks-more" id="ranks-more" hidden><button type="button" class="btn-text">더 보기</button></div>
     <div class="footnote">
       <p>추정값이라 실제로 걸리는 시간과 다를 수 있어요</p>
       <button type="button" class="btn-text" id="open-sources">자료 출처</button>
@@ -136,9 +138,12 @@
     <h1 class="title" id="map-title" tabindex="-1">지도</h1>
   </header>
   <main class="mapcard" hidden>
-    <div class="map" id="map-full"></div>
-    <p class="map-note" hidden>지도 배경 없음</p>
-    <span class="map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
+    <div class="map-box">
+      <div class="map" id="map-full"></div>
+      <p class="map-note" hidden>지도 배경 없음</p>
+      <span class="map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
+    </div>
+    <ul class="legend" id="map-full-legend"></ul>
   </main>
 </div>
 

@@ -30,18 +30,20 @@ const APP_VERSION = "0.6.0";
 const PRIVACY_URL = ""; // 개인정보 처리방침 공개 페이지(스토어에 적는 주소와 같게)
 const CONTACT_URL = ""; // 문의 페이지(App Store 지원 URL과 같은 곳)
 const REVIEW_URL = { twa: "", ios: "" }; // 스토어 앱 페이지(스토어 앱에서만 '리뷰 남기기')
-const TOP_K = 20; // 한 번에 찾는 조합 수. 목록은 5개씩 보인다
+const TOP_K = 20; // 한 번에 찾는 조합 수. 후보 카드는 6개씩 보인다(넓은 화면의 2·3열이 꽉 차게)
 const RESULTS_STEP = 8;
-const RANKS_STEP = 5;
+const RANKS_STEP = 6;
 // 워커를 못 쓰는 브라우저에서 화면 스레드로 계산할 때: 조합 수 어림(과목마다 분반 묶음 수를 곱한 것)이 이보다 크면
 // 스피너를 먼저 띄우고 계산한다(계산하는 동안에는 500ms 뒤에 스피너를 그릴 수 없다)
 const HEAVY = 100000;
 const LONG_MS = 10000; // 계산이 이보다 길어질 것 같으면 진행 정도와 '취소'를 보인다
 const TERMS = { 1: "1학기", S: "여름학기", 2: "2학기", W: "겨울학기" };
+const TERM_ORDER = ["1", "S", "2", "W"]; // 한 해 안의 학기 순서(학기 선택칸)
 // 교과구분 색 묶음. 색은 style.css 의 cls-* 토큰, 메타 줄에는 원래 이름(일선, 교직)을 쓰고 색 묶음만 '기타'
 const CLS_GROUPS = [["전필", "req"], ["전선", "elec"], ["교양", "gen"], ["기타", "etc"]];
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 const coarsePointer = matchMedia("(pointer: coarse)");
+const finePointer = matchMedia("(hover: hover) and (pointer: fine)"); // 마우스: 지도 확대·축소 버튼, 휠, 끌기
 const collator = new Intl.Collator("ko");
 
 const state = {
@@ -137,10 +139,12 @@ function placeLabel(b) {
   const home = (state.campus?.homes || []).find(([id]) => id === b);
   return home ? home[1] : buildingLabel(b);
 }
-/** 강의실은 동-호(301-118), 건물만 알면 301동. */
+/** 강의실: 301동 118호, 호수가 글자면 301동 강당, 건물만 알면 301동, 직접 넣은 건물은 301동 (직접 입력). */
 function roomLabel(m) {
   if (!m.building) return "강의실 미정";
-  return m.room ? `${m.building}-${m.room}` : `${m.building}동`;
+  if (m.manual) return `${m.building}동 (직접 입력)`;
+  if (!m.room) return `${m.building}동`;
+  return /^[A-Za-z]?\d/.test(m.room) ? `${m.building}동 ${m.room}호` : `${m.building}동 ${m.room}`;
 }
 const daysLabel = (days) => days.map((d) => DAY_KO[d]).join("·");
 
@@ -324,6 +328,7 @@ async function loadSemester(sem) {
 }
 
 async function switchSemester(sem) {
+  if (!state.semesters.some(([x]) => x === sem)) { renderTerm(); return; }
   if (sem === state.semester && (state.loaded || state.loading)) return;
   cancelCompute();
   store.set("semester", { id: sem, current: state.current });
@@ -351,26 +356,53 @@ function loadRoutes() {
 
 // ---------------------------------------------------------------- 학기 줄, 배너, 불러오는 중
 
+/** 연도·학기를 따로 고른다(편람이 있는 학기만). 연도는 목록 순서(최근 먼저), 학기는 한 해 안의 순서. */
 function renderTerm() {
-  const sel = $("term");
-  if (sel.options.length !== state.semesters.length) sel.replaceChildren(...state.semesters.map(([id]) => h("option", { value: id }, semLabel(id))));
-  sel.value = state.semester;
-  sel.hidden = !state.semesters.length;
-  fitSelect(sel);
+  const ySel = $("year"), tSel = $("term");
+  const ids = state.semesters.map(([id]) => id).filter((id) => /^\d{4}-[12SW]$/.test(id));
+  const ok = ids.includes(state.semester);
+  ySel.hidden = tSel.hidden = !ok;
+  if (ok) {
+    const [y, t] = state.semester.split("-");
+    const years = [...new Set(ids.map((id) => id.split("-")[0]))];
+    if (ySel.dataset.key !== years.join()) {
+      ySel.replaceChildren(...years.map((v) => h("option", { value: v }, `${v}년`)));
+      ySel.dataset.key = years.join();
+    }
+    const terms = TERM_ORDER.filter((k) => ids.includes(`${y}-${k}`));
+    if (tSel.dataset.key !== `${y}:${terms.join()}`) {
+      tSel.replaceChildren(...terms.map((k) => h("option", { value: k }, TERMS[k])));
+      tSel.dataset.key = `${y}:${terms.join()}`;
+    }
+    ySel.value = y;
+    tSel.value = t;
+    fitTerm();
+  }
   $("past-tag").hidden = !state.current || state.semester === state.current;
   $("asof").textContent = state.loaded ? asofShort(state.semesterMeta.updated) : "";
 }
 
-/** 글자형 선택칸 폭을 고른 항목 글자에 맞춘다(화살표가 글자 바로 뒤에 오게). CSS field-sizing 은 굵은 글자 폭을 모자라게 잡아서 직접 잰다. */
+/** 연도를 바꾸면 같은 학기로, 그해에 그 학기가 없으면 그해의 가장 늦은 학기로. */
+function onYearChange() {
+  const y = $("year").value;
+  const t = state.semester.split("-")[1];
+  const has = (k) => state.semesters.some(([x]) => x === `${y}-${k}`);
+  const term = has(t) ? t : [...TERM_ORDER].reverse().find(has);
+  if (term) switchSemester(`${y}-${term}`); else renderTerm();
+}
+
+/** 선택칸 폭을 고른 항목 글자에 맞춘다(화살표가 글자 바로 뒤에 오게). CSS field-sizing 은 글자 폭을 모자라게 잡아서 직접 잰다. */
 const canvas = document.createElement("canvas").getContext("2d");
 function fitSelect(sel) {
+  if (sel.hidden) return;
   const cs = getComputedStyle(sel);
   canvas.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
   const text = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : "";
   sel.style.width = `${Math.ceil(canvas.measureText(text).width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2)}px`;
 }
-if (document.fonts) document.fonts.addEventListener("loadingdone", () => fitSelect($("term")));
-window.addEventListener("resize", () => fitSelect($("term")));
+const fitTerm = () => { fitSelect($("year")); fitSelect($("term")); };
+if (document.fonts) document.fonts.addEventListener("loadingdone", fitTerm);
+window.addEventListener("resize", fitTerm);
 
 function renderLoadState() {
   const q = $("q");
@@ -1225,7 +1257,7 @@ const weekLate = (ev) => ev.legs.reduce((s, l) => s + lateOf(l), 0);
 function renderResult() {
   const R = state.result;
   if (!R) return;
-  $("rank-count").textContent = `${R.ranked.length}개 · 도보 짧은 순`;
+  $("rank-count").textContent = `시간표 ${R.ranked.length}개를 찾았어요`;
   $("rank-cond").textContent = `${placeLabel(R.home)} · ${R.mode === "slope" ? "경사 반영" : "평지"}`;
   $("daytabs").replaceChildren(...R.days.map((d) => h("button", { type: "button", role: "tab", id: `tab-${d}`, "data-day": String(d), "aria-controls": "day-panel" }, DAY_KO[d])));
   updateTabs();
@@ -1289,13 +1321,21 @@ function renderDay({ reveal = false, fade = false } = {}) {
 }
 
 const ttHeight = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--tt-h")) || 316;
+const remPx = () => parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
 
+/** 늦는 까닭: 걷는 시간과 쉬는 시간(강의실 미정 수업 앞뒤 쉬는 시간 포함). */
+function lateWhy(l) {
+  return `${placeLabel(l.from)}에서 ${buildingLabel(l.to)}까지 걷기 ${Math.round(l.minutes)}분, 쉬는 시간 ${Math.round(l.slack + l.minutes)}분`;
+}
+
+/** 칸 하나: 교과구분 연한 색 바탕에 과목명(부제 괄호 뺀 것)과 강의실, 늦으면 빨간 'N분 늦음'. */
 function renderTimetable(ev, day) {
   const box = $("tt");
   if (!(ev.days[day] || []).length) { box.replaceChildren(h("p", { class: "tt-empty" }, "수업 없음")); return; }
   const [h0, h1] = state.result.axis;
   const span = (h1 - h0) * 60;
   const gridPx = ttHeight();
+  const k = remPx() / 16; // 글자 크기 설정만큼 줄 높이도 커진다
   const top = (m) => `${((m - h0 * 60) / span) * 100}%`;
   const hours = h("div", { class: "tt-hours", "aria-hidden": "true" });
   const grid = h("ol", { class: "tt-grid" });
@@ -1304,38 +1344,61 @@ function renderTimetable(ev, day) {
     grid.append(h("li", { class: "tt-line", "aria-hidden": "true", style: { top: top(x * 60) } }));
     if ((x - h0) % step === 0) hours.append(h("span", { style: { top: top(x * 60) } }, String(x)));
   }
+  box.replaceChildren(hours, grid);
+  const textW = grid.clientWidth - 16; // 칸 안 글자 폭(좌우 여백 8)
+  const titleFont = `500 ${14 * k}px ${getComputedStyle(grid).fontFamily}`;
   const legs = ev.legs.filter((l) => l.day === day);
   let n = 0;
   legs.forEach((l, i) => {
     const m = l.meeting;
     if (!m) return;
-    n += 1; // 지도 핀과 같은 번호
+    n += 1; // 지도 번호와 같은 순서
     const late = lateOf(l);
-    const px = ((m.end - m.start) / span) * gridPx;
-    // 칸 높이에 맞춰: 과목명 한 줄 > 강의실 > 지각 태그 > 과목명 둘째·셋째 줄 순으로 넣는다(줄 18, 강의실 16, 태그 20, 위아래 6)
-    const short = px < 38;
-    const avail = px - 6;
-    const showRoom = !short && avail >= 34;
-    const showTag = Boolean(late) && !short && avail >= 54;
-    const lines = Math.max(1, Math.min(3, Math.floor((avail - (showRoom ? 16 : 0) - (showTag ? 20 : 0)) / 18)));
+    const heightPct = ((m.end - m.start) / span) * 100;
+    const px = (heightPct / 100) * gridPx;
+    // 칸 높이에 맞춰 과목명을 몇 줄까지 보일지 정한다(줄 18, 강의실 줄 16, 늦음 줄 18, 위아래 여백 6). 넘치면 마지막 줄에 말줄임.
+    // 과목명이 먼저다: 과목명을 다 보이고도 남으면 강의실(폰에서 75분 수업은 과목명이 한 줄이면 강의실까지).
+    // 낮은 칸은 늦음 표시가 과목명 위 오른쪽에 겹친다
+    const short = px < 38 * k;
+    const lateRow = late && !short ? 18 * k : 0;
+    const avail = px - 6 - lateRow;
+    const need = Math.min(3, textLines(shortName(m.section.name), titleFont, textW));
+    const showRoom = !short && (avail >= 50 * k || avail - 16 * k >= need * 18 * k);
+    const lines = Math.max(1, Math.min(3, Math.floor((avail - (showRoom ? 16 * k : 0)) / (18 * k))));
     const cls = state.byId.get(m.section.courseId)?.cls || "";
     const nx = legs[i + 1];
     let next = "";
     if (m.building && nx) {
-      if (nx.meeting && nx.meeting.building) next = `다음 수업까지 도보 ${Math.round(nx.minutes)}분`;
-      else if (!nx.meeting) next = `${placeLabel(state.result.home)}까지 도보 ${Math.round(nx.minutes)}분`;
+      if (nx.meeting && nx.meeting.building) next = `다음 수업까지 걷기 ${Math.round(nx.minutes)}분`;
+      else if (!nx.meeting) next = `${placeLabel(state.result.home)}까지 걷기 ${Math.round(nx.minutes)}분`;
     }
-    const said = [`${n}. ${hm(m.start)}~${hm(m.end)} ${m.section.name}`, roomLabel(m), late ? `지각 ${late}분` : "", next].filter(Boolean).join(", ");
+    const said = [`${n}. ${hm(m.start)}~${hm(m.end)} ${m.section.name}`, roomLabel(m), late ? `${late}분 늦음(${lateWhy(l)})` : "", next].filter(Boolean).join(", ");
     grid.append(h("li", {
-      class: short ? "tt-block short" : "tt-block",
-      style: { top: top(m.start), height: `calc(${((m.end - m.start) / span) * 100}% - 2px)`, "--fill-bg": clsFill(cls), "--bar": clsColor(cls), "--lines": String(lines) },
+      class: `tt-block${short ? " short" : ""}${lateRow ? " is-late" : ""}`,
+      style: { top: top(m.start), height: `calc(${heightPct}% - 2px)`, background: clsFill(cls), "--lines": String(lines) },
+      title: `${m.section.name} ${hm(m.start)}~${hm(m.end)} ${roomLabel(m)}`,
     },
     h("span", { class: "sr-only" }, said),
-    h("span", { class: "b-head", "aria-hidden": "true" }, h("span", { class: "b-no" }, String(n)), h("span", { class: "b-title" }, shortName(m.section.name))),
-    showRoom ? h("span", { class: "b-room", "aria-hidden": "true" }, roomLabel(m)) : null,
-    showTag ? h("span", { class: "tag danger", "aria-hidden": "true" }, `지각 ${late}분`) : null));
+    late ? h("span", { class: "tt-late", "aria-hidden": "true", title: lateWhy(l) }, `${late}분 늦음`) : null,
+    h("span", { class: "b-title", "aria-hidden": "true" }, shortName(m.section.name)),
+    showRoom ? h("span", { class: "b-room", "aria-hidden": "true" }, roomLabel(m)) : null));
   });
-  box.replaceChildren(hours, grid);
+}
+
+/** 글자가 폭 안에서 몇 줄이 되는지 어림한다(띄어쓰기에서 줄을 바꾸고, 폭보다 긴 낱말은 쪼갠다). */
+function textLines(text, font, width) {
+  if (!(width > 0)) return 1;
+  canvas.font = font;
+  const space = canvas.measureText(" ").width;
+  let lines = 1, cur = 0;
+  for (const word of String(text).split(/\s+/).filter(Boolean)) {
+    const w = canvas.measureText(word).width;
+    if (cur && cur + space + w <= width) { cur += space + w; continue; }
+    if (cur) lines += 1;
+    lines += Math.floor(w / width);
+    cur = w % width;
+  }
+  return lines;
 }
 
 function renderSummary(ev, day) {
@@ -1344,7 +1407,8 @@ function renderSummary(ev, day) {
   const legs = ev.legs.filter((l) => l.day === day);
   const walk = Math.round(legs.reduce((s, l) => s + l.minutes, 0));
   const late = legs.reduce((s, l) => s + lateOf(l), 0);
-  box.replaceChildren(...[h("span", {}, "도보 ", h("b", {}, `${walk}분`)), late ? h("span", { class: "tag danger" }, `지각 ${late}분`) : null].filter(Boolean));
+  box.replaceChildren(...[h("span", {}, "걷기 ", h("b", {}, `${walk}분`)),
+    late ? h("span", { class: "tag danger" }, h("span", { class: "sr-only" }, ", "), `${late}분 늦음`) : null].filter(Boolean));
 }
 
 // ---------------------------------------------------------------- 지도
@@ -1377,22 +1441,23 @@ function midpoint(line) {
   return line[0];
 }
 
-/** 작은 칸 지도는 끌거나 확대되지 않는다(한 손가락은 페이지를 스크롤). 전체 화면 지도만 끌기·핀치·확대 버튼. */
-function makeMap(el, interactive) {
+/** 지도 둘 다 확대·축소된다. 마우스: 확대·축소 버튼, 휠, 끌기. 터치: 두 손가락으로 확대·이동, 두 번 눌러 확대.
+ *  시간표 옆 작은 지도는 터치에서 한 손가락 끌기를 끈다(페이지 스크롤이 지도에 걸리지 않게). 전체 화면 지도는 한 손가락으로 끈다. */
+function makeMap(el, full) {
   if (typeof L === "undefined" || !state.campus) return null;
   if (!campusBounds) campusBounds = L.latLngBounds(state.campus.ids.map(coordOf).filter(Boolean)).pad(0.1);
   const still = reduceMotion.matches;
+  const mouse = finePointer.matches;
   const map = L.map(el, {
     zoomControl: false, attributionControl: false, // 저작권 표기는 지도 밖 .map-attr(늘 보이고, 스크린리더가 읽는다)
-    dragging: interactive, touchZoom: interactive, doubleClickZoom: interactive, scrollWheelZoom: interactive, boxZoom: interactive,
-    keyboard: interactive, inertia: interactive && !still, zoomAnimation: !still, fadeAnimation: !still, markerZoomAnimation: !still,
+    dragging: full || mouse, touchZoom: true, doubleClickZoom: true, scrollWheelZoom: full || mouse, boxZoom: mouse,
+    keyboard: true, inertia: !still, zoomAnimation: !still, fadeAnimation: !still, markerZoomAnimation: !still,
     zoomSnap: 0.25, zoomDelta: 0.5, maxBounds: campusBounds, maxBoundsViscosity: 1.0,
   });
-  if (interactive) {
-    L.control.zoom({ position: "topright", zoomInTitle: "확대", zoomOutTitle: "축소" }).addTo(map);
-    el.setAttribute("role", "region");
-    el.setAttribute("aria-label", "지도");
-  }
+  const buttons = full || mouse;
+  if (buttons) L.control.zoom({ position: "topright", zoomInTitle: "확대", zoomOutTitle: "축소" }).addTo(map);
+  el.setAttribute("role", "region");
+  el.setAttribute("aria-label", "지도");
   // 타일을 못 불러오면(오프라인) 선과 핀만 그리고 '지도 배경 없음'
   const note = el.parentElement.querySelector(".map-note");
   const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, className: "map-tiles" });
@@ -1402,19 +1467,35 @@ function makeMap(el, interactive) {
   tiles.on("tileerror", () => { if (!ok) note.hidden = false; });
   tiles.addTo(map);
   map.setView(campusBounds.getCenter(), 15, { animate: false });
-  const mp = { map, el, tiles, interactive, lines: L.layerGroup().addTo(map), marks: L.layerGroup().addTo(map), data: null };
-  if (interactive) map.on("zoomend", () => { if (mp.data) placeMarks(mp); });
+  const legend = el.closest(".mapcard").querySelector(".legend");
+  const mp = { map, el, tiles, full, buttons, legend, lines: L.layerGroup().addTo(map), marks: L.layerGroup().addTo(map), data: null };
+  map.on("zoomend", () => { if (mp.data) placeMarks(mp); }); // 배율이 바뀌면 붙어 보이는 번호를 다시 묶는다
   return mp;
+}
+
+/** 지도 아래 번호표: 수업 순서 번호와 건물, 마지막에 출발·도착. */
+function renderLegend(mp, legs) {
+  const items = [];
+  let n = 0;
+  for (const l of legs) {
+    if (!l.meeting) continue;
+    n += 1;
+    items.push(h("li", {}, h("span", { class: "num" }, String(n)), h("span", {}, l.meeting.building ? buildingLabel(l.meeting.building) : "강의실 미정")));
+  }
+  if (items.length) items.push(h("li", {}, h("span", { class: "num home", "aria-hidden": "true" }, svg(HOME_PIN.replace('width="12" height="12"', 'width="10" height="10"'))), h("span", {}, placeLabel(state.result.home))));
+  mp.legend.replaceChildren(...items);
 }
 
 function renderMap(mp, ev, day, { reveal = false } = {}) {
   const { map } = mp;
   const R = state.result;
+  const legs = ev.days[day] ? ev.legs.filter((l) => l.day === day) : [];
+  renderLegend(mp, legs); // 번호표를 먼저 채워야 지도 칸 높이가 정해진다
+  mp.el.setAttribute("aria-label", `${DAY_KO[day]}요일 지도`);
   map.invalidateSize();
-  if (mp.interactive) map.setMinZoom(Math.max(12, map.getBoundsZoom(campusBounds, false)));
+  map.setMinZoom(Math.max(12, map.getBoundsZoom(campusBounds, false)));
   mp.lines.clearLayers();
   const homeAt = coordOf(R.home);
-  const legs = ev.days[day] ? ev.legs.filter((l) => l.day === day) : [];
   const stops = [], labels = [], pts = homeAt ? [homeAt] : [];
   let n = 0;
   for (const l of legs) {
@@ -1443,9 +1524,12 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
   for (const line of classLines) drawn.push(L.polyline(line, { className: "map-route-case", weight: 8, lineCap: "round", lineJoin: "round", interactive: false }).addTo(mp.lines));
   for (const line of classLines) drawn.push(L.polyline(line, { className: "map-route", weight: 4, lineCap: "round", lineJoin: "round", interactive: false }).addTo(mp.lines));
   for (const st of stops) pts.push(st.at);
-  // 요일·순위를 바꾸면 그날 경로 전체가 들어오게(애니메이션 없이). 오른쪽 위 크게 보기 버튼 자리를 비운다
-  // 작은 지도는 오른쪽 위 크게 보기 버튼, 전체 화면 지도는 확대·축소 버튼과 아래 저작권 표기 자리를 비운다
-  const pad = mp.interactive ? { paddingTopLeft: [24, 24], paddingBottomRight: [68, 48] } : { paddingTopLeft: [20, 40], paddingBottomRight: [20, 36] };
+  // 요일·순위를 바꾸면 그날 경로 전체가 들어오게(애니메이션 없이). 핀이 오른쪽 위 버튼(크게 보기, 확대·축소), 왼쪽 위 '지도 배경 없음',
+  // 오른쪽 아래 저작권 표기에 가리지 않게 가장자리를 비운다. 폰의 작은 지도는 폭이 좁아 위쪽을 비운다
+  const k = remPx() / 16; // 글자를 키우면 저작권 표기와 '지도 배경 없음'도 커진다
+  const top = Math.max(mp.full || mp.buttons ? 40 : 56, Math.round(24 + 16 * k)), bottom = Math.max(32, Math.round(16 + 16 * k));
+  const pad = mp.full ? { paddingTopLeft: [24, top], paddingBottomRight: [68, bottom] }
+    : mp.buttons ? { paddingTopLeft: [20, top], paddingBottomRight: [56, bottom] } : { paddingTopLeft: [20, top], paddingBottomRight: [20, bottom] };
   if (pts.length > 1) map.fitBounds(L.latLngBounds(pts), { ...pad, maxZoom: 17, animate: false });
   else if (pts.length) map.setView(pts[0], 16, { animate: false });
   mp.data = { stops, labels, homeAt };
@@ -1508,68 +1592,51 @@ function revealRoute(mp, drawn) {
 function renderFullMap() {
   if (!state.result) return;
   $("map-title").textContent = `${DAY_KO[state.day]}요일 지도`;
-  remember($("map-full"));
   if (!maps.full) maps.full = makeMap($("map-full"), true);
   if (maps.full) renderMap(maps.full, currentEv(), state.day);
+  remember($("map-full")); // 번호표가 들어간 뒤의 크기(크기가 같으면 다시 그리지 않는다)
 }
 
 // ---------------------------------------------------------------- 순위
 
-function fmtDiff(d) {
-  return d < 0 ? `−${-d}분` : `+${d}분`;
-}
-
-/** 1위와 다른 분반: ['화학실험 003', …] */
-function otherSections(ev, first) {
-  const chosen = new Map(first.sections.map((s) => [s.courseId, s.key]));
-  return ev.sections.filter((s) => chosen.get(s.courseId) !== s.key).map((s) => `${shortName(s.name)} ${s.no}`);
-}
-
 function twinText(twins) {
-  const shown = twins.slice(0, 3).map(sectionLabel).join(" · ");
+  const shown = twins.slice(0, 3).map(sectionLabel).join(", ");
   return twins.length > 3 ? `${shown} 외 ${twins.length - 3}개` : shown;
 }
 
+/** 후보 카드: 순위, 한 주 걷는 시간·등교 요일(늦으면 빨간 'N분 늦음'), 요일별 미리보기. 고른 카드는 테두리와 담은 분반 목록. */
 function rankItem(ev, i) {
   const R = state.result;
-  const first = R.ranked[0];
+  const [h0, h1] = R.axis;
+  const span = (h1 - h0) * 60;
+  const pct = (x) => `${(x / span) * 100}%`;
   const cur = i === state.rank;
   const walk = Math.round(ev.travel);
-  const diff = walk - Math.round(first.travel);
   const late = weekLate(ev);
-  const free = [0, 1, 2, 3, 4].filter((d) => !ev.days[d]);
-  const others = i ? otherSections(ev, first) : [];
-  const sub = [];
-  if (free.length) sub.push(`공강 ${daysLabel(free)}`);
-  if (others.length) sub.push(`다른 분반: ${others[0]}${others.length > 1 ? ` 외 ${others.length - 1}개` : ""}`);
-  const said = [`${i + 1}위`, `도보 주 ${walk}분`];
-  if (i) said.push(diff > 0 ? `1위보다 ${diff}분 많음` : diff < 0 ? `1위보다 ${-diff}분 적음` : "1위와 같음");
-  if (late) said.push(`지각 ${late}분`);
-  said.push(...sub);
-  const btn = h("button", { type: "button", class: sub.length ? "rank" : "rank one-line", "data-rank": String(i), "aria-current": cur ? "true" : null, "aria-label": said.join(", ") },
-    h("span", { class: "rank-no" }, `${i + 1}위`),
-    h("span", { class: "rank-main" },
-      h("span", { class: "rank-line" },
-        h("span", { class: "rank-sum" }, `주 ${walk}분`),
-        i ? h("span", { class: "rank-diff" }, fmtDiff(diff)) : null,
-        late ? h("span", { class: "tag danger" }, `지각 ${late}분`) : null),
-      sub.length ? h("span", { class: "rank-sub" }, sub.join(" · ")) : null),
-    checkMark());
-  return h("li", {}, btn, cur ? rankPicks(ev) : null);
-}
-
-function checkMark() {
-  const el = icon(I.check);
-  el.classList.add("check-mark");
-  return el;
+  const days = R.days.filter((d) => (ev.days[d] || []).length).map((d) => DAY_KO[d]).join("");
+  const sum = days ? `걷기 주 ${walk}분 · ${days} 등교` : `걷기 주 ${walk}분`; // 시간이 모두 미정이면 등교 요일이 없다
+  const clsOf = (courseId) => state.byId.get(courseId)?.cls || "";
+  const week = h("span", { class: "week", "aria-hidden": "true", style: { "--days": String(R.days.length) } },
+    R.days.map((d) => h("span", { class: "wd" }, DAY_KO[d])),
+    R.days.map((d) => h("span", { class: "wc" }, (ev.days[d] || []).map((m) => h("span", {
+      class: "wb", style: { top: pct(m.start - h0 * 60), height: pct(m.end - m.start), background: clsColor(clsOf(m.section.courseId)) },
+    })))));
+  const btn = h("button", {
+    type: "button", class: "rank-hit", "data-rank": String(i), "aria-current": cur ? "true" : null,
+    "aria-label": [`${i + 1}위`, `걷기 주 ${walk}분`, days ? `${days} 등교` : "", late ? `${late}분 늦음` : ""].filter(Boolean).join(", "),
+  },
+  h("span", { class: "rank-head" }, h("span", { class: "rank-no" }, `${i + 1}위`),
+    h("span", { class: "rank-sum" }, sum, late ? h("span", { class: "late" }, ` · ${late}분 늦음`) : null)),
+  week);
+  return h("li", { class: cur ? "rank selected" : "rank" }, btn, cur ? rankPicks(ev) : null);
 }
 
 function rankPicks(ev) {
   return h("ul", { class: "rank-picks" }, ev.sections.map((s) => {
     const c = state.byId.get(s.courseId);
     return h("li", {},
-      h("span", { class: "dot", "aria-hidden": "true", style: { background: clsColor(c ? c.cls : "") } }),
-      h("span", {}, `${s.name} · `, h("span", { class: "p-sec" }, sectionLabel(s)),
+      h("span", { class: "swatch", "aria-hidden": "true", style: { background: clsColor(c ? c.cls : "") } }),
+      h("span", {}, `${s.name} `, h("span", { class: "p-sec" }, sectionLabel(s)),
         s.twins && s.twins.length ? h("span", { class: "p-twins" }, `같은 시간·건물: ${twinText(s.twins)}`) : null));
   }));
 }
@@ -1831,11 +1898,12 @@ document.addEventListener("click", (e) => {
 
 // ---------------------------------------------------------------- 시작
 
-$("term").addEventListener("change", (e) => switchSemester(e.target.value));
+$("year").addEventListener("change", onYearChange);
+$("term").addEventListener("change", () => switchSemester(`${$("year").value}-${$("term").value}`));
 $("banner-retry").addEventListener("click", () => {
   const f = bannerRetry;
   hideBanner();
-  $("term").focus({ preventScroll: true });
+  if (!$("year").hidden) $("year").focus({ preventScroll: true });
   if (f) f();
 });
 
