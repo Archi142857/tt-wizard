@@ -20,25 +20,24 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: app-${{ github.ref }}
-  cancel-in-progress: true
+# 겹쳐 올려도 앞 실행을 취소하지 않는다(취소가 실패처럼 빨간 X 로 보여서, 10/1). 공개 레포라 실행 시간은 공짜
 
 jobs:
   android:
-    runs-on: ubuntu-latest
+    # ubuntu-latest 가 10/19 부터 Ubuntu 26 으로 바뀐다. 확인하기 전까지 24.04 로 묶어 둔다
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: app/package-lock.json
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
@@ -59,7 +58,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: tt-wizard-android-debug
           path: app/android/app/build/outputs/apk/debug/app-debug.apk
@@ -70,11 +69,11 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm

@@ -5,6 +5,7 @@
 // 1) 자료(data/*.json): 웹 서버(GitHub Pages)에서 새로 받는다(네이티브 HTTP, 없으면 fetch). 3초 안에 안 오거나 끊겼으면 지난번에 받아 둔 것,
 //    그것도 없으면 앱에 넣은 것(빌드 때의 스냅샷)을 쓴다. 늦게 온 응답은 다음 실행을 위해 저장한다.
 //    받아 둔 것은 앱 빌드(BUILD)마다 따로 둔다: 앱을 새로 내면 새 스냅샷이 옛 저장본보다 먼저다.
+//    바탕 지도(data/basemap.json)는 크고 거의 안 바뀌어서 앱에 넣은 것만 쓴다(새 판은 앱 업데이트로 온다).
 // 2) 안드로이드 뒤로 가기: 열린 시트(<dialog>)를 닫고(cancel 이벤트), 아니면 이전 화면, 첫 화면이면 앱을 내린다.
 // 3) <html data-platform="android|ios">
 (function () {
@@ -15,6 +16,7 @@
   var BUILD = "__BUILD__"; // build_app.py 가 바꾼다
   var REMOTE = "__REMOTE__"; // 자료를 새로 받을 곳 (끝에 /)
   var WAIT_MS = 3000;
+  var BUNDLED_ONLY = /^data\/basemap\.json$/; // 네트워크로 새로 받지 않는 자료
   var DB_NAME = "ttw-app";
   var STORE = "data";
   var platform = typeof cap.getPlatform === "function" ? cap.getPlatform() : "";
@@ -122,7 +124,7 @@
   window.fetch = function (input, init) {
     var method = (init && init.method) || (input && typeof input === "object" && input.method) || "GET";
     var d = String(method).toUpperCase() === "GET" ? dataPath(input) : null;
-    return d ? fetchData(d, init) : nativeFetch(input, init);
+    return d && !BUNDLED_ONLY.test(d.path) ? fetchData(d, init) : nativeFetch(input, init);
   };
 
   // ------------------------------------------------------------ 안드로이드 뒤로 가기

@@ -91,6 +91,7 @@ def test_native_shim():
     assert r["offline"] == {"from": "bundle", "remoteCalls": 0}
     assert r["slow"]["first"] == "bundle" and r["slow"]["waitedMs"] == 3000 and '"late"' in r["slow"]["savedLate"]
     assert r["back"] == {"closed": True, "kept": True, "historyBack": 1, "minimized": 1}
+    assert r["basemap"] == {"from": "bundle", "remoteCalls": 0}  # 바탕 지도는 앱에 넣은 것만
 
 
 def test_native_projects_match_config():

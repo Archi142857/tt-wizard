@@ -1,5 +1,5 @@
 // tests/test_app.py 가 부른다: 앱 연결 스크립트(app/src/native.js)를 가짜 Capacitor·브라우저 위에서 돌리고 결과를 JSON으로 출력한다.
-// 자료 받기(네트워크 → 받아 둔 것 → 앱에 넣은 것, 늦은 응답 저장), 자료가 아닌 요청, 안드로이드 뒤로 가기, 웹에서는 아무것도 안 함.
+// 자료 받기(네트워크 → 받아 둔 것 → 앱에 넣은 것, 늦은 응답 저장), 바탕 지도(앱에 넣은 것만), 자료가 아닌 요청, 안드로이드 뒤로 가기, 웹에서는 아무것도 안 함.
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
@@ -137,6 +137,13 @@ const out = {};
   s.listeners.backButton({ canGoBack: true });
   s.listeners.backButton({ canGoBack: false });
   out.back = { closed, kept, historyBack: s.calls.back, minimized: s.calls.minimized };
+}
+
+// 7) 바탕 지도는 앱에 넣은 것만(네트워크로 받지 않는다)
+{
+  const s = setup({ http: async () => ({ status: 200, data: '{"from":"remote"}' }) });
+  const r = await read(await s.win.fetch("data/basemap.json"));
+  out.basemap = { from: r.body.from, remoteCalls: s.calls.remote.length };
 }
 
 console.log(JSON.stringify(out));

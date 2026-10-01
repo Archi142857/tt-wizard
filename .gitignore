@@ -227,6 +227,7 @@ data/topo_buildings.geojson
 # 웹 자료: scripts/export_web.py 가 만든다(GitHub Actions 가 배포 때 다시 만든다)
 web/data/
 # 수치지형도: 스크립트가 읽는 레이어(등고선 F0010000, 표고점 F0020000, 건물 B0010000)만 올린다
+# 바탕 지도(scripts/basemap.py)용으로 1:5,000 도엽(N3*)의 도로경계 A0010000, 인도 A0033320, 하천·호수 E0010001·E0032111·E0052114 도
 data/topo/*
 !data/topo/README.md
 !data/topo/*/
@@ -234,6 +235,11 @@ data/topo/*/*
 !data/topo/*/*F0010000.*
 !data/topo/*/*F0020000.*
 !data/topo/*/*B0010000.*
+!data/topo/*/N3A_A0010000.*
+!data/topo/*/N3A_A0033320.*
+!data/topo/*/N3A_E0010001.*
+!data/topo/*/N3A_E0032111.*
+!data/topo/*/N3A_E0052114.*
 # 실제 시간표(개인 자료)는 올리지 않는다. 결과 요약(results/experiments/README.md, fig7)만 올린다
 data/experiments/
 results/experiments/real.csv

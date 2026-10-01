@@ -8,3 +8,5 @@ scipy>=1.11        # 등고선 → DEM 삼각망 보간
 pyshp>=2.3         # 수치지형도 SHP 읽기
 matplotlib>=3.7    # 실험 그림 (scripts/experiments.py)
 pytest>=8.0
+shapely>=2.0       # 바탕 지도(scripts/basemap.py): 면 합치기·자르기·줄이기
+pyproj>=3.6        # 바탕 지도: 수치지형도 좌표(EPSG:5186) → 경위도

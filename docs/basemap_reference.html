@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>캠퍼스 지도 참고 구현</title>
+<!--
+  TT Wizard 캠퍼스 바탕 지도 참고 구현(백엔드 시안, 10/1). 프론트엔드가 web/js/app.js 에 옮길 때 보는 용도. 설명은 docs/basemap.md
+  보기: python scripts/export_web.py → python -m http.server 8000 → http://localhost:8000/docs/basemap_reference.html
+  - 자료: data/basemap.json (형식은 docs/basemap.md). 지도 타일(tile.openstreetmap.org) 대신 이 파일로 그린다
+  - 색: OSM 기본 지도(OpenStreetMap Carto)의 구조(땅·학교 땅·건물·숲·물·흰 길+테두리·등급 색 큰길·점선 보행로)에
+        TT Wizard 느낌(연보라 캠퍼스 땅, 남색 글자, 파랑 물, 차가운 회색 건물)을 조금 섞은 시안. 최종 색은 디자인 세션이 정한다
+  - 건물 번호: 수업이 있는 날(시간표를 보여 줄 때)은 그날 수업 건물 번호만, 수업이 없는 날은 모든 건물 번호(겹치면 숨김, 많이 확대하면 이름도)
+  - 빈 땅이 보이지 않게: maxBounds = 자료 범위, 최소 배율 = max(캠퍼스가 다 들어오는 배율, 화면이 자료 범위 안에 드는 배율)
+  주소 뒤 ?theme=light|dark&mode=day|free&view=route|close|min
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" crossorigin>
+<link rel="stylesheet" href="../web/vendor/leaflet/leaflet.css">
+<style>
+  html, body { margin: 0; height: 100%; font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif; }
+  #map { position: absolute; inset: 0; }
+  .leaflet-container { font-family: inherit; }
+  .leaflet-div-icon { background: none; border: 0; }
+  .blabel { transform: translate(-50%, -50%); text-align: center; white-space: nowrap; pointer-events: none;
+    text-shadow: 0 0 2px var(--halo), 0 0 2px var(--halo), 0 0 3px var(--halo), 0 0 3px var(--halo), 0 0 4px var(--halo); }
+  .blabel b { display: block; font-size: 12px; line-height: 14px; font-weight: 750; color: var(--label); letter-spacing: -0.1px; }
+  .blabel span { display: block; font-size: 10px; line-height: 12px; font-weight: 550; color: var(--name); letter-spacing: -0.2px; }
+  .blabel.day { transform: translate(15px, -50%); text-align: left; }
+  .blabel.day b { font-size: 12.5px; }
+  .zlabel { transform: translate(-50%, -50%); font-size: 9.5px; font-weight: 650; color: var(--zl); pointer-events: none;
+    text-shadow: 0 0 2px var(--halo), 0 0 2px var(--halo), 0 0 3px var(--halo); }
+  .pin { display: flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 5px; box-sizing: border-box; border: 2px solid var(--card);
+    border-radius: 9999px; background: var(--pin); color: #fff; font-size: 12px; line-height: 16px; font-weight: 700; box-shadow: 0 1px 3px #0003; transform: translate(-50%, -50%); width: max-content; }
+  .leg { display: inline-block; padding: 1px 6px; border-radius: 9999px; background: var(--card); color: var(--text2); font-size: 12px; line-height: 16px; font-weight: 500;
+    white-space: nowrap; box-shadow: 0 1px 3px #0003; transform: translate(-50%, -50%); }
+  .attr { position: absolute; right: 0; bottom: 0; z-index: 500; padding: 1px 6px; font-size: 10px; line-height: 14px; background: var(--card); color: var(--text2); opacity: .9; border-top-left-radius: 8px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="attr">© 국토지리정보원 · © OpenStreetMap</div>
+<script src="../web/vendor/leaflet/leaflet.js"></script>
+<script>
+const Q = new URLSearchParams(location.search);
+const THEME = Q.get("theme") || "light", MODE = Q.get("mode") || "day", VIEW = Q.get("view") || "route";
+// 지도 색(시안). OSM Carto 대비 바꾼 것: 땅·건물을 차가운 회색으로, 캠퍼스 땅을 연보라(앱 바탕 #EEF0FF 계열)로, 물을 파랑 쪽으로, 글자를 남색으로
+const T = {
+  light: { land: "#F1F0F2", green: "#C9E2C2", park: "#D3EACB", grass: "#D7EDCF", pitch: "#BFE4D2", campus: "#F5F6FF", campusLine: "#D7DCFA",
+    minor: "#DFDCE6", index: "#CAC4D6", zl: "#968EAE", water: "#AFC9F2",
+    walkArea: "#FBFBFE", road: "#FFFFFF", roadLine: "#C3C0D0", road_trunk: "#F7BBA8", road_trunkLine: "#D99683", road_primary: "#F9D9AF", road_primaryLine: "#D2AE78",
+    road_secondary: "#F2F1C4", road_secondaryLine: "#C2C08A", roadCase: "#C3C0D0", ped: "#E3E4F4", pedCase: "#B3B6D2", foot: "#F0857A", footCase: "#FFFFFF", steps: "#EC6F62",
+    bldg: "#DAD6DF", bldgLine: "#BCB6C9", label: "#1D2A78", name: "#51596A", halo: "#FFFFFF", route: "#4F70FF", card: "#FFFFFF", pin: "#415FEC", text2: "#51596A" },
+  dark: { land: "#17171B", green: "#1B261F", park: "#1E2A21", grass: "#1F2B22", pitch: "#1B2D27", campus: "#1C1D25", campusLine: "#2B2E40",
+    minor: "#25252C", index: "#32313C", zl: "#7A7690", water: "#1C2B45",
+    walkArea: "#22222A", road: "#3B3C45", roadLine: "#0D0D10", road_trunk: "#7D4E43", road_trunkLine: "#4C2F28", road_primary: "#7A6142", road_primaryLine: "#4A3B28",
+    road_secondary: "#5E5E3E", road_secondaryLine: "#3B3B27", roadCase: "#0B0B0E", ped: "#35364A", pedCase: "#121218", foot: "#C9726A", footCase: "#17171B", steps: "#D97A6D",
+    bldg: "#35343E", bldgLine: "#474656", label: "#E5E8F0", name: "#AFB2BB", halo: "#17171B", route: "#758BE7", card: "#1E2026", pin: "#4D6CE0", text2: "#C8CAD2" },
+}[THEME];
+for (const [k, v] of Object.entries(T)) document.documentElement.style.setProperty("--" + k, v);
+document.body.style.background = T.land;
+
+/** Google polyline → [[lat, lon], ...] (소수 prec 자리). 앱 engine.js decodePolyline 에 자리수만 더한 것 */
+function decode(s, prec) {
+  const out = [], f = 10 ** prec; let i = 0, lat = 0, lon = 0;
+  while (i < s.length) {
+    const v = [];
+    for (let k = 0; k < 2; k++) { let sh = 0, r = 0, b; do { b = s.charCodeAt(i++) - 63; r |= (b & 31) << sh; sh += 5; } while (b >= 32); v.push(r & 1 ? ~(r >> 1) : r >> 1); }
+    lat += v[0]; lon += v[1]; out.push([lat / f, lon / f]);
+  }
+  return out;
+}
+
+(async () => {
+  const [B, C, RT] = await Promise.all(["basemap.json", "campus.json", "routes.json"].map((u) => fetch("../web/data/" + u).then((r) => r.json())));
+  const dataBounds = L.latLngBounds([B.bounds[0], B.bounds[1]], [B.bounds[2], B.bounds[3]]);
+  const campusBounds = L.latLngBounds(C.ids.map((id) => C.buildings[id]).filter((v) => v && v[1] != null).map((v) => [v[1], v[2]])).pad(0.1);
+  const map = L.map("map", { zoomControl: false, attributionControl: false, zoomSnap: 0.25, maxZoom: 19.5, fadeAnimation: false, zoomAnimation: false,
+    maxBounds: dataBounds, maxBoundsViscosity: 1.0 });
+  map.getContainer().style.background = T.land;
+  // 빈 땅이 안 보이게: 화면이 자료 범위 안에 드는 배율보다 덜 축소하지 않는다(넓은 화면에서는 캠퍼스가 한 화면에 다 안 들어올 수 있다)
+  const minZoom = () => Math.max(map.getBoundsZoom(campusBounds, false), map.getBoundsZoom(dataBounds, true));
+
+  const R = L.canvas({ padding: 0.4 });
+  const add = (l) => l.addTo(map);
+  // 면 한 개 = [소수 자리, 바깥 고리, 구멍...]
+  const area = (list, o) => (list || []).map(([prec, ...rings]) => add(L.polygon(rings.map((r) => decode(r, prec)), { renderer: R, interactive: false, ...o })));
+  const mpp = () => (156543.034 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / 2 ** map.getZoom();
+  const sized = [];
+  const line = (ll, color, m, min, extra = 0, o = {}) => { const l = add(L.polyline(ll, { renderer: R, interactive: false, color, lineCap: "round", lineJoin: "round", ...o })); sized.push([l, m, min, extra]); return l; };
+  const A = B.area, Ln = B.line || {};
+
+  // 그리는 순서: 땅 → 등고선 → 물 → 도로면 → 길(선) → 건물 → (경로·핀·글자)
+  area(A.green, { stroke: false, fillColor: T.green, fillOpacity: 1 });
+  area(A.park, { stroke: false, fillColor: T.park, fillOpacity: 1 });
+  area(A.grass, { stroke: false, fillColor: T.grass, fillOpacity: 1 });
+  area(A.campus, { color: T.campusLine, weight: 1.2, fillColor: T.campus, fillOpacity: 1 });
+  area(A.pitch, { stroke: false, fillColor: T.pitch, fillOpacity: 1 });
+  const minor = B.contour.minor.map(([, s]) => add(L.polyline(decode(s, 5), { renderer: R, interactive: false, color: T.minor, weight: 0.7 })));
+  B.contour.index.forEach(([, s]) => add(L.polyline(decode(s, 5), { renderer: R, interactive: false, color: T.index, weight: 1.1 })));
+  area(A.water, { stroke: false, fillColor: T.water, fillOpacity: 1 });
+  area(A.walk, { stroke: false, fillColor: T.walkArea, fillOpacity: 1 });
+  area(A.road, { color: T.roadLine, weight: 0.9, fillColor: T.road, fillOpacity: 1 });
+  for (const k of ["road_secondary", "road_primary", "road_trunk"]) area(A[k], { color: T[k + "Line"], weight: 0.9, fillColor: T[k], fillOpacity: 1 });
+  const ROADW = { service: 4.5, residential: 6, living_street: 5, unclassified: 6, tertiary: 7, tertiary_link: 6 };
+  const roads = (Ln.road || []).map(([hw, s]) => [ROADW[hw] || 5, decode(s, 5)]);
+  const peds = (Ln.pedestrian || []).map(([, s]) => decode(s, 5));
+  const walks = (Ln.walk || []).map(([, s]) => decode(s, 5));
+  for (const [w, ll] of roads) line(ll, T.roadCase, w, 2.6, 2);
+  for (const ll of peds) line(ll, T.pedCase, 5, 2.6, 2);
+  for (const [w, ll] of roads) line(ll, T.road, w, 1.6);
+  for (const ll of peds) line(ll, T.ped, 5, 1.6);
+  const footCase = walks.map((ll) => line(ll, T.footCase, 1.6, 2.6, 1.6, { opacity: 0.7 }));
+  const foot = walks.map((ll) => line(ll, T.foot, 0.9, 1.3, 0, { lineCap: "butt" }));
+  const steps = (Ln.steps || []).map(([, s]) => line(decode(s, 5), T.steps, 2.2, 3.2, 0, { lineCap: "butt" }));
+  area(A.building, { color: T.bldgLine, weight: 0.8, fillColor: T.bldg, fillOpacity: 1 });
+
+  const zMarks = B.contour.index.map(([z, s]) => { const ll = decode(s, 5); return L.marker(ll[Math.floor(ll.length / 2)], { interactive: false, icon: L.divIcon({ className: "", html: `<div class="zlabel">${z}</div>`, iconSize: [0, 0] }) }); });
+
+  // 하루 견본(수업이 있는 날): 16 → 43-1 → 301. 분은 campus.json 경사 반영 시간
+  const stops = MODE === "day" ? ["16", "43-1", "301"] : [];
+  const legs = [];
+  for (let i = 1; i < stops.length; i++) {
+    const a = stops[i - 1], b = stops[i], p = RT.paths[a + "|" + b];
+    legs.push(p ? decode(p, 5) : decode(RT.paths[b + "|" + a], 5).reverse());
+  }
+  for (const ll of legs) add(L.polyline(ll, { color: T.card, weight: 8, lineCap: "round", lineJoin: "round", interactive: false }));
+  for (const ll of legs) add(L.polyline(ll, { color: T.route, weight: 4, lineCap: "round", lineJoin: "round", interactive: false }));
+  const pins = stops.map((id, i) => add(L.marker([C.buildings[id][1], C.buildings[id][2]], { interactive: false, zIndexOffset: 1000, icon: L.divIcon({ className: "", html: `<div class="pin">${i + 1}</div>`, iconSize: [0, 0] }) })));
+  const mins = stops.slice(1).map((b, i) => Math.round(C.slope[C.ids.indexOf(stops[i])][C.ids.indexOf(b)]));
+  const legMarks = mins.map((m, i) => { const ll = legs[i]; return add(L.marker(ll[Math.floor(ll.length / 2)], { interactive: false, zIndexOffset: 900, icon: L.divIcon({ className: "", html: `<div class="leg">${m}분</div>`, iconSize: [0, 0] }) })); });
+
+  // 건물 번호: 수업이 있는 날은 그날 건물만(핀 아래에 번호), 수업이 없는 날은 전부
+  const all = Object.entries(C.buildings).filter(([, v]) => v[1] != null).map(([id, v]) => ({ id, name: v[0], at: L.latLng(v[1], v[2]), pri: /^\d+$/.test(id) ? 0 : 1 }))
+    .sort((a, b) => a.pri - b.pri || a.id.length - b.id.length);
+  const dayIds = new Set(stops);
+  let shown = [];
+  function restyle() {
+    const k = mpp(), z = map.getZoom();
+    for (const [l, m, min, extra] of sized) l.setStyle({ weight: Math.max(min, m / k) + extra });
+    foot.forEach((l) => l.setStyle({ dashArray: `${Math.max(3, 1.6 / k).toFixed(1)} ${Math.max(2, 1.0 / k).toFixed(1)}`, opacity: z >= 15.25 ? (THEME === "dark" && z < 16.5 ? 0.75 : 1) : 0 }));
+    footCase.forEach((l) => l.setStyle({ opacity: z >= 16.5 ? 0.7 : 0 }));
+    steps.forEach((l) => l.setStyle({ dashArray: `${Math.max(1.4, 0.35 / k).toFixed(1)} ${Math.max(1.1, 0.3 / k).toFixed(1)}` }));
+    minor.forEach((l) => l.setStyle({ opacity: z >= 15.75 ? 1 : 0 }));
+    shown.forEach((m) => m.remove());
+    shown = [];
+    const size = map.getSize();
+    const placed = pins.map((pm) => { const p = map.latLngToContainerPoint(pm.getLatLng()); return [p.x - 16, p.y - 14, p.x + 16, p.y + 14]; });
+    for (const lm of legMarks) { const p = map.latLngToContainerPoint(lm.getLatLng()); placed.push([p.x - 26, p.y - 12, p.x + 26, p.y + 12]); }
+    if (MODE === "day") {
+      // 그날 건물 번호는 핀 바로 아래(겹쳐도 숨기지 않는다)
+      for (const lb of all.filter((b) => dayIds.has(b.id))) {
+        const html = `<div class="blabel day"><b>${lb.id}</b>${z >= 17.25 ? `<span>${lb.name}</span>` : ""}</div>`; // 핀 오른쪽
+        shown.push(add(L.marker(lb.at, { interactive: false, zIndexOffset: 800, icon: L.divIcon({ className: "", html, iconSize: [0, 0] }) })));
+      }
+    } else if (z >= 15.5) {
+      const withName = z >= 17.25;
+      for (const lb of all) {
+        const p = map.latLngToContainerPoint(lb.at);
+        const w = Math.max(7.2 * lb.id.length + 4, withName ? 10.2 * lb.name.length : 0), h = withName ? 28 : 15;
+        const box = [p.x - w / 2 - 2, p.y - h / 2 - 1, p.x + w / 2 + 2, p.y + h / 2 + 1];
+        if (box[0] < 2 || box[1] < 2 || box[2] > size.x - 2 || box[3] > size.y - 2) continue;
+        if (placed.some((q) => !(box[2] < q[0] || box[0] > q[2] || box[3] < q[1] || box[1] > q[3]))) continue;
+        placed.push(box);
+        shown.push(add(L.marker(lb.at, { interactive: false, icon: L.divIcon({ className: "", html: `<div class="blabel"><b>${lb.id}</b>${withName ? `<span>${lb.name}</span>` : ""}</div>`, iconSize: [0, 0] }) })));
+      }
+    }
+    for (const zm of zMarks) z >= 17 ? zm.addTo(map) : zm.remove();
+  }
+  map.on("zoomend moveend", restyle);
+
+  map.setMinZoom(minZoom());
+  if (VIEW === "route" && legs.length) map.fitBounds(L.latLngBounds(legs.flat()), { paddingTopLeft: [24, 40], paddingBottomRight: [68, 32], maxZoom: 17, animate: false });
+  else if (VIEW === "close") map.setView([37.4585, 126.9512], 17.75, { animate: false });
+  else if (VIEW === "min") map.setView(campusBounds.getCenter(), map.getMinZoom(), { animate: false });
+  else map.fitBounds(campusBounds, { animate: false });
+  restyle();
+  await document.fonts.ready;
+  setTimeout(() => { window.READY = true; }, 300);
+})();
+</script>
+</body>
+</html>

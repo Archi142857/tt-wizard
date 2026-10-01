@@ -16,10 +16,11 @@ permissions:
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
+    # ubuntu-latest 가 10/19 부터 Ubuntu 26 으로 바뀐다. 확인하기 전까지 24.04 로 묶어 둔다
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt

@@ -1,6 +1,6 @@
 // TT Wizard 서비스 워커: 폰 홈 화면에 설치한 앱이 네트워크가 없어도 열리게 한다.
-// - 같은 사이트의 파일(화면·엔진·편람·이동시간)과 글꼴을 다룬다. 지도 타일(OpenStreetMap)은 브라우저에 맡긴다
-//   (OSM 타일 정책: 미리 받아 두거나 따로 쌓지 않는다)
+// - 같은 사이트의 파일(화면·엔진·편람·이동시간·바탕 지도 data/basemap.json)과 글꼴을 다룬다.
+//   지도 타일(OpenStreetMap, 바탕 지도로 바꾸기 전까지)은 브라우저에 맡긴다(OSM 타일 정책: 미리 받아 두거나 따로 쌓지 않는다)
 // - 글꼴 Pretendard(jsDelivr 동적 서브셋, 주소에 판 번호가 들어 있어 내용이 안 바뀐다)는 한 번 받은 것을 그대로 쓴다.
 //   화면에 나온 글자 묶음만 저장되고, 셸 캐시 이름을 올려도 지우지 않는다. iOS 앱은 한글 서브셋을 앱에 넣는다(스토어 포장 때)
 // - 늘 네트워크를 먼저 본다. 브라우저 캐시는 서버에 바뀌었는지 물은 뒤에만 쓴다(안 바뀌었으면 304 로 짧게 끝난다).
@@ -13,7 +13,7 @@ const SHELL = [
   "./", "index.html", "style.css", "js/app.js", "js/engine.js", "js/search-worker.js", "manifest.webmanifest",
   "vendor/leaflet/leaflet.css", "vendor/leaflet/leaflet.js", "icons/icon-192.png", "icons/favicon-32.png", "icons/favicon.svg",
   "icons/wordmark.svg", "icons/wordmark-dark.svg",
-  "data/campus.json", "data/courses.json", "data/semesters.json",
+  "data/campus.json", "data/courses.json", "data/semesters.json", "data/basemap.json",
 ];
 const WAIT_MS = 3000;
 const FONT_CACHE = "ttw-font-v1";

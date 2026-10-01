@@ -7,6 +7,7 @@
   web/data/courses.json  과목 → 분반 → 수업(요일, 시작·끝 분, 동, 호실). 논문 과목은 뺀다
   web/data/campus.json   이동시간 행렬(평지 = 마법 지도 표, 경사 반영), 건물 이름·좌표, 출발 후보, 갱신 시각
   web/data/routes.json   지도에 그릴 경로 모양(data/route_paths.json 그대로. 없으면 화면이 직선으로 잇는다)
+  web/data/basemap.json  바탕 지도(data/basemap.json 그대로. scripts/basemap.py 가 만든다. 형식은 docs/basemap.md)
   web/data/semesters.json, semesters/<학기>.json
                          학기 선택: 지난 학기 편람(data/history/<학기>.json, 이미 courses.json 형식)과 목록.
                          지금 학기는 courses.json. data/history/ 는 build_history.py(처음 한 번)와 sync.py(학기가 바뀔 때)가 채운다
@@ -211,6 +212,9 @@ def main(argv: list[str] | None = None) -> int:
         shutil.copyfile(routes, out / "routes.json")
     else:
         (out / "routes.json").write_text('{"ids":[],"paths":{}}', encoding="utf-8")
+    basemap = data / "basemap.json"
+    if basemap.exists():
+        shutil.copyfile(basemap, out / "basemap.json")
     semesters = export_semesters(data, out, campus["meta"]["semester"])
 
     n_sec = sum(len(c[6]) for c in courses["courses"])
@@ -220,6 +224,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  campus.json   지점 {len(campus['ids'])}개 · 평지 {'있음' if campus['flat'] else '없음'}"
           f" · 경사 반영 {'있음' if campus['slope'] else '없음'} · 건물 {len(campus['buildings'])}개")
     print(f"  routes.json   {'data/route_paths.json 복사' if routes.exists() else '없음 → 직선으로 표시'}")
+    print(f"  basemap.json  {f'data/basemap.json 복사 ({basemap.stat().st_size / 1e3:.0f} KB)' if basemap.exists() else '없음'}")
     print(f"  semesters.json 학기 {len(semesters)}개 ({semesters[0][0] or '학기 모름'}"
           f"{' ~ ' + semesters[-1][0] if len(semesters) > 1 else ''})")
     if args.stamp:
