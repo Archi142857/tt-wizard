@@ -495,8 +495,10 @@ function marked(text, q, skip = /\s/, cho = false) {
 
 const isPicked = (id) => state.picks.some((p) => p.id === id);
 
+/** 담기 버튼과 그 행. 누르는 영역은 행 전체(style.css), 담은 과목의 행은 어두운 바탕. */
 function setAddButton(b, name, picked) {
   b.classList.toggle("is-on", picked);
+  b.closest(".result")?.classList.toggle("is-picked", picked);
   b.setAttribute("aria-label", `${name} ${picked ? "담음" : "담기"}`);
   b.replaceChildren(...(picked ? [icon(I.check, 16), "담음"] : ["담기"]));
 }
@@ -507,10 +509,11 @@ function resultRow({ c, kind, prof }, { q, qId }) {
   const first = kind === "id" ? marked(c.id, qId, /[\s.]/) : kind === "dept" ? marked(c.dept, q) : kind === "prof" ? marked(prof, q) : c.dept ? [c.dept] : null;
   const rest = [c.cls, fmtCredit(c.credit)].filter(Boolean).join(" · ");
   const btn = h("button", { type: "button", class: "btn-add", "data-id": c.id });
-  setAddButton(btn, c.name, isPicked(c.id));
-  return h("li", { class: "result" },
+  const row = h("li", { class: "result" },
     h("div", { class: "r-body" }, h("span", { class: "r-title" }, title), h("span", { class: "r-meta" }, first ? [first, rest ? ` · ${rest}` : ""] : rest)),
     btn);
+  setAddButton(btn, c.name, isPicked(c.id));
+  return row;
 }
 
 let resultsShown = RESULTS_STEP, lastQuery = "", countTimer = null;
@@ -664,6 +667,7 @@ function renderPicked({ added = "" } = {}) {
   const n = state.picks.length;
   $("picked-count").textContent = n ? String(n) : "";
   $("picked-empty").hidden = n > 0;
+  $("picked-legend").hidden = n === 0; // 점 색 풀이는 담은 과목이 있을 때만
   $("picked-list").replaceChildren(...state.picks.map((p) => courseRow(p, p.id === added)));
   renderPickedError();
   updateRun();
@@ -1258,7 +1262,7 @@ function renderResult() {
   const R = state.result;
   if (!R) return;
   $("rank-count").textContent = `시간표 ${R.ranked.length}개를 찾았어요`;
-  $("rank-cond").textContent = `${placeLabel(R.home)} · ${R.mode === "slope" ? "경사 반영" : "평지"}`;
+  $("rank-cond").textContent = `출발·도착 ${placeLabel(R.home)} · ${R.mode === "slope" ? "경사 반영" : "평지"}`;
   $("daytabs").replaceChildren(...R.days.map((d) => h("button", { type: "button", role: "tab", id: `tab-${d}`, "data-day": String(d), "aria-controls": "day-panel" }, DAY_KO[d])));
   updateTabs();
   renderDay({ reveal: state.reveal });
@@ -1473,8 +1477,11 @@ function makeMap(el, full) {
   return mp;
 }
 
-/** 지도 아래 번호표: 수업 순서 번호와 건물, 마지막에 출발·도착. */
-function renderLegend(mp, legs) {
+// 점선 견본(지도의 돌아가는 길과 같은 모양: 둥근 점 5px 간격)
+const RETURN_KEY = '<svg class="line-key" width="20" height="8" viewBox="0 0 20 8" aria-hidden="true"><path d="M2.5 4H17.6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 4.9"/></svg>';
+
+/** 지도 아래 번호표: 수업 순서 번호와 건물, 출발·도착, 돌아가는 길(점선)이 있으면 그 견본. */
+function renderLegend(mp, legs, hasReturn) {
   const items = [];
   let n = 0;
   for (const l of legs) {
@@ -1483,6 +1490,7 @@ function renderLegend(mp, legs) {
     items.push(h("li", {}, h("span", { class: "num" }, String(n)), h("span", {}, l.meeting.building ? buildingLabel(l.meeting.building) : "강의실 미정")));
   }
   if (items.length) items.push(h("li", {}, h("span", { class: "num home", "aria-hidden": "true" }, svg(HOME_PIN.replace('width="12" height="12"', 'width="10" height="10"'))), h("span", {}, placeLabel(state.result.home))));
+  if (items.length && hasReturn) items.push(h("li", { class: "line" }, svg(RETURN_KEY), h("span", {}, "돌아가는 길")));
   mp.legend.replaceChildren(...items);
 }
 
@@ -1490,21 +1498,8 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
   const { map } = mp;
   const R = state.result;
   const legs = ev.days[day] ? ev.legs.filter((l) => l.day === day) : [];
-  renderLegend(mp, legs); // 번호표를 먼저 채워야 지도 칸 높이가 정해진다
-  mp.el.setAttribute("aria-label", `${DAY_KO[day]}요일 지도`);
-  map.invalidateSize();
-  map.setMinZoom(Math.max(12, map.getBoundsZoom(campusBounds, false)));
-  mp.lines.clearLayers();
-  const homeAt = coordOf(R.home);
-  const stops = [], labels = [], pts = homeAt ? [homeAt] : [];
-  let n = 0;
-  for (const l of legs) {
-    if (!l.meeting) continue;
-    n += 1;
-    const at = l.meeting.building ? coordOf(l.meeting.building) : null;
-    if (at && l.meeting.building !== R.home) stops.push({ at, nums: [n], names: [l.meeting.section.name], b: l.meeting.building });
-  }
-  const homeLines = [], classLines = [];
+  // 선: 수업 가는 길(번호가 붙은 수업으로)은 실선, 마지막 수업에서 출발·도착 자리로 돌아가는 길은 점선
+  const homeLines = [], classLines = [], labels = [];
   for (const l of legs) {
     if (l.from === l.to) continue;
     let line = routeLine(state.routes, l.from, l.to);
@@ -1513,16 +1508,31 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
       if (!a || !b) continue;
       line = [a, b];
     }
-    pts.push(...line);
     (l.meeting ? classLines : homeLines).push(line);
     const mins = Math.round(l.minutes);
     if (mins > 0) labels.push({ at: midpoint(line), text: `${mins}분` });
   }
-  // 선: 수업 가는 길은 route 4px 실선 + card 2px 테두리, 돌아가는 길은 route-home 4px 점선
-  for (const line of homeLines) L.polyline(line, { className: "map-route-home", weight: 4, dashArray: "0.1 8", lineCap: "round", interactive: false }).addTo(mp.lines);
+  renderLegend(mp, legs, homeLines.length > 0); // 번호표를 먼저 채워야 지도 칸 높이가 정해진다
+  mp.el.setAttribute("aria-label", `${DAY_KO[day]}요일 지도`);
+  map.invalidateSize();
+  map.setMinZoom(Math.max(12, map.getBoundsZoom(campusBounds, false)));
+  mp.lines.clearLayers();
+  const homeAt = coordOf(R.home);
+  const stops = [], pts = homeAt ? [homeAt] : [];
+  let n = 0;
+  for (const l of legs) {
+    if (!l.meeting) continue;
+    n += 1;
+    const at = l.meeting.building ? coordOf(l.meeting.building) : null;
+    if (at && l.meeting.building !== R.home) stops.push({ at, nums: [n], names: [l.meeting.section.name], b: l.meeting.building });
+  }
+  for (const line of [...classLines, ...homeLines]) pts.push(...line);
+  // 선 모양: 수업 가는 길은 route 4px 실선 + card 2px 테두리, 돌아가는 길은 route-home 4px 점선.
+  // 돌아가는 길은 실선 위에 그린다(같은 길을 되짚어 갈 때 점선이 실선 밑에 숨지 않고 ⌂ 까지 이어 보이게)
   const drawn = [];
   for (const line of classLines) drawn.push(L.polyline(line, { className: "map-route-case", weight: 8, lineCap: "round", lineJoin: "round", interactive: false }).addTo(mp.lines));
   for (const line of classLines) drawn.push(L.polyline(line, { className: "map-route", weight: 4, lineCap: "round", lineJoin: "round", interactive: false }).addTo(mp.lines));
+  for (const line of homeLines) L.polyline(line, { className: "map-route-home", weight: 4, dashArray: "0.1 8", lineCap: "round", interactive: false }).addTo(mp.lines);
   for (const st of stops) pts.push(st.at);
   // 요일·순위를 바꾸면 그날 경로 전체가 들어오게(애니메이션 없이). 핀이 오른쪽 위 버튼(크게 보기, 확대·축소), 왼쪽 위 '지도 배경 없음',
   // 오른쪽 아래 저작권 표기에 가리지 않게 가장자리를 비운다. 폰의 작은 지도는 폭이 좁아 위쪽을 비운다
@@ -1982,7 +1992,10 @@ document.addEventListener("visibilitychange", () => {
 
 history.scrollRestoration = "manual";
 history.replaceState({ view: "input", depth: 0 }, "", location.pathname + location.search);
-$("cls-legend").replaceChildren(...CLS_GROUPS.map(([name, key]) => h("span", {}, h("span", { class: "dot", "aria-hidden": "true", style: { background: `var(--cls-${key})` } }), name)));
+// 교과구분 색 풀이: 결과 화면 시간표 아래, 입력 화면 담은 과목 아래
+for (const id of ["cls-legend", "picked-legend"]) {
+  $(id).replaceChildren(...CLS_GROUPS.map(([name, key]) => h("span", {}, h("span", { class: "dot", "aria-hidden": "true", style: { background: `var(--cls-${key})` } }), name)));
+}
 renderInfo();
 renderOnline();
 start();

@@ -1,7 +1,8 @@
 /* TT Wizard 화면. TT Wizard 디자인 규칙 v3(공유 폴더 디자인_시스템.md, design\v3\TT Wizard 디자인 규칙.md)을 옮겼다.
    토큰 이름은 디자인 시스템 tokens.json 과 같고, 컴포넌트 규칙은 components/bundle.css 를 따른다(클래스 이름도 같다).
    글자는 rem, 폭 구간은 em. 굵기는 400·500·700만, 글자는 12px 이상. 색은 아래 토큰으로만 칠한다.
-   연도·학기 선택칸, 시간표 칸, 지도 번호표, 후보 카드는 사용자 요청(2026-10-01)으로 v2 모양을 v3 토큰으로 옮겼다. */
+   연도·학기 선택칸, 시간표 칸, 지도 번호표, 후보 카드는 사용자 요청(2026-10-01)으로 v2 모양을 v3 토큰으로 옮겼다.
+   입력 화면 로고는 사용자 요청으로 워드마크만, 검색 결과는 행 전체가 담기·빼기(담은 행은 어두운 바탕). */
 :root {
   --tt-deep-navy: #1d2a78;
   --tt-primary: #4f70ff;
@@ -105,6 +106,8 @@
   --gutter-left: max(var(--space-5), env(safe-area-inset-left, 0px));
   --gutter-right: max(var(--space-5), env(safe-area-inset-right, 0px));
   --bottom-bar-h: calc(var(--cta-height) + var(--space-3) * 2 + var(--safe-bottom));
+  --result-picked: var(--fill); /* 검색 결과에서 담은 과목의 행 바탕(다크는 아래 '다크 전용'에서 bg) */
+  --result-picked-btn: var(--card);
   color-scheme: light;
 }
 
@@ -203,7 +206,8 @@ h2.section-title .count { color: var(--text3); }
 /* ---------------------------------------------------------------- 상단 바 */
 .topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: var(--space-2);
   min-height: calc(var(--topbar-h) + var(--safe-top)); padding-top: var(--safe-top); background: var(--bg); }
-.lockup { display: block; height: var(--logo-topbar); width: auto; -webkit-touch-callout: none; }
+/* 입력 화면 로고: 워드마크만(사용자 요청). 로고 묶음(32px)보다 글자가 커 보이게 36px */
+.wordmark { display: block; height: 36px; width: auto; -webkit-touch-callout: none; }
 .topbar .title { flex: 1; min-width: 0; margin: 0; font-size: 1.0625rem; line-height: 1.5rem; font-weight: 700; color: var(--heading);
   overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .topbar .title:focus { outline: none; }
@@ -272,7 +276,18 @@ body.is-typing .bottom-bar { display: none; }
 .searchbox .spinner { margin-right: var(--space-2); color: var(--text3); }
 .searchbox .icon-btn { margin-right: calc(var(--space-2) * -1); }
 .results { margin-top: var(--space-2); overflow: hidden; }
-.result { display: flex; align-items: center; gap: var(--space-3); min-height: 64px; padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4); }
+.result { position: relative; display: flex; align-items: center; gap: var(--space-3); min-height: 64px; padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+  cursor: pointer; transition: background-color var(--dur-fade) var(--ease-standard); }
+/* 담기·빼기는 행 어디를 눌러도 된다: 버튼의 누르는 영역(::before)을 행 전체로 넓힌다. 초점 테두리도 행에 */
+.result .btn-add { position: static; }
+.result .btn-add::before { top: 0; left: 0; width: 100%; height: 100%; transform: none; }
+.result .btn-add:focus-visible { outline: none; }
+.result:has(.btn-add:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
+.result:not(.is-picked):has(.btn-add:active) { background: var(--surface-hover); }
+/* 담은 과목의 행은 어두운 바탕(라이트 fill, 다크 bg), 버튼은 그 위의 '✓ 담음' */
+.result.is-picked { background: var(--result-picked); }
+.result.is-picked .r-meta { color: var(--text2); }
+.result.is-picked .btn-add { background: var(--result-picked-btn); }
 .r-body { flex: 1; min-width: 0; }
 .r-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 1rem; line-height: 1.5rem; font-weight: 500;
   color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
@@ -440,6 +455,9 @@ dialog.sheet.is-dragging { transition: none; }
 .num { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 1.125rem; height: 1.125rem; padding: 0 3px; border-radius: var(--radius-full);
   background: var(--accent); color: var(--on-color); font-size: 0.75rem; line-height: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .num.home { padding: 0; background: var(--home); color: var(--bg); }
+/* 점선 견본 '돌아가는 길': 좁은 두 칸 번호표에서는 한 줄을 다 쓴다 */
+.legend li.line { grid-column: 1 / -1; }
+.line-key { flex-shrink: 0; color: var(--route-home); }
 .map-note { position: absolute; left: var(--space-2); top: var(--space-2); margin: 0; font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text3);
   pointer-events: none; }
 .map-attr { position: absolute; right: 0; bottom: 0; padding: 1px 6px; border-top-left-radius: var(--radius-xs); background: var(--card); opacity: .9;
@@ -462,7 +480,12 @@ dialog.sheet.is-dragging { transition: none; }
   color: var(--text2); }
 .day-summary b { color: var(--text); font-weight: 500; }
 @media (max-width: 22.4375em) { .panes { flex-direction: column; height: auto; } .panes > .card { flex: none; height: var(--pane-h); } }
-@media (min-width: 52.5em) { :root { --tt-h: 420px; } .panes { height: var(--pane-h-wide); } .panes .legend { grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); } }
+@media (min-width: 52.5em) {
+  :root { --tt-h: 420px; }
+  .panes { height: var(--pane-h-wide); }
+  .panes .legend { grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); }
+  .panes .legend li.line { grid-column: auto; }
+}
 
 /* 전체 화면 지도 */
 .view-map { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; padding: 0 var(--gutter-right) 0 var(--gutter-left); background: var(--bg); }
@@ -471,6 +494,7 @@ dialog.sheet.is-dragging { transition: none; }
 .view-map .map-box > .map-attr { right: env(safe-area-inset-right, 0px); border-bottom-right-radius: 0; }
 .view-map .map-box > .map-note { left: var(--gutter-left); top: var(--space-3); }
 .view-map .legend { grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); padding: var(--space-3) var(--gutter-right) calc(var(--space-3) + var(--safe-bottom)) var(--gutter-left); }
+.view-map .legend li.line { grid-column: auto; }
 .view-map .map-box:has(+ .legend:empty) > .map-attr { bottom: var(--safe-bottom); }
 
 /* Leaflet 안 */
@@ -535,6 +559,7 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
 /* ---------------------------------------------------------------- 마우스를 올릴 수 있을 때만 */
 @media (hover: hover) {
   .icon-btn:hover, .btn-text:hover, .result:hover, .rank-hit:hover, button.info-row:hover, a.info-row:hover, .course-hit:hover .c-title { background: var(--surface-hover); }
+  .result.is-picked:hover { background: var(--result-picked); } /* 담은 행은 어두운 그대로, 버튼만 빨갛게(빼기) */
   .course-hit:hover .c-title { background: none; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
   .term-select:hover { background-color: var(--surface-hover); }
   .btn-add.is-on:hover { background: var(--danger-weak); color: var(--danger); }
@@ -552,6 +577,7 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
   .select, .term-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23afb2bb' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
   dialog.sheet::backdrop { background: var(--scrim, #000000a6); }
   .tt-late { color: var(--bg); } /* 다크의 danger 는 밝아서 흰 글자가 안 읽힌다 */
+  :root { --result-picked: var(--bg); --result-picked-btn: var(--fill); } /* 담은 행은 카드보다 어둡게 */
 }
 
 /* ---------------------------------------------------------------- 고대비(강제 색) */
