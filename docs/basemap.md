@@ -115,6 +115,7 @@ function decode(s, prec) {           // prec: 5 또는 6
 
 ```
 python scripts/fetch_osm_basemap.py   # (인터넷 되는 PC) OSM 숲·잔디·공원 면과 길 → data/osm_basemap.geojson
+                                      # 다섯 번에 나눠 받고, 실패하면 다시 돌리면 된다(받은 조각은 건너뜀)
 python scripts/basemap.py             # → data/basemap.json (shapely, pyproj, pyshp 필요: requirements.txt)
 ```
 

@@ -171,4 +171,36 @@ def test_fetch_osm_basemap_assembles_areas():
     lines = fob.to_lines({"elements": [{"type": "way", "id": 9, "tags": {"highway": "footway"}, "nodes": [1, 2],
                                         "geometry": g((0, 0), (1, 1))}]})
     assert lines[0]["properties"]["highway"] == "footway" and "nodes" not in lines[0]["properties"]
-    assert 'way["landuse"~"^(forest|grass|meadow|recreation_ground|village_green)$"]' in fob.area_query("1,2,3,4")
+    # 한 번에 받으면 서버가 504 를 내서 나눠 받는다: 면은 태그마다, 선은 넓은 것·캠퍼스 둘레
+    areas = fob.area_queries("1,2,3,4")
+    assert [label for label, _ in areas] == ["면 landuse", "면 leisure", "면 natural"]
+    assert 'way["landuse"~"^(forest|grass|meadow|recreation_ground|village_green)$"](1,2,3,4)' in areas[0][1]
+    wide, near = fob.line_queries("1,2,3,4", "5,6,7,8")
+    assert "footway" in wide[1] and "residential" not in wide[1] and "residential" in near[1] and "(5,6,7,8)" in near[1]
+
+
+def test_overpass_treats_runtime_error_as_failure(monkeypatch):
+    requests = pytest.importorskip("requests")
+    import fetch_osm_basemap as fob
+
+    calls = []
+
+    class Res:
+        def __init__(self, body):
+            self.body = body
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return self.body
+
+    def post(url, **kw):
+        calls.append(url.split("/")[2])
+        if len(calls) == 1:  # 첫 서버: 200 이지만 시간 초과 표시(결과가 잘림)
+            return Res({"remark": 'runtime error: Query timed out in "query" at line 1 after 181 seconds.', "elements": []})
+        return Res({"elements": [{"type": "way", "id": 1}]})
+
+    monkeypatch.setattr(requests, "post", post)
+    data = fob.overpass("[out:json];", rounds=1)
+    assert data == {"elements": [{"type": "way", "id": 1}]} and len(calls) == 2
