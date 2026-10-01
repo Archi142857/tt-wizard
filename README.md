@@ -135,9 +135,12 @@ Tobler 보행 함수를 적용한 시간 ÷ 같은 경로의 평지 시간이다
 
 현장에서 확인한 출입구는 `data/entrances_manual.csv`(`building,lat,lon,floor,kind,note`)에 적으면 그 건물은 자동 후보 대신 그것을 쓴다.
 
-오르막 실측으로 경사 반영 시간을 검증한다. 측정 방법과 기록 양식(`data/field/*_template.csv`)은 `docs/field_measurement.md`.
+오르막 실측으로 경사 반영 시간을 검증한다. 폰으로 재는 측정 페이지(`web/field/`, https://archi142857.github.io/tt-wizard/field/)가
+걸은 길(GPS)과 시간을 기록하고, 내보낸 CSV(`data/field/tracks/`, git 에 올리지 않음)를 `track` 이 분석한다.
+측정 방법과 기록 양식(`data/field/*_template.csv`)은 `docs/field_measurement.md`.
 
 ```bash
+python scripts/field_validation.py track data/field/tracks                # 측정 페이지 기록 → 구간 시간 + 경사별 속도
 python scripts/field_validation.py suggest                                # 잴 만한 구간 후보
 python scripts/field_validation.py plan --routes data/field/routes.csv    # 모형 경로·예측 → results/field/plan.*
 python scripts/field_validation.py check data/field/measurements.csv      # 실측 vs 모형 → results/field/
@@ -172,7 +175,7 @@ scripts/
   build_history.py           지난 학기 편람 엑셀 → data/history/<학기>.json (웹 화면 학기 선택)
   experiments.py             비교 실험 → results/experiments/ (engine_bench.mjs 로 웹 엔진 시간도 잰다)
   restrictions.py            수강편람 비고의 수강 제한(®) 읽기: 이 학생이 이 분반을 들을 수 있나
-  field_validation.py        오르막 실측 구간 고르기·경로 뽑기·실측 비교 → results/field/
+  field_validation.py        오르막 실측 구간 고르기·경로 뽑기·실측 비교, 측정 페이지 GPS 기록 분석 → results/field/
   tmap_matrix.py       TMAP 보행자 API → travel.csv
 data/
   sample/              데모용 가짜 데이터
@@ -180,10 +183,11 @@ data/
   history/             지난 학기 편람 (웹 화면 courses.json 형식, 학기 선택용)
   topo/                수치지형도 원자료 (등고선·표고점·건물 레이어) — 건물 고도용
   magicmap/            캠퍼스 마법 지도에서 받은 도로 그래프·건물쌍 거리표와 경사를 붙인 결과
-  field/               오르막 실측 구간·기록 (양식: *_template.csv)
+  field/               오르막 실측 구간(routes.csv)·기록 (양식: *_template.csv, 측정 페이지 CSV 는 tracks/ — git 에 안 올림)
   lectures.json, buildings.csv, travel.csv, travel_slope.csv, route_stats.csv, route_paths.json, results.json, stats.csv, changes/
 web/                 정적 웹 화면: 과목 검색 → 시간표 · 동선 지도(OpenStreetMap) · 순위 목록 (GitHub Pages)
   model/               관악캠퍼스 3D·2D 모델링 (campus_model.py 가 만든 결과, 커밋한다)
+  field/               오르막 실측 페이지 (폰 GPS 기록, 앱에서 링크하지 않음)
 results/experiments/ 비교 실험 결과 (CSV, 그림, README.md 요약)
 docs/                계획·결정 사항, 방법 설명(elevation_method.md, travel_time_method.md, experiments.md)
 tests/               pytest

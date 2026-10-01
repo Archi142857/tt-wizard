@@ -237,3 +237,5 @@ data/topo/*/*
 # 실제 시간표(개인 자료)는 올리지 않는다. 결과 요약(results/experiments/README.md, fig7)만 올린다
 data/experiments/
 results/experiments/real.csv
+# 측정 페이지(web/field/)에서 내보낸 GPS 기록(위치 원자료)은 올리지 않는다. 분석 결과(results/field/)만 올린다
+data/field/tracks/
