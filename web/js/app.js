@@ -1,7 +1,7 @@
 // TT Wizard 화면(디자인 규칙 v3). 자료(data/*.json)는 scripts/export_web.py 가 만들고, 탐색은 engine.js 가 브라우저에서 한다.
 // 화면은 입력 · 결과 · 정보 셋이고 전체 화면 지도, 자료 출처·오픈소스 라이선스가 그 위에 뜬다. 화면만 방문 기록(pushState)을
 // 남기고 시트(<dialog>)는 남기지 않는다. 화면 문구는 디자인 규칙 '문구'를 따른다(문장은 해요체 한 줄, 그 밖에는 명사구).
-import { DAY_KO, parseCourses, TravelMatrix, search, findConflicts, routeLine } from "./engine.js";
+import { DAY_KO, parseCourses, TravelMatrix, search, findConflicts, countFeasible, routeLine } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -32,7 +32,7 @@ const CONTACT_URL = ""; // 문의 페이지(App Store 지원 URL과 같은 곳)
 const REVIEW_URL = { twa: "", ios: "" }; // 스토어 앱 페이지(스토어 앱에서만 '리뷰 남기기')
 const TOP_K = 20; // 한 번에 찾는 조합 수. 후보 카드는 6개씩 보인다(넓은 화면의 2·3열이 꽉 차게)
 const RESULTS_STEP = 8;
-const RANKS_STEP = 6;
+const RANKS_STEP = 6; // 후보 카드 처음 개수이자 '더 보기' 한 번에 더 보이는 개수
 // 워커를 못 쓰는 브라우저에서 화면 스레드로 계산할 때: 조합 수 어림(과목마다 분반 묶음 수를 곱한 것)이 이보다 크면
 // 스피너를 먼저 띄우고 계산한다(계산하는 동안에는 500ms 뒤에 스피너를 그릴 수 없다)
 const HEAVY = 100000;
@@ -147,13 +147,6 @@ function roomLabel(m) {
   return /^[A-Za-z]?\d/.test(m.room) ? `${m.building}동 ${m.room}호` : `${m.building}동 ${m.room}`;
 }
 const daysLabel = (days) => days.map((d) => DAY_KO[d]).join("·");
-/** 받침에 맞춘 '로/으로': 기숙사로, 정문으로, 301동으로(ㄹ 받침은 '로'). */
-function withRo(word) {
-  const code = String(word).trim().slice(-1).charCodeAt(0) - 0xac00;
-  if (!(code >= 0 && code <= 11171)) return `${word}(으)로`;
-  const jong = code % 28;
-  return `${word}${jong === 0 || jong === 8 ? "로" : "으로"}`;
-}
 
 /** 분반 표기는 어디서나 061(나민애). 교수가 없으면 061(교수 미정). */
 function instructorOf(s) {
@@ -1086,7 +1079,7 @@ function startWorker() {
     const m = e.data || {};
     if (!pending || m.id !== pending.id) return;
     if (m.type === "progress") pending.onProgress(m.done, m.ms);
-    else if (m.type === "result") settle({ ranked: m.ranked, stats: m.stats });
+    else if (m.type === "result") settle({ ranked: m.ranked, stats: m.stats, total: m.total || null });
     else if (m.type === "conflict") settle({ ranked: [], conflict: m.courseIds || [] });
     else if (m.type === "error") settle(null, new Error(m.message));
   };
@@ -1108,15 +1101,17 @@ function settle(value, error) {
   if (error) p.reject(error); else p.resolve(value);
 }
 
-/** 화면 스레드에서 탐색(워커를 못 쓸 때). */
+/** 화면 스레드에서 탐색(워커를 못 쓸 때). 전체 조합 수도 워커와 같게: 찾은 게 TOP_K 보다 적으면 그게 전부다. */
 function runHere(courses) {
   return new Promise((resolve) => {
     const res = search(courses, travelFor(state.mode), state.home, { topK: TOP_K });
-    resolve(res.ranked.length ? res : { ranked: [], conflict: findConflicts(courses) });
+    if (!res.ranked.length) { resolve({ ranked: [], conflict: findConflicts(courses) }); return; }
+    res.total = res.ranked.length < TOP_K ? { count: res.ranked.length, exact: true } : countFeasible(courses);
+    resolve(res);
   });
 }
 
-/** 탐색: {ranked, stats} 또는 조합이 없으면 {ranked: [], conflict: [과목 id]}. */
+/** 탐색: {ranked, stats, total} 또는 조합이 없으면 {ranked: [], conflict: [과목 id]}. total = {count, exact}(전체 조합 수). */
 function compute(courses, onProgress) {
   const w = startWorker();
   if (!w) return runHere(courses);
@@ -1225,7 +1220,7 @@ async function run() {
 function showResult(res, courses) {
   const order = new Map(courses.map((c, i) => [c.id, i]));
   for (const ev of res.ranked) ev.sections.sort((a, b) => order.get(a.courseId) - order.get(b.courseId));
-  state.result = { ranked: res.ranked, courses, home: state.home, mode: state.mode, days: weekDays(res.ranked), axis: hourRange(res.ranked) };
+  state.result = { ranked: res.ranked, total: res.total || null, courses, home: state.home, mode: state.mode, days: weekDays(res.ranked), axis: hourRange(res.ranked) };
   state.rank = 0;
   state.day = firstDay(res.ranked[0]);
   state.ranksShown = RANKS_STEP;
@@ -1265,10 +1260,28 @@ function hourRange(ranked) {
 const lateOf = (l) => (l.slack !== null && l.slack < 0 ? Math.max(0, Math.round(-l.slack)) : 0); // 수치는 반올림한 정수 분
 const weekLate = (ev) => ev.legs.reduce((s, l) => s + lateOf(l), 0);
 
+/** 다 못 센 조합 수(실제는 그보다 많다)의 어림수: 10000 → '1만 개', 3456 → '3천 개', 456 → '400개'. */
+const roughCount = (n) => (n >= 10000 ? `${Math.floor(n / 10000)}만 개` : n >= 1000 ? `${Math.floor(n / 1000)}천 개` : `${n >= 100 ? Math.floor(n / 100) * 100 : n}개`);
+
+/**
+ * 목록 제목: 희미한 '(전체 조합 1,234개 중)' + '걷는 시간이 짧은 20개를 찾았어요'. 찾은 것이 전부면 '전체 조합 4개를 찾았어요' 하나.
+ * total 은 워커가 센 겹치지 않는 조합 수(같은 시간·건물 분반은 하나라 찾은 수와 단위가 같다). exact=false 면 그보다 많다는 뜻이라
+ * 어림수로 '(1만 개가 넘는 조합 중)'. total 이 없으면(예전 워커) 희미한 부분 없이.
+ */
+function rankTitle(R) {
+  const m = R.ranked.length, t = R.total;
+  if (t ? t.exact && t.count <= m : m < TOP_K) return [`전체 조합 ${m}개를 찾았어요`];
+  const found = h("span", { class: "rank-found" }, `걷는 시간이 짧은 ${m}개를 찾았어요`);
+  if (!t) return [found];
+  const n = Math.max(t.count, m);
+  const all = t.exact ? `전체 조합 ${n.toLocaleString("ko-KR")}개` : `${roughCount(n)}가 넘는 조합`;
+  return [h("span", { class: "rank-total" }, `(${all} 중)`), " ", found];
+}
+
 function renderResult() {
   const R = state.result;
   if (!R) return;
-  $("rank-count").textContent = `시간표 ${R.ranked.length}개를 찾았어요`;
+  $("rank-count").replaceChildren(...rankTitle(R));
   $("rank-cond").textContent = `출발·도착 ${placeLabel(R.home)} · ${R.mode === "slope" ? "경사 반영" : "평지"}`;
   $("daytabs").replaceChildren(...R.days.map((d) => h("button", { type: "button", role: "tab", id: `tab-${d}`, "data-day": String(d), "aria-controls": "day-panel" }, DAY_KO[d])));
   updateTabs();
@@ -1524,7 +1537,7 @@ function drawReturn(mp) {
 }
 
 /** 지도 아래 번호표: 수업 순서 번호와 건물, 출발·도착, 점선(마지막 수업 뒤 출발·도착 자리로 가는 길)이 있으면 그 견본.
- *  '돌아가는 길'은 '빙 돌아가는 길(우회로)'로도 읽혀서 쓰지 않는다: '수업 뒤 기숙사로' */
+ *  '기숙사 가는 길'. '돌아가는 길'은 '빙 돌아가는 길(우회로)'로도 읽혀서, '수업 뒤 기숙사로'는 말이 어색해서 쓰지 않는다 */
 function renderLegend(mp, legs, hasReturn) {
   const items = [];
   let n = 0;
@@ -1534,7 +1547,7 @@ function renderLegend(mp, legs, hasReturn) {
     items.push(h("li", {}, h("span", { class: "num" }, String(n)), h("span", {}, l.meeting.building ? buildingLabel(l.meeting.building) : "강의실 미정")));
   }
   if (items.length) items.push(h("li", {}, h("span", { class: "num home", "aria-hidden": "true" }, svg(HOME_PIN.replace('width="12" height="12"', 'width="10" height="10"'))), h("span", {}, placeLabel(state.result.home))));
-  if (items.length && hasReturn) items.push(h("li", { class: "line" }, svg(RETURN_KEY), h("span", {}, `수업 뒤 ${withRo(placeLabel(state.result.home))}`)));
+  if (items.length && hasReturn) items.push(h("li", { class: "line" }, svg(RETURN_KEY), h("span", {}, `${placeLabel(state.result.home)} 가는 길`)));
   mp.legend.replaceChildren(...items);
 }
 

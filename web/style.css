@@ -16,6 +16,7 @@
   --card: var(--tt-white);
   --raised: var(--tt-white);
   --surface-hover: #f7f8fe;
+  --row-picked: var(--fill);
   --heading: var(--tt-deep-navy);
   --text: var(--tt-ink);
   --text2: #51596a;
@@ -33,6 +34,7 @@
   --focus: var(--tt-primary);
   --disabled: #c5c9e2;
   --danger: #d8152f;
+  --on-danger: var(--tt-white);
   --danger-weak: #ffedec;
   --warning: #a25c04;
   --warning-weak: #fff1e5;
@@ -42,7 +44,7 @@
   --scrim: #18203366;
   --home: var(--tt-deep-navy);
   --route: var(--tt-primary);
-  --route-home: var(--text3);
+  --route-home: var(--home);
   --cls-req: var(--tt-primary);
   --cls-req-bg: #eaf0ff;
   --cls-elec: #0b9c7d;
@@ -75,7 +77,7 @@
   --icon: 24px;
   --touch: 48px;
   --topbar-h: 56px;
-  --logo-topbar: 32px;
+  --logo-topbar: 36px;
   --cta-height: 56px;
   --logo-min-lockup: 120px;
   --logo-min-symbol: 48px;
@@ -88,6 +90,7 @@
   --bp-stack: 360px;
   --bp-medium: 600px;
   --bp-expanded: 840px;
+  --bp-cards: 900px;
   --dur-press: 100ms;
   --dur-fade: 150ms;
   --dur-move: 200ms;
@@ -106,8 +109,7 @@
   --gutter-left: max(var(--space-5), env(safe-area-inset-left, 0px));
   --gutter-right: max(var(--space-5), env(safe-area-inset-right, 0px));
   --bottom-bar-h: calc(var(--cta-height) + var(--space-3) * 2 + var(--safe-bottom));
-  --result-picked: var(--fill); /* 검색 결과에서 담은 과목의 행 바탕(다크는 아래 '다크 전용'에서 bg) */
-  --result-picked-btn: var(--card);
+  --row-picked-btn: var(--card); /* 담은 행 위 '✓ 담음' 버튼(행 바탕은 토큰 row-picked). 다크는 아래 '다크 전용'에서 fill */
   color-scheme: light;
 }
 
@@ -119,6 +121,7 @@
     --card: #1e2026;
     --raised: #26272d;
     --surface-hover: #25272e;
+    --row-picked: var(--bg);
     --heading: #e5e8f0;
     --text: #e4e6eb;
     --text2: #c8cad2;
@@ -136,6 +139,7 @@
     --focus: var(--accent-text);
     --disabled: #36383e;
     --danger: #f2908d;
+    --on-danger: var(--bg);
     --danger-weak: #3c2221;
     --warning: #e6b463;
     --warning-weak: #382c19;
@@ -145,7 +149,7 @@
     --scrim: #000000a6;
     --home: #ced1d9;
     --route: #758be7;
-    --route-home: var(--text3);
+    --route-home: var(--home);
     --cls-req: #7993e8;
     --cls-req-bg: #272d40;
     --cls-elec: #3fae90;
@@ -205,9 +209,11 @@ h2.section-title .count { color: var(--text3); }
 
 /* ---------------------------------------------------------------- 상단 바 */
 .topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: var(--space-2);
-  min-height: calc(var(--topbar-h) + var(--safe-top)); padding-top: var(--safe-top); background: var(--bg); }
+  min-height: calc(var(--topbar-h) + var(--safe-top)); padding-top: var(--safe-top); background: var(--bg);
+  /* 바탕을 좌우 여백까지 깐다: 초점 테두리(바깥 4px)처럼 본문 폭보다 조금 넓은 것이 스크롤해 들어갈 때 상단 바 옆으로 비치지 않게 */
+  margin: 0 calc(var(--gutter-right) * -1) 0 calc(var(--gutter-left) * -1); padding-right: var(--gutter-right); padding-left: var(--gutter-left); }
 /* 입력 화면 로고: 워드마크만(사용자 요청). 로고 묶음(32px)보다 글자가 커 보이게 36px */
-.wordmark { display: block; height: 36px; width: auto; -webkit-touch-callout: none; }
+.wordmark { display: block; height: var(--logo-topbar); width: auto; -webkit-touch-callout: none; }
 .topbar .title { flex: 1; min-width: 0; margin: 0; font-size: 1.0625rem; line-height: 1.5rem; font-weight: 700; color: var(--heading);
   overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .topbar .title:focus { outline: none; }
@@ -285,9 +291,9 @@ body.is-typing .bottom-bar { display: none; }
 .result:has(.btn-add:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
 .result:not(.is-picked):has(.btn-add:active) { background: var(--surface-hover); }
 /* 담은 과목의 행은 어두운 바탕(라이트 fill, 다크 bg), 버튼은 그 위의 '✓ 담음' */
-.result.is-picked { background: var(--result-picked); }
+.result.is-picked { background: var(--row-picked); }
 .result.is-picked .r-meta { color: var(--text2); }
-.result.is-picked .btn-add { background: var(--result-picked-btn); }
+.result.is-picked .btn-add { background: var(--row-picked-btn); }
 .r-body { flex: 1; min-width: 0; }
 .r-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 1rem; line-height: 1.5rem; font-weight: 500;
   color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
@@ -426,12 +432,12 @@ dialog.sheet.is-dragging { transition: none; }
   border-radius: var(--radius-xs); background: var(--cls-etc-bg); }
 .tt-block .b-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--lines, 2); overflow: hidden; font-size: 0.875rem; line-height: 1.125rem;
   font-weight: 500; color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
-.tt-block .b-room { overflow: hidden; font-size: 0.75rem; line-height: 1rem; color: var(--text2); white-space: nowrap; text-overflow: ellipsis; }
+.tt-block .b-room { overflow: hidden; font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text2); white-space: nowrap; text-overflow: ellipsis; }
 .tt-block.short { padding: 0 var(--space-2); }
 .tt-block.short .b-room { display: none; }
-.tt-block.short .b-title { -webkit-line-clamp: 1; font-size: 0.8125rem; line-height: 1rem; }
+.tt-block.short .b-title { -webkit-line-clamp: 1; font-size: 0.75rem; line-height: 1rem; }
 /* 늦는 수업: 빨간 'N분 늦음'. 낮은 칸은 과목명 위 오른쪽에 겹치고, 그 밖에는 과목명 위에 한 줄 */
-.tt-late { position: absolute; top: 3px; right: 4px; z-index: 1; padding: 0 6px; border-radius: var(--radius-full); background: var(--danger); color: var(--on-color);
+.tt-late { position: absolute; top: 3px; right: 4px; z-index: 1; padding: 0 6px; border-radius: var(--radius-full); background: var(--danger); color: var(--on-danger);
   font-size: 0.75rem; line-height: 1rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tt-block.is-late .tt-late { position: static; align-self: flex-end; margin-bottom: 2px; }
 .tt-empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; line-height: 1.25rem; color: var(--text3); }
@@ -457,14 +463,14 @@ dialog.sheet.is-dragging { transition: none; }
 .num.home { padding: 0; background: var(--home); color: var(--bg); }
 /* 점선 견본 '수업 뒤 기숙사로': 좁은 두 칸 번호표에서는 한 줄을 다 쓴다 */
 .legend li.line { grid-column: 1 / -1; }
-.line-key { flex-shrink: 0; color: var(--home); }
+.line-key { flex-shrink: 0; color: var(--route-home); }
 .map-note { position: absolute; left: var(--space-2); top: var(--space-2); margin: 0; font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text3);
   pointer-events: none; }
 .map-attr { position: absolute; right: 0; bottom: 0; padding: 1px 6px; border-top-left-radius: var(--radius-xs); background: var(--card); opacity: .9;
   font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text2); }
 .map-attr a { color: inherit; }
 .pin { display: flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 5px; border: 2px solid var(--card);
-  border-radius: var(--radius-full); background: var(--accent); color: var(--on-color); font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap;
+  border-radius: var(--radius-full); background: var(--accent); color: var(--on-color); font-size: 12px; line-height: 16px; font-weight: 700; white-space: nowrap;
   box-shadow: var(--shadow-sm); }
 .pin.home { padding: 0; background: var(--home); color: var(--bg); }
 .leg-label { display: inline-block; padding: 1px 6px; border-radius: var(--radius-full); background: var(--card); color: var(--text2);
@@ -472,8 +478,8 @@ dialog.sheet.is-dragging { transition: none; }
 .leg-label svg { margin-right: 2px; vertical-align: -1px; } /* 출발·도착 자리로 가는 구간: ⌂ 19분 */
 .map-route { stroke: var(--route); }
 .map-route-case { stroke: var(--card); }
-/* 수업 뒤 출발·도착 자리로 가는 길: ⌂ 핀 색(home) 파선 + 흰 테두리, 경로선 아래·옆(app.js drawReturn). route-home(회색 점)은 지도 배경에 묻혀서 쓰지 않는다 */
-.map-route-home { stroke: var(--home); }
+/* 수업 뒤 출발·도착 자리로 가는 길: route-home(= home, ⌂ 핀 색) 파선 + card 테두리, 경로선 아래·옆(app.js drawReturn) */
+.map-route-home { stroke: var(--route-home); }
 .map-route-home-case { stroke: var(--card); }
 .cls-legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin: var(--space-2) var(--space-1) 0; font-size: 0.75rem; line-height: 1rem;
   font-weight: 500; color: var(--text2); }
@@ -514,7 +520,11 @@ dialog.sheet.is-dragging { transition: none; }
 /* ---------------------------------------------------------------- 순위 */
 .result-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; column-gap: var(--space-3); row-gap: var(--space-1);
   margin: var(--space-8) var(--space-1) var(--space-3); }
-.result-head h2.section-title { margin: 0; }
+/* 목록 제목: 희미한 '(전체 조합 n개 중)'(t-body text3) + '걷는 시간이 짧은 m개를 찾았어요'(t-h2). 두 덩이가 따로 줄을 바꿔서
+   좁으면 희미한 쪽이 윗줄이 된다 */
+.result-head h2.section-title { display: block; margin: 0; }
+.rank-total, .rank-found { display: inline-block; }
+.rank-total { font-size: 1rem; line-height: 1.5rem; font-weight: 400; letter-spacing: 0; color: var(--text3); }
 .result-head .cond { font-size: 0.875rem; line-height: 1.25rem; color: var(--text3); }
 /* 후보 카드: 순위와 한 주 요약, 요일별 미리보기(칸마다 수업 막대). 고른 카드는 테두리와 담은 분반 목록 */
 .ranks { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
@@ -529,18 +539,18 @@ dialog.sheet.is-dragging { transition: none; }
 .rank-no { flex-shrink: 0; font-size: 1rem; line-height: 1.375rem; font-weight: 700; color: var(--text3); }
 .rank.selected .rank-no { color: var(--accent-text); }
 .rank-sum { min-width: 0; font-size: 0.8125rem; line-height: 1.125rem; color: var(--text2); text-align: right; }
-.rank-sum .late { color: var(--danger); font-weight: 500; }
+.rank-sum .late { color: var(--danger); }
 .week { display: grid; grid-template-columns: repeat(var(--days, 5), minmax(0, 1fr)); gap: 6px; }
-.week .wd { font-size: 0.75rem; line-height: 1rem; color: var(--text3); text-align: center; }
+.week .wd { font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text3); text-align: center; }
 .week .wc { position: relative; height: 48px; border-radius: var(--radius-xs); background: var(--bg); }
 .week .wb { position: absolute; left: 0; right: 0; min-height: 4px; border-radius: var(--radius-2xs); }
 .rank-picks { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0 var(--space-3) var(--space-3); list-style: none; }
 .rank-picks li { display: flex; align-items: flex-start; gap: var(--space-2); font-size: 0.875rem; line-height: 1.25rem; word-break: keep-all; }
 .swatch { flex-shrink: 0; width: 12px; height: 12px; margin-top: 4px; border-radius: var(--radius-2xs); }
 .rank-picks .p-sec { color: var(--text2); }
-.rank-picks .p-twins { display: block; font-size: 0.75rem; line-height: 1.125rem; color: var(--text3); }
+.rank-picks .p-twins { display: block; font-size: 0.8125rem; line-height: 1.125rem; color: var(--text3); }
 .ranks-more { display: flex; justify-content: center; margin-top: var(--space-2); }
-@media (min-width: 56.25em) { .ranks { display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); align-items: start; } }
+@media (min-width: 56.25em) { .ranks { /* bp-cards 900px */ display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); align-items: start; } }
 
 /* ---------------------------------------------------------------- 정보 화면 */
 .info-list { overflow: hidden; margin-top: var(--space-2); }
@@ -562,7 +572,7 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
 /* ---------------------------------------------------------------- 마우스를 올릴 수 있을 때만 */
 @media (hover: hover) {
   .icon-btn:hover, .btn-text:hover, .result:hover, .rank-hit:hover, button.info-row:hover, a.info-row:hover, .course-hit:hover .c-title { background: var(--surface-hover); }
-  .result.is-picked:hover { background: var(--result-picked); } /* 담은 행은 어두운 그대로, 버튼만 빨갛게(빼기) */
+  .result.is-picked:hover { background: var(--row-picked); } /* 담은 행은 어두운 그대로, 버튼만 빨갛게(빼기) */
   .course-hit:hover .c-title { background: none; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
   .term-select:hover { background-color: var(--surface-hover); }
   .btn-add.is-on:hover { background: var(--danger-weak); color: var(--danger); }
@@ -579,8 +589,7 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
   .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) saturate(.35) brightness(.9) contrast(.9); }
   .select, .term-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23afb2bb' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
   dialog.sheet::backdrop { background: var(--scrim, #000000a6); }
-  .tt-late { color: var(--bg); } /* 다크의 danger 는 밝아서 흰 글자가 안 읽힌다 */
-  :root { --result-picked: var(--bg); --result-picked-btn: var(--fill); } /* 담은 행은 카드보다 어둡게 */
+  :root { --row-picked-btn: var(--fill); }
 }
 
 /* ---------------------------------------------------------------- 고대비(강제 색) */
