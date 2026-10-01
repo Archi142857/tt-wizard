@@ -113,13 +113,14 @@
   /* 넓은 화면 두 칸에서 오른쪽(담은 과목·조건) 칸의 폭. width-result 1080 의 3분의 1(디자인 토큰에 넣기 전까지 여기) */
   --width-pane: 360px;
   /* 바탕 지도 색(app.js 가 캔버스에 그릴 때 읽는다). 디자인 세션이 지도 토큰을 정하기 전까지 백엔드 시안(docs/basemap_reference.html 의 T):
-     OSM 기본 지도 구조(땅·학교 땅·건물·숲·물·흰 길과 테두리·등급 색 큰길·점선 보행로)에 연보라 캠퍼스 땅·남색 글자·파랑 물·차가운 회색 건물 */
+     OSM 기본 지도 구조(땅·학교 땅·건물·숲·물·흰 길과 테두리·등급 색 큰길)에 연보라 캠퍼스 땅·남색 글자·파랑 물·차가운 회색 건물.
+     보행로·계단만 시안의 주황 점선 대신 옅은 회색(10/1 사용자: 주황 점선이 시선을 빼앗는다) */
   --map-land: #f1f0f2; --map-green: #c9e2c2; --map-park: #d3eacb; --map-grass: #d7edcf; --map-pitch: #bfe4d2;
   --map-campus: #f5f6ff; --map-campus-line: #d7dcfa; --map-contour: #dfdce6; --map-contour-index: #cac4d6; --map-contour-label: #968eae;
   --map-water: #afc9f2; --map-walk-area: #fbfbfe; --map-road: #ffffff; --map-road-line: #c3c0d0;
   --map-road-secondary: #f2f1c4; --map-road-secondary-line: #c2c08a; --map-road-primary: #f9d9af; --map-road-primary-line: #d2ae78;
   --map-road-trunk: #f7bba8; --map-road-trunk-line: #d99683; --map-road-case: #c3c0d0; --map-ped: #e3e4f4; --map-ped-case: #b3b6d2;
-  --map-foot: #f0857a; --map-foot-case: #ffffff; --map-foot-low: 1; --map-steps: #ec6f62; --map-building: #dad6df; --map-building-line: #bcb6c9;
+  --map-foot: #a9a6bc; --map-steps: #a9a6bc; --map-building: #dad6df; --map-building-line: #bcb6c9;
   --map-label: #1d2a78; --map-name: #51596a; --map-halo: #ffffff;
   color-scheme: light;
 }
@@ -184,7 +185,7 @@
     --map-water: #1c2b45; --map-walk-area: #22222a; --map-road: #3b3c45; --map-road-line: #0d0d10;
     --map-road-secondary: #5e5e3e; --map-road-secondary-line: #3b3b27; --map-road-primary: #7a6142; --map-road-primary-line: #4a3b28;
     --map-road-trunk: #7d4e43; --map-road-trunk-line: #4c2f28; --map-road-case: #0b0b0e; --map-ped: #35364a; --map-ped-case: #121218;
-    --map-foot: #c9726a; --map-foot-case: #17171b; --map-foot-low: .75; --map-steps: #d97a6d; --map-building: #35343e; --map-building-line: #474656;
+    --map-foot: #5b5969; --map-steps: #5b5969; --map-building: #35343e; --map-building-line: #474656;
     --map-label: #e5e8f0; --map-name: #afb2bb; --map-halo: #17171b;
   }
 }

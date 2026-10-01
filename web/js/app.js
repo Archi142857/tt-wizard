@@ -1624,6 +1624,10 @@ function prepareBasemap(B) {
     areas[k] = list.map(([prec, ...rings]) => { const rs = rings.map((r) => decodeWorld(r, prec)); return { rings: rs, bb: boxOf(rs) }; });
   }
   for (const [k, list] of Object.entries(B.line || {})) lines[k] = list.map(([kind, s]) => { const p = decodeWorld(s, 5); return { kind, pts: p, bb: boxOf([p]) }; });
+  // 보행로는 캠퍼스 안 길(footway 등)과 산길(path·track, 거의 다 캠퍼스 밖)로 나눠 보이는 배율을 다르게 한다
+  const trail = (f) => f.kind === "path" || f.kind === "track";
+  lines.trail = (lines.walk || []).filter(trail);
+  lines.foot = (lines.walk || []).filter((f) => !trail(f));
   for (const [k, list] of Object.entries(B.contour || {})) contours[k] = list.map(([z, s]) => { const p = decodeWorld(s, 5); return { z, pts: p, bb: boxOf([p]) }; });
   const [south, west, north, east] = B.bounds;
   return { areas, lines, contours, bounds: L.latLngBounds([south, west], [north, east]) };
@@ -1663,7 +1667,7 @@ function applyMinZoom(map) {
 // 지도 색은 CSS(--map-*)에서 읽는다. 기기 테마가 바뀌면 다시 읽고 다시 그린다
 const MAP_COLORS = ["land", "green", "park", "grass", "pitch", "campus", "campus-line", "contour", "contour-index", "contour-label", "water", "walk-area",
   "road", "road-line", "road-secondary", "road-secondary-line", "road-primary", "road-primary-line", "road-trunk", "road-trunk-line", "road-case",
-  "ped", "ped-case", "foot", "foot-case", "foot-low", "steps", "building", "building-line", "halo"];
+  "ped", "ped-case", "foot", "steps", "building", "building-line", "halo"];
 let mapColorCache = null;
 function mapColors() {
   if (!mapColorCache) {
@@ -1681,7 +1685,9 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
 // 선 폭은 미터로 정하고 배율마다 화소로 바꾼다(최소 화소 아래로는 가늘어지지 않는다). 캠퍼스 안 찻길 폭(m)은 OSM highway 값으로
 const ROAD_M = { service: 4.5, residential: 6, living_street: 5, unclassified: 6, tertiary: 7, tertiary_link: 6 };
 
-/** 바탕을 그린다. b = 캔버스가 덮는 범위(layer 좌표), m = 화소 배수. 순서: 땅 → 등고선 → 물 → 도로면 → 길(선) → 건물 → 등고선 높이. */
+/** 바탕을 그린다. b = 캔버스가 덮는 범위(layer 좌표), m = 화소 배수. 순서: 땅 → 등고선 → 물 → 도로면 → 길(선) → 건물 → 등고선 높이.
+ *  보행로·계단은 참고 구현의 주황 점선 대신 옅은 회색 점·사다리로, 확대했을 때만(10/1 사용자: 주황 점선이 너무 많아 시선을 빼앗는다).
+ *  산길은 15부터, 캠퍼스 안 보행로는 15.5부터, 계단은 16.25부터. 경로선(파랑)이 지도에서 가장 눈에 띄게 */
 function drawBasemap(ctx, map, b, m) {
   const size = b.getSize(), C = mapColors();
   ctx.setTransform(m, 0, 0, m, 0, 0);
@@ -1754,9 +1760,10 @@ function drawBasemap(ctx, map, b, m) {
   stroke(Ln.pedestrian, C["ped-case"], px(5, 2.6, 2));
   stroke(Ln.road, C.road, (f) => px(roadW(f), 1.6));
   stroke(Ln.pedestrian, C.ped, px(5, 1.6));
-  if (z >= 16.5) stroke(Ln.walk, C["foot-case"], px(1.6, 2.6, 1.6), { alpha: 0.7 });
-  if (z >= 15.25) stroke(Ln.walk, C.foot, px(0.9, 1.3), { dash: [Math.max(3, 1.6 / k), Math.max(2, 1 / k)], cap: "butt", alpha: z < 16.5 ? Number(C["foot-low"]) || 1 : 1 });
-  stroke(Ln.steps, C.steps, px(2.2, 3.2), { dash: [Math.max(1.4, 0.35 / k), Math.max(1.1, 0.3 / k)], cap: "butt" });
+  const dots = [0.1, Math.max(3.5, 1.9 / k)]; // 둥근 끝 + 아주 짧은 선 = 점
+  if (z >= 15) stroke(Ln.trail, C.foot, px(0.8, 1.4), { dash: dots });
+  if (z >= 15.5) stroke(Ln.foot, C.foot, px(0.8, 1.6), { dash: dots });
+  if (z >= 16.25) stroke(Ln.steps, C.steps, px(2.2, 3), { dash: [Math.max(1.2, 0.35 / k), Math.max(1.2, 0.35 / k)], cap: "butt" });
   fill(A.building, C.building, C["building-line"], 0.8);
   // 많이 확대하면 계곡선(25 m) 가운데에 높이
   if (z >= 17 && Z.index) {
