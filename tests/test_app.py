@@ -51,7 +51,7 @@ def test_build_app_bundle(tmp_path, monkeypatch):
     info = build_app.build(web=web, out=out, remote="https://example.org/tt", tag="T1")
 
     files = {p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file()}
-    assert {"index.html", "js/app.js", "js/engine.js", "js/search-worker.js", "js/native.js", "data/courses.json",
+    assert {"index.html", "js/app.js", "js/engine.js", "js/search-worker.js", "js/search.js", "js/native.js", "data/courses.json",
             "data/semesters/2025-1.json", "vendor/leaflet/leaflet.js", "vendor/pretendard/LICENSE.txt",
             "vendor/pretendard/woff2-dynamic-subset/PretendardVariable.subset.0.woff2", "app-build.json"} <= files
     assert not [f for f in files if f == "sw.js" or f.startswith(("model/", "field/", "vendor/three/")) or f.endswith("package.json")]

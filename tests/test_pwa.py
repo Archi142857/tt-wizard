@@ -35,7 +35,7 @@ def test_index_links_manifest_and_icons():
 def test_service_worker_precache_list():
     sw = (WEB / "sw.js").read_text(encoding="utf-8")
     shell = re.findall(r'"([^"]+)"', re.search(r"const SHELL = \[(.*?)\];", sw, re.S).group(1))
-    assert "./" in shell and "index.html" in shell and "js/engine.js" in shell and "js/search-worker.js" in shell
+    assert "./" in shell and "index.html" in shell and "js/engine.js" in shell and "js/search-worker.js" in shell and "js/search.js" in shell
     for path in shell:
         if path == "./" or path.startswith("data/"):  # data/ 는 export_web.py 가 만든다
             continue

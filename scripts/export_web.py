@@ -160,12 +160,12 @@ WEB = ROOT / "web"
 # 주소에 판(?v=)을 붙일 곳: 파일 → 그 안에서 부르는 주소
 STAMP_REFS = {
     "index.html": ("style.css", "js/app.js"),
-    "js/app.js": ("./engine.js", "./search-worker.js"),
+    "js/app.js": ("./engine.js", "./search-worker.js", "./search.js"),
     "js/search-worker.js": ("./engine.js",),
 }
-# 아직 안 부를 수도 있는 주소(0곳이면 건너뛴다): 탐색 워커는 화면이 붙이기 전까지 app.js 에 없다
-STAMP_OPTIONAL = {("js/app.js", "./search-worker.js")}
-STAMP_FILES = ("style.css", "js/app.js", "js/engine.js", "js/search-worker.js")  # 이 파일들 내용이 바뀌면 판이 바뀐다
+# 아직 안 부를 수도 있는 주소(0곳이면 건너뛴다): 탐색 워커·과목 검색(search.js)은 화면이 붙이기 전까지 app.js 에 없다
+STAMP_OPTIONAL = {("js/app.js", "./search-worker.js"), ("js/app.js", "./search.js")}
+STAMP_FILES = ("style.css", "js/app.js", "js/engine.js", "js/search-worker.js", "js/search.js")  # 이 파일들 내용이 바뀌면 판이 바뀐다
 
 
 def stamp_assets(web: Path = WEB) -> str:

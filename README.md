@@ -53,6 +53,7 @@ python -m ttwizard search --lectures data/lectures.json \
 https://archi142857.github.io/tt-wizard/ — 과목을 검색해 담으면 브라우저에서 바로 분반 조합을 찾아 시간표 · 하루 동선 지도 · 순위를 보여 준다.
 서버 없이 정적 파일만 쓰고(GitHub Pages), 알고리즘은 `web/js/engine.js` 로 옮겨 두었다(파이썬과 같은 답인지 테스트로 확인).
 수강신청 사이트처럼 년도·학기를 골라 지난 학기(2021-1부터) 편람으로도 찾을 수 있다.
+과목 검색은 줄임말(`대글` → 대학 글쓰기, `컴공과`), 초성과 글자 섞기(`ㄷㅎ글쓰기`), 한/영 전환을 잊고 친 글자(`eogkr`)도 찾는다(`docs/search.md`).
 폰 홈 화면에 설치할 수 있다(PWA: 안드로이드 크롬은 '앱으로 설치' 버튼, iPhone 은 공유 → '홈 화면에 추가').
 설치해도 같은 웹 화면이고, 한 번 연 자료는 네트워크 없이도 열린다(지도 타일은 브라우저에 맡긴다).
 
@@ -206,7 +207,7 @@ web/                 정적 웹 화면: 과목 검색 → 시간표 · 동선 �
   field/               오르막 실측 페이지 (폰 GPS 기록, 앱에서 링크하지 않음)
 app/                 스토어 앱 (Capacitor 8): android/, ios/ 네이티브 프로젝트, src/native.js(앱 연결), assets/icons/ — docs/app.md
 results/experiments/ 비교 실험 결과 (CSV, 그림, README.md 요약)
-docs/                계획·결정 사항, 방법 설명(elevation_method.md, travel_time_method.md, experiments.md, app.md)
+docs/                계획·결정 사항, 방법 설명(elevation_method.md, travel_time_method.md, experiments.md, app.md, search.md)
 tests/               pytest
 ```
 
@@ -226,5 +227,6 @@ tests/               pytest
 ## 참고
 
 - [wafflestudio/snutt](https://github.com/wafflestudio/snutt) (MIT) — 수강편람 엑셀 엔드포인트, 파싱 규칙, 캠퍼스맵 API 활용을 참고했다.
+- [wafflestudio/snutt-timetable](https://github.com/wafflestudio/snutt-timetable) (MIT) — 과목 검색 규칙(줄임말, 학과 줄임, 특별 낱말)을 참고했다(`web/js/search.js`).
 - [Leaflet](https://leafletjs.com) 1.9.4 (BSD-2) — 웹 화면 지도 (`web/vendor/leaflet`).
 - [three.js](https://threejs.org) r128 (MIT) — 3D 모델링 (`web/vendor/three`).

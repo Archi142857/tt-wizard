@@ -35,7 +35,7 @@ REMOTE = "https://archi142857.github.io/tt-wizard/"  # 앱이 자료를 새로 �
 
 SKIP_DIRS = {"model", "field", "three"}  # 3D·2D 모델과 three.js, 실측 페이지
 SKIP_FILES = {"sw.js", "README.md", "package.json"}  # 서비스 워커, 설명, node 테스트용 모듈 표시
-NEEDED = ("index.html", "style.css", "js/app.js", "js/engine.js", "js/search-worker.js",
+NEEDED = ("index.html", "style.css", "js/app.js", "js/engine.js", "js/search-worker.js", "js/search.js",
           "data/campus.json", "data/courses.json")
 FONT_CSS = "pretendardvariable-dynamic-subset.css"
 CDN_FONT = re.compile(r'<link rel="stylesheet" href="https://cdn\.jsdelivr\.net/gh/orioncactus/pretendard@[^"]+'
