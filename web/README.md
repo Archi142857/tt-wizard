@@ -70,7 +70,7 @@ python -m http.server 8000 -d web
 | 파일 | 내용 |
 | --- | --- |
 | `index.html`, `style.css` | 화면. `style.css` 맨 위가 디자인 시스템 토큰 |
-| `manifest.webmanifest`, `sw.js`, `icons/` | 폰 홈 화면 설치(PWA). 아이콘·로고(`favicon.svg`, `lockup-horizontal.svg` 포함)는 디자인 세션 파일(`design\v3\app-icons`, `design\v3\logo\svg`)을 그대로 넣는다. 화면 로고는 `wordmark.svg`·`wordmark-dark.svg`(원본 그대로). 저장 방식을 바꾸면 `sw.js` 의 `CACHE` 이름을 올린다 |
+| `manifest.webmanifest`, `sw.js`, `icons/` | 폰 홈 화면 설치(PWA). 앱 아이콘(`favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`)은 디자인 세션의 `design\v3\app-icons` 같은 이름 파일을 그대로 넣는다(10/1 새 심볼). 다크 판·`adaptive-*` 는 앱 포장용이라 웹에는 넣지 않는다(매니페스트 아이콘은 다크 판을 못 고른다). 화면 로고는 `wordmark.svg`·`wordmark-dark.svg`(`design\v3\logo\svg` 원본 그대로). 저장 방식을 바꾸면 `sw.js` 의 `CACHE` 이름을 올린다 |
 | `js/engine.js` | 이동시간 행렬 · 평가 · 탐색(백트래킹 + 분기 한정) · 경로 선 풀기. 파이썬과 같은 답을 내는지 `tests/test_web.py` 가 node 로 확인 |
 | `js/search-worker.js` | 탐색 워커: `engine.search` 를 화면 밖에서 돌리고 진행 정도·결과·겹치는 과목을 보낸다. `app.js` 가 `new Worker(new URL("./search-worker.js", import.meta.url), { type: "module" })` 로 부른다(배포 판이 붙는 모양) |
 | `js/app.js` | 화면 동작(검색, 과목 시트, 화면 이동과 뒤로 가기, 결과·지도, 정보 화면). 담은 과목·조건·직접 넣은 강의실과 시간은 브라우저(localStorage)에만 저장 |
@@ -78,6 +78,7 @@ python -m http.server 8000 -d web
 | `vendor/leaflet/` | Leaflet 1.9.4 (npm 배포본 그대로) |
 | `model/` | 서울대학교 관악캠퍼스 3D·2D 모델링 (`scripts/campus_model.py` 가 만든 결과, 커밋한다) |
 | `vendor/three/` | three.js r128 과 OrbitControls (npm 배포본 그대로, 3D 모델링용) |
+| `field/` | 오르막 실측 페이지: 폰 GPS 기록(백엔드 몫, 앱에서 링크하지 않음). `../js/engine.js`·`../data/`·`../vendor/leaflet/`·`../icons/favicon.svg` 를 함께 쓴다 |
 
 ## 배포
 

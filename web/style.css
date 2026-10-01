@@ -17,6 +17,7 @@
   --raised: var(--tt-white);
   --surface-hover: #f7f8fe;
   --row-picked: var(--fill);
+  --row-picked-btn: var(--card);
   --heading: var(--tt-deep-navy);
   --text: var(--tt-ink);
   --text2: #51596a;
@@ -109,7 +110,6 @@
   --gutter-left: max(var(--space-5), env(safe-area-inset-left, 0px));
   --gutter-right: max(var(--space-5), env(safe-area-inset-right, 0px));
   --bottom-bar-h: calc(var(--cta-height) + var(--space-3) * 2 + var(--safe-bottom));
-  --row-picked-btn: var(--card); /* 담은 행 위 '✓ 담음' 버튼(행 바탕은 토큰 row-picked). 다크는 아래 '다크 전용'에서 fill */
   color-scheme: light;
 }
 
@@ -122,6 +122,7 @@
     --raised: #26272d;
     --surface-hover: #25272e;
     --row-picked: var(--bg);
+    --row-picked-btn: var(--fill);
     --heading: #e5e8f0;
     --text: #e4e6eb;
     --text2: #c8cad2;
@@ -461,7 +462,7 @@ dialog.sheet.is-dragging { transition: none; }
 .num { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 1.125rem; height: 1.125rem; padding: 0 3px; border-radius: var(--radius-full);
   background: var(--accent); color: var(--on-color); font-size: 0.75rem; line-height: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .num.home { padding: 0; background: var(--home); color: var(--bg); }
-/* 점선 견본 '수업 뒤 기숙사로': 좁은 두 칸 번호표에서는 한 줄을 다 쓴다 */
+/* 파선 견본 '기숙사 가는 길': 좁은 두 칸 번호표에서는 한 줄을 다 쓴다 */
 .legend li.line { grid-column: 1 / -1; }
 .line-key { flex-shrink: 0; color: var(--route-home); }
 .map-note { position: absolute; left: var(--space-2); top: var(--space-2); margin: 0; font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text3);
@@ -520,11 +521,10 @@ dialog.sheet.is-dragging { transition: none; }
 /* ---------------------------------------------------------------- 순위 */
 .result-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; column-gap: var(--space-3); row-gap: var(--space-1);
   margin: var(--space-8) var(--space-1) var(--space-3); }
-/* 목록 제목: 희미한 '(전체 조합 n개 중)'(t-body text3) + '걷는 시간이 짧은 m개를 찾았어요'(t-h2). 두 덩이가 따로 줄을 바꿔서
-   좁으면 희미한 쪽이 윗줄이 된다 */
-.result-head h2.section-title { display: block; margin: 0; }
-.rank-total, .rank-found { display: inline-block; }
-.rank-total { font-size: 1rem; line-height: 1.5rem; font-weight: 400; letter-spacing: 0; color: var(--text3); }
+.result-head h2.section-title { flex-wrap: wrap; column-gap: var(--space-2); row-gap: 0; margin: 0; }
+/* 목록 제목 두 덩이: 희미한 전체 조합 수(t-body text3)와 찾은 수(t-h2). 따로 줄을 바꿔 폰에서는 희미한 쪽이 윗줄 */
+.result-head .rank-total { font-size: 1rem; line-height: 1.5rem; font-weight: 400; letter-spacing: 0; color: var(--text3); font-variant-numeric: tabular-nums; }
+.result-head .rank-found { font-variant-numeric: tabular-nums; }
 .result-head .cond { font-size: 0.875rem; line-height: 1.25rem; color: var(--text3); }
 /* 후보 카드: 순위와 한 주 요약, 요일별 미리보기(칸마다 수업 막대). 고른 카드는 테두리와 담은 분반 목록 */
 .ranks { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
@@ -589,7 +589,6 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
   .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) saturate(.35) brightness(.9) contrast(.9); }
   .select, .term-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23afb2bb' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
   dialog.sheet::backdrop { background: var(--scrim, #000000a6); }
-  :root { --row-picked-btn: var(--fill); }
 }
 
 /* ---------------------------------------------------------------- 고대비(강제 색) */
