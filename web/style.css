@@ -54,6 +54,35 @@
   --cls-gen-bg: #ffece1;
   --cls-etc: #828a9d;
   --cls-etc-bg: #edeef7;
+  --map-land: #f2efe9;
+  --map-campus: #f5f6ff;
+  --map-campus-line: #d7dcfa;
+  --map-green: #c9e2c2;
+  --map-park: #d3eacb;
+  --map-grass: #d7edcf;
+  --map-pitch: #bfe4d2;
+  --map-water: #afc9f2;
+  --map-contour: #dfdce6;
+  --map-contour-index: #cac4d6;
+  --map-contour-label: #968eae;
+  --map-walk-area: #fbfbfe;
+  --map-road: #ffffff;
+  --map-road-line: #c3c0d0;
+  --map-road-secondary: #f2f1c4;
+  --map-road-secondary-line: #c2c08a;
+  --map-road-primary: #f9d9af;
+  --map-road-primary-line: #d2ae78;
+  --map-road-trunk: #f7bba8;
+  --map-road-trunk-line: #d99683;
+  --map-ped: #e3e4f4;
+  --map-ped-line: #b3b6d2;
+  --map-foot: #a9a6bc;
+  --map-steps: #a9a6bc;
+  --map-building: #d3c8be;
+  --map-building-line: #ae9f91;
+  --map-label: var(--heading);
+  --map-name: var(--text2);
+  --map-halo: var(--card);
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -86,10 +115,12 @@
   --width-input: 640px;
   --width-result: 1080px;
   --width-sheet: 560px;
+  --width-pane: 360px;
   --pane-h: 356px;
   --pane-h-wide: 460px;
   --bp-stack: 360px;
   --bp-medium: 600px;
+  --bp-two-pane: 680px;
   --bp-expanded: 840px;
   --bp-cards: 900px;
   --dur-press: 100ms;
@@ -103,26 +134,14 @@
   --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
   --font-sans: Pretendard, "Pretendard Variable", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 
-  /* 화면 전용: 시간표 격자 높이(app.js 가 블록 줄 수를 정할 때 읽는다), 폰 가장자리(노치·홈 막대) */
+  /* 화면 전용: 시간표 격자 높이(app.js 가 블록 줄 수를 정할 때 읽는다), 폰 가장자리(노치·홈 막대).
+     바탕 지도 색 map-*(app.js 가 캔버스에 그릴 때 읽는다)·width-pane·bp-two-pane 은 10/2 디자인 토큰이 되어 위 토큰 블록에 있다 */
   --tt-h: 316px;
   --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
   --gutter-left: max(var(--space-5), var(--safe-area-inset-left, env(safe-area-inset-left, 0px)));
   --gutter-right: max(var(--space-5), var(--safe-area-inset-right, env(safe-area-inset-right, 0px)));
   --bottom-bar-h: calc(var(--cta-height) + var(--space-3) * 2 + var(--safe-bottom));
-  /* 넓은 화면 두 칸에서 오른쪽(담은 과목·조건) 칸의 폭. width-result 1080 의 3분의 1(디자인 토큰에 넣기 전까지 여기) */
-  --width-pane: 360px;
-  /* 바탕 지도 색(app.js 가 캔버스에 그릴 때 읽는다). 디자인 세션이 지도 토큰을 정하기 전까지 백엔드 시안 색:
-     OSM 기본 지도 구조(땅·학교 땅·건물·숲·물·흰 길과 테두리·등급 색 큰길)에 연보라 캠퍼스 땅·남색 글자·파랑 물.
-     보행로·계단은 시안의 주황 점선 대신 옅은 회색(10/1 사용자: 주황 점선이 시선을 빼앗는다). 땅·건물은 OSM 처럼 따뜻한 땅색과
-     베이지 갈색 건물(10/1 밤 사용자: 땅과 건물이 더 잘 구분되게. 백엔드가 고른 값, 캠퍼스 땅과 건물 명암비 라이트 1.53·다크 1.62) */
-  --map-land: #f2efe9; --map-green: #c9e2c2; --map-park: #d3eacb; --map-grass: #d7edcf; --map-pitch: #bfe4d2;
-  --map-campus: #f5f6ff; --map-campus-line: #d7dcfa; --map-contour: #dfdce6; --map-contour-index: #cac4d6; --map-contour-label: #968eae;
-  --map-water: #afc9f2; --map-walk-area: #fbfbfe; --map-road: #ffffff; --map-road-line: #c3c0d0;
-  --map-road-secondary: #f2f1c4; --map-road-secondary-line: #c2c08a; --map-road-primary: #f9d9af; --map-road-primary-line: #d2ae78;
-  --map-road-trunk: #f7bba8; --map-road-trunk-line: #d99683; --map-road-case: #c3c0d0; --map-ped: #e3e4f4; --map-ped-case: #b3b6d2;
-  --map-foot: #a9a6bc; --map-steps: #a9a6bc; --map-building: #d3c8be; --map-building-line: #ae9f91;
-  --map-label: #1d2a78; --map-name: #51596a; --map-halo: #ffffff;
   color-scheme: light;
 }
 
@@ -172,22 +191,39 @@
     --cls-gen-bg: #3a2a1f;
     --cls-etc: #9498a5;
     --cls-etc-bg: #2c2e33;
+    --map-land: #17171b;
+    --map-campus: #1c1d25;
+    --map-campus-line: #2b2e40;
+    --map-green: #1b261f;
+    --map-park: #1e2a21;
+    --map-grass: #1f2b22;
+    --map-pitch: #1b2d27;
+    --map-water: #1c2b45;
+    --map-contour: #25252c;
+    --map-contour-index: #32313c;
+    --map-contour-label: #7a7690;
+    --map-walk-area: #22222a;
+    --map-road: #3b3c45;
+    --map-road-line: #0d0d10;
+    --map-road-secondary: #5e5e3e;
+    --map-road-secondary-line: #3b3b27;
+    --map-road-primary: #7a6142;
+    --map-road-primary-line: #4a3b28;
+    --map-road-trunk: #7d4e43;
+    --map-road-trunk-line: #4c2f28;
+    --map-ped: #35364a;
+    --map-ped-line: #121218;
+    --map-foot: #5b5969;
+    --map-steps: #5b5969;
+    --map-building: #463f39;
+    --map-building-line: #605750;
+    --map-label: var(--heading);
+    --map-name: var(--text3);
+    --map-halo: #17171b;
     --shadow-sm: 0 1px 3px #00000066;
     --shadow-md: 0 8px 24px #00000080;
     --shadow-press: inset 0 0 0 100px #0000002e;
     color-scheme: dark;
-  }
-}
-/* 화면 전용: 다크 바탕 지도 색(시안). 타일을 필터로 뒤집던 것 대신 따로 맞춘 한 벌 */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --map-land: #17171b; --map-green: #1b261f; --map-park: #1e2a21; --map-grass: #1f2b22; --map-pitch: #1b2d27;
-    --map-campus: #1c1d25; --map-campus-line: #2b2e40; --map-contour: #25252c; --map-contour-index: #32313c; --map-contour-label: #7a7690;
-    --map-water: #1c2b45; --map-walk-area: #22222a; --map-road: #3b3c45; --map-road-line: #0d0d10;
-    --map-road-secondary: #5e5e3e; --map-road-secondary-line: #3b3b27; --map-road-primary: #7a6142; --map-road-primary-line: #4a3b28;
-    --map-road-trunk: #7d4e43; --map-road-trunk-line: #4c2f28; --map-road-case: #0b0b0e; --map-ped: #35364a; --map-ped-case: #121218;
-    --map-foot: #5b5969; --map-steps: #5b5969; --map-building: #463f39; --map-building-line: #605750;
-    --map-label: #e5e8f0; --map-name: #afb2bb; --map-halo: #17171b;
   }
 }
 
@@ -279,19 +315,16 @@ body.is-typing .bottom-bar { display: none; }
    - 왼쪽 큰 칸은 학기·검색(늘어나는 칸), 오른쪽 좁은 칸은 담은 과목·조건·시간표 만들기(폭 고정 width-pane 360px).
      Android 지원 창 배치(주 칸 약 2/3, 보조 칸 360dp, 사이 24dp), Polaris·GOV.UK 2/3+1/3, Apple 인스펙터·Microsoft 보조 칸(오른쪽)과 같다.
      좁을 때는 두 칸이 반씩(폭 784px까지, 펼친 폴더블은 가운데 접힌 자리가 두 칸 사이 틈에 온다)
-   - 두 칸 모두 화면 높이만큼(상단 바 아래) 내려가 아래 끝이 같다: 왼쪽은 검색 결과 카드, 오른쪽은 담은 과목 카드가 늘어나고
-     (검색 전에는 최근 검색어, 담기 전에는 빈 상태 한 줄), 조건과 시간표 만들기는 오른쪽 아래에 붙는다.
-     두 칸 다 sticky 라 짧은 쪽은 그대로 있고 긴 쪽만 페이지와 함께 내려간다: 검색 결과를 내려도 담은 과목·시간표 만들기가 보이고
-     (장바구니 요약), 담은 과목이 많아 오른쪽을 내려도 검색창이 보인다. 시간표 만들기는 늘 화면 아래에 붙는다
-   - 높이는 조건에 넣지 않는다: 앱(WebView)은 화상 키보드가 올라오면 창 높이가 줄어 타자 중에 한 칸으로 바뀌어 버린다 */
+   - 두 칸은 내용만큼의 높이다(10/2 디자인: 카드를 늘려 두 칸의 아래 끝을 맞추면 빈 카드가 커 보였다). 두 칸 다 상단 바 아래에
+     붙어서(sticky) 짧은 쪽이 제자리에 남는다: 담은 과목이 많아 오른쪽을 내려도 검색창이 보이고(장바구니 요약), 오른쪽 칸이 화면보다
+     길면 시간표 만들기가 화면 아래에 붙는다. 왼쪽 결과 카드는 화면 높이 안에서 카드 안만 스크롤한다(아래 블록)
+   - 두 칸 조건에 높이를 넣지 않는다: 앱(WebView)은 화상 키보드가 올라오면 창 높이가 줄어 타자 중에 한 칸으로 바뀌어 버린다 */
 @media (min-width: 42.5em), (horizontal-viewport-segments: 2) {
   #view-input { max-width: var(--width-result); padding-bottom: 0; }
   #view-input > main { display: grid; grid-template-columns: minmax(0, 1fr) min(var(--width-pane), calc((100% - var(--space-6)) / 2));
     column-gap: var(--space-6); align-items: start; }
-  .input-left, .input-right { position: sticky; top: calc(var(--topbar-h) + var(--safe-top)); display: flex; flex-direction: column;
-    min-height: calc(100vh - var(--topbar-h) - var(--safe-top)); min-height: calc(100dvh - var(--topbar-h) - var(--safe-top)); }
+  .input-left, .input-right { position: sticky; top: calc(var(--topbar-h) + var(--safe-top)); display: flex; flex-direction: column; }
   .input-left { padding-bottom: calc(var(--space-6) + var(--safe-bottom)); }
-  .input-left .results, .input-right .picked { flex: 1 0 auto; }
   .input-right > h2.section-title:first-child { margin-top: var(--space-2); }
   .input-right .bottom-bar { position: sticky; z-index: 1; margin-top: var(--space-4);
     padding: var(--space-3) 0 calc(var(--space-6) + var(--safe-bottom)); }
@@ -299,6 +332,17 @@ body.is-typing .bottom-bar { display: none; }
   /* 되돌리기 스낵바는 오른쪽 칸 폭으로 시간표 만들기 위에(app.js placeSnackbar 가 버튼 자리에 맞춘다) */
   #view-input:not([hidden]) ~ .snackbar { max-width: var(--width-pane); margin: 0 0 0 auto;
     right: max(var(--gutter-right), calc((100% - var(--width-result)) / 2 + var(--gutter-right))); }
+}
+/* 넓은 화면 결과 카드(검색 결과, 검색 전의 최근 검색어·과목 둘러보기)는 카드 안에서만 스크롤한다(10/2 사용자: 과목 스크롤은 그 카드
+   안에서만). 왼쪽 칸을 상단 바 아래 화면 높이로 묶고 카드가 남은 높이 안에서 줄어든다. 목록은 더 보기 없이 이어 붙는다(app.js feedList).
+   둘러보기의 선택칸(목록 제목)은 카드 위에 붙어 있다. 화면이 아주 낮으면(가로로 눕힌 폰에 화상 키보드) 카드가 너무 작아지므로
+   예전처럼 페이지가 스크롤한다 */
+@media (min-width: 42.5em) and (min-height: 25em), (horizontal-viewport-segments: 2) and (min-height: 25em) {
+  .input-left { max-height: calc(100vh - var(--topbar-h) - var(--safe-top)); max-height: calc(100dvh - var(--topbar-h) - var(--safe-top)); }
+  .input-left .results { flex: 0 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+    scrollbar-width: thin; scrollbar-gutter: stable; }
+  .input-left .results:has(> .browse:not([hidden])) { scroll-padding-top: calc(var(--touch) + var(--space-1) + 1px); } /* 붙어 있는 선택칸 밑으로 초점이 숨지 않게 */
+  .browse-head { position: sticky; top: 0; z-index: 1; background: var(--card); }
 }
 /* 접히는 폰을 책처럼 펴 두어 화면이 좌우 두 쪽으로 나뉘면(Viewport Segments) 두 칸을 한 쪽씩, 접힌 자리 양옆 12px 를 비운다
    (Samsung·Android: 폴더블은 반반, 접힌 자리 가까이에 누를 것을 두지 않는다) */
@@ -346,7 +390,7 @@ body.is-typing .bottom-bar { display: none; }
 .result { position: relative; display: flex; align-items: center; gap: var(--space-3); min-height: 64px; padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
   cursor: pointer; transition: background-color var(--dur-fade) var(--ease-standard); }
 /* 담기·빼기는 행 어디를 눌러도 된다: 버튼의 누르는 영역(::before)을 행 전체로 넓힌다. 초점 테두리도 행에 */
-.result .btn-add { position: static; }
+.result .btn-add { position: static; scroll-margin-block: 2rem; } /* 키보드로 옮겨 가면 버튼만이 아니라 (초점 테두리를 그리는) 행 전체가 보이게 */
 /* 담은 과목이 다른 과목과 겹쳐 조합을 막을 때 버튼 앞 '시간 겹침'. 좁은 칸·큰 글자에서는 과목명 아래 줄로 */
 .result:has(.r-clash) { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: var(--space-3); }
 .result .r-clash { margin-right: calc(var(--space-2) - var(--space-3)); }
@@ -369,8 +413,8 @@ body.is-typing .bottom-bar { display: none; }
 .r-meta { display: block; overflow: hidden; font-size: 0.8125rem; line-height: 1.125rem; color: var(--text3); white-space: nowrap; text-overflow: ellipsis; }
 .results .more { display: flex; justify-content: center; border-top: 1px solid var(--line); padding: var(--space-1) 0; }
 .results .empty { padding: var(--space-4); }
-/* 검색 전: 최근 검색어(담기로 이어진 검색어, 최대 10개). 넓은 화면은 늘 보이고(비었으면 빈 상태 한 줄), 폰은 검색창에 초점이 있을 때만.
-   글자를 넣으면 검색 결과로 바뀐다(Carbon 검색 패턴, Apple HIG Searching) */
+/* 검색 전: 최근 검색어(담기로 이어졌거나 Enter 로 낸 검색어, 최대 10개). 넓은 화면은 있으면 늘(없으면 두지 않는다), 폰은 빈 검색창에
+   초점이 있을 때만. 글자를 넣으면 검색 결과로 바뀐다(Carbon 검색 패턴, Apple HIG Searching) */
 .recent { padding: 0 var(--space-4) var(--space-4); }
 .recent .list-head { margin-right: calc(var(--space-2) * -1); }
 .recent-title { margin: 0; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; color: var(--text2); }
@@ -382,6 +426,16 @@ body.is-typing .bottom-bar { display: none; }
 .chip .chip-q:focus-visible { outline: none; }
 .recent-list .chip:has(.chip-q:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .chip .chip-x { flex-shrink: 0; }
+/* 넓은 화면 검색 전: 과목 둘러보기(10/2 디자인). 목록 머리의 선택칸(교양 전체·학과, 이름 '과목 목록')이 곧 목록 제목이라 따로 제목이 없다.
+   바탕·테두리 없이 t-body-sm-strong text, 꺾쇠 muted, 높이 48, 폭은 고른 글자에 맞춘다(app.js fitSelect). 행은 검색 결과 행과 같다.
+   선택칸 아래 줄은 머리 쪽에 그어서 머리가 카드 위에 붙어 있을 때도 행과 갈린다 */
+.browse-head { padding: var(--space-1) var(--space-2) 0; border-bottom: 1px solid var(--line); }
+.browse-select { appearance: none; -webkit-appearance: none; min-width: 0; max-width: 100%; min-height: var(--touch); padding: 0 30px 0 var(--space-2);
+  border: 0; border-radius: var(--radius-sm);
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a92a6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right var(--space-2) center;
+  color: var(--text); font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; cursor: pointer; }
+.browse-select:focus-visible { outline-offset: -2px; }
+.recent:not([hidden]) ~ .browse { border-top: 1px solid var(--line); }
 
 /* ---------------------------------------------------------------- 담은 과목 */
 .picked { overflow: hidden; container-type: inline-size; }
@@ -514,18 +568,23 @@ dialog.sheet.is-dragging { transition: none; }
 .tt-block .b-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--lines, 2); overflow: hidden; font-size: 0.875rem; line-height: 1.125rem;
   font-weight: 500; color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
 .tt-block .b-room { overflow: hidden; font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text2); white-space: nowrap; text-overflow: ellipsis; }
-.tt-block.short { padding: 0 var(--space-2); }
-.tt-block.short .b-room { display: none; }
-.tt-block.short .b-title { -webkit-line-clamp: 1; font-size: 0.75rem; line-height: 1rem; }
+/* 과목명 한 줄과 강의실 줄을 쌓을 수 없는 낮은 칸: 과목명(t-label) 옆에 강의실을 한 줄로(10/2 사용자). 과목명이 먼저 줄고,
+   강의실은 app.js 가 폭을 재어 '43-1동 301호' → '43-1동' 가운데 들어가는 것을 넣는다. 늦음 알약 자리(--late-w)는 비운다 */
+.tt-block.short { flex-direction: row; align-items: center; justify-content: flex-start; gap: 6px; padding: 0 calc(var(--space-2) + var(--late-w, 0px)) 0 var(--space-2); }
+.tt-block.short .b-title { display: block; flex: 0 100 auto; min-width: 0; font-size: 0.75rem; line-height: 1rem; white-space: nowrap; text-overflow: ellipsis; }
+.tt-block.short .b-room { flex: 0 1 auto; min-width: 0; }
+.tt-block.short .tt-late { top: 50%; transform: translateY(-50%); }
+/* 알약 줄 밑에 과목명과 강의실 줄이 다 안 들어가는 늦는 칸: 강의실을 알약 줄 왼쪽(비어 있던 자리)에 두고 과목명은 그 아래 */
+.tt-block.room-top { justify-content: flex-start; }
+.tt-block.room-top .b-room { order: -1; margin-bottom: 2px; padding-right: var(--late-w, 0px); }
 /* 늦는 수업: 빨간 'N분 늦음'을 오른쪽 위에. 과목명 첫 줄 옆이나 글 위에 자리가 있으면 그대로 두고, 없을 때만 과목명 위에 한 줄(.is-late,
-   app.js 가 재어 정한다). 낮은 칸은 과목명 위 오른쪽에 겹친다 */
+   app.js 가 재어 정한다). 낮은 칸은 한 줄 오른쪽 끝(글은 알약 앞에서 끝난다) */
 .tt-late { position: absolute; top: 3px; right: 4px; z-index: 1; padding: 0 6px; border-radius: var(--radius-full); background: var(--danger); color: var(--on-danger);
   font-size: 0.75rem; line-height: 1rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tt-block.is-late .tt-late { position: static; align-self: flex-end; margin-bottom: 2px; }
-.tt-block.short .b-title { padding-right: var(--late-w, 0px); } /* 낮은 칸의 늦음 알약 자리(app.js 가 잰 폭) */
 .tt-empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; line-height: 1.25rem; color: var(--text3); }
 .mapcard { display: flex; flex-direction: column; gap: var(--space-2); }
-.map-box { position: relative; display: flex; flex: 1; min-height: 0; }
+.map-box { position: relative; display: flex; flex: 1; min-height: 0; container-type: inline-size; }
 .map-box > .map-attr { right: 0; bottom: 0; z-index: 2; border-bottom-right-radius: var(--radius-md); }
 .map { position: relative; z-index: 0; flex: 1; min-width: 0; min-height: 0; overflow: hidden; border-radius: var(--radius-md); background: var(--map-land); }
 /* 오른쪽 위 버튼 줄: 크게 보기(32px), 그 아래 마우스일 때 확대·축소 */
@@ -546,9 +605,17 @@ dialog.sheet.is-dragging { transition: none; }
 /* 파선 견본 '기숙사 가는 길': 좁은 두 칸 번호표에서는 한 줄을 다 쓴다 */
 .legend li.line { grid-column: 1 / -1; }
 .line-key { flex-shrink: 0; color: var(--route-home); }
+/* 출처 '© 국토지리정보원 · © OpenStreetMap'(10/2 디자인). 이름(.u) 안에서는 줄을 바꾸지 않고, 지도 칸이 22rem 보다 좁으면(폰 결과 화면의
+   작은 지도) 가운뎃점(.sep) 없이 오른쪽 맞춤 두 줄. 예전에는 '© 국토지리정보원 · ©' / 'OpenStreetMap' 으로 끊겼다.
+   지도 밖(번호표 아래)으로 옮기지 않는다: 높이가 정해진 칸이라 그만큼 지도가 준다 */
 .map-attr { position: absolute; right: 0; bottom: 0; padding: 1px 6px; border-top-left-radius: var(--radius-xs); background: var(--card); opacity: .9;
   font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text2); }
 .map-attr a { color: inherit; }
+.map-attr .u { white-space: nowrap; }
+@container (max-width: 22rem) {
+  .map-attr { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+  .map-attr .sep { display: none; }
+}
 .pin { display: flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 5px; border: 2px solid var(--card);
   border-radius: var(--radius-full); background: var(--accent); color: var(--on-color); font-size: 12px; line-height: 16px; font-weight: 700; white-space: nowrap;
   box-shadow: var(--shadow-sm); }
@@ -556,6 +623,9 @@ dialog.sheet.is-dragging { transition: none; }
 .leg-label { display: inline-block; padding: 1px 6px; border-radius: var(--radius-full); background: var(--card); color: var(--text2);
   font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap; box-shadow: var(--shadow-sm); transform: translate(-50%, -50%); }
 .leg-label svg { margin-right: 2px; vertical-align: -1px; } /* 출발·도착 자리로 가는 구간: ⌂ 19분 */
+/* 같은 길을 오가는 두 구간(301동 → 83동 → 301동)만 라벨 앞에 도착하는 수업 번호(번호표 번호와 같은 모양, 10/2 디자인): '2 26분', '3 32분'.
+   ⌂ 19분의 ⌂ 처럼 '그 수업으로 가는 길'. 화살표는 쓰지 않는다(길 모양에 따라 거꾸로 보이고 부호 규칙에 걸린다) */
+.leg-label .num { min-width: 16px; height: 16px; margin: 0 4px 0 -4px; padding: 0 4px; font-size: 12px; line-height: 16px; vertical-align: top; }
 .map-route { stroke: var(--route); }
 .map-route-case { stroke: var(--card); }
 /* 수업 뒤 출발·도착 자리로 가는 길: route-home(= home, ⌂ 핀 색) 파선 + card 테두리, 경로선 아래·옆(app.js drawReturn) */
@@ -586,14 +656,14 @@ dialog.sheet.is-dragging { transition: none; }
 .view-map .map-box:has(+ .legend:empty) > .map-attr { bottom: var(--safe-bottom); }
 
 /* 바탕 지도 건물 번호: 수업이 있는 날은 그날 수업 건물 번호만 핀 오른쪽에(겹쳐도 그대로), 없는 날은 모든 건물을 겹치지 않게(app.js placeLabels).
-   많이 확대하면 이름도. 글자 모양은 디자인 세션이 정하기 전까지 시안 그대로(번호 12px 750, 이름 10px 550, 바탕색 테두리) */
-.blabel { width: max-content; transform: translate(-50%, -50%); text-align: center; white-space: nowrap; pointer-events: none;
+   많이 확대하면 이름도. 번호는 t-label-strong(12px 700), 이름은 t-label(12px 500), 둘 다 줄 높이 14px 에 map-halo 2px 테두리(10/2 디자인:
+   10px 이름과 750·550 굵기는 타입 표 밖이고 한글 10px 는 폰에서 읽기 어렵다). 지도 그림이라 px 고정 */
+.blabel { display: block; width: max-content; transform: translate(-50%, -50%); text-align: center; white-space: nowrap; pointer-events: none;
   text-shadow: 0 0 2px var(--map-halo), 0 0 2px var(--map-halo), 0 0 3px var(--map-halo), 0 0 3px var(--map-halo), 0 0 4px var(--map-halo); }
-.blabel b { display: block; font-size: 12px; line-height: 14px; font-weight: 750; letter-spacing: -0.1px; color: var(--map-label); }
-.blabel span { display: block; font-size: 10px; line-height: 12px; font-weight: 550; letter-spacing: -0.2px; color: var(--map-name); }
+.blabel b { display: block; font-size: 12px; line-height: 14px; font-weight: 700; color: var(--map-label); }
+.blabel span { display: block; font-size: 12px; line-height: 14px; font-weight: 500; color: var(--map-name); }
 .blabel.day { transform: translate(calc(var(--pin-half, 12px) + 3px), -50%); text-align: left; }
 .blabel.day.left { transform: translate(calc(-100% - var(--pin-half, 12px) - 3px), -50%); text-align: right; }
-.blabel.day b { font-size: 12.5px; }
 
 /* Leaflet 안 */
 .leaflet-container { font-family: inherit; background: var(--map-land); }
@@ -680,7 +750,7 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
   .icon-btn:hover, .btn-text:hover, .result:hover, .rank-hit:hover, button.info-row:hover, a.info-row:hover, .course-hit:hover .c-title { background: var(--surface-hover); }
   .result.is-picked:hover { background: var(--row-picked); } /* 담은 행은 어두운 그대로, 버튼만 빨갛게(빼기) */
   .course-hit:hover .c-title { background: none; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
-  .term-select:hover { background-color: var(--surface-hover); }
+  .term-select:hover, .browse-select:hover { background-color: var(--surface-hover); }
   .btn-add.is-on:hover { background: var(--danger-weak); color: var(--danger); }
   .recent-list .chip:has(.chip-q:hover) { background: var(--surface-hover); }
   .chip .chip-x:hover { color: var(--text2); }
@@ -694,12 +764,13 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
 @media (prefers-color-scheme: dark) {
   body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; } /* 밝은 글자가 굵어 보이지 않게 */
   .select, .term-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23afb2bb' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
+  .browse-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23898c96' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
   dialog.sheet::backdrop { background: var(--scrim, #000000a6); }
 }
 
 /* ---------------------------------------------------------------- 고대비(강제 색) */
 @media (forced-colors: active) {
-  .btn-primary, .btn-add, .btn-text, .tag, .daytabs button, .seg label, .days label, .snackbar, .banner, .searchbox, .chip, .term-select, .tt-late { border: 1px solid CanvasText; }
+  .btn-primary, .btn-add, .btn-text, .tag, .daytabs button, .seg label, .days label, .snackbar, .banner, .searchbox, .chip, .term-select, .browse-select, .tt-late { border: 1px solid CanvasText; }
   .rank { border-color: CanvasText; }
   .rank.selected { border-color: Highlight; }
   .seg label:has(input:checked), .days label:has(input:checked), .daytabs button[aria-selected="true"] { outline: 2px solid Highlight; outline-offset: 1px; }

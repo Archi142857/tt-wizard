@@ -68,7 +68,12 @@
         </div>
         <ul class="recent-list" id="recent-list" aria-labelledby="recent-title"></ul>
       </div>
-      <p class="empty" id="recent-empty" hidden>최근 검색어가 없어요</p>
+      <div class="browse" id="browse" hidden>
+        <div class="list-head browse-head">
+          <select id="browse-select" class="browse-select" aria-label="과목 목록"></select>
+        </div>
+        <ul class="list" id="browse-list" aria-label="과목 목록"></ul>
+      </div>
       <ul class="list" id="results-list"></ul>
       <p class="empty" id="results-empty" hidden>검색 결과가 없어요</p>
       <div class="more" id="results-more" hidden><button type="button" class="btn-text">더 보기</button></div>
@@ -127,7 +132,7 @@
           <div class="map-box">
             <button type="button" class="icon-btn map-expand" id="map-expand" aria-label="지도 크게 보기"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path></svg></span></button>
             <div class="map" id="map"></div>
-            <span class="map-attr">© 국토지리정보원 · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
+            <span class="map-attr"><span class="u">© 국토지리정보원</span><span class="sep"> · </span><span class="u">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span></span>
           </div>
           <ul class="legend" id="map-legend"></ul>
         </div>
@@ -154,7 +159,7 @@
   <main class="mapcard" hidden>
     <div class="map-box">
       <div class="map" id="map-full"></div>
-      <span class="map-attr">© 국토지리정보원 · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
+      <span class="map-attr"><span class="u">© 국토지리정보원</span><span class="sep"> · </span><span class="u">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span></span>
     </div>
     <ul class="legend" id="map-full-legend"></ul>
   </main>

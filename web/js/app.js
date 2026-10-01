@@ -24,7 +24,10 @@ const PRIVACY_URL = ""; // 개인정보 처리방침 공개 페이지(스토어�
 const CONTACT_URL = ""; // 문의 페이지(App Store 지원 URL과 같은 곳)
 const REVIEW_URL = { android: "", ios: "" }; // 스토어 앱 페이지(스토어 앱에서만 '리뷰 남기기')
 const TOP_K = 20; // 한 번에 찾는 조합 수. 후보 카드는 6개씩 보인다(넓은 화면의 2·3열이 꽉 차게)
-const RESULTS_STEP = 8;
+const RESULTS_STEP = 8; // 폰 검색 결과: 처음 개수이자 '더 보기' 한 번에 더 보이는 개수
+// 넓은 화면 결과 카드(검색 결과, 과목 둘러보기)는 더 보기 없이 다 보인다(10/2 사용자). 처음엔 FEED_STEP 개를 그리고 끝의 FEED_LEAD 개 행
+// 가운데 하나가 보이면 다음 FEED_STEP 개를 이어 붙인다(결과 2천 개를 한 번에 그리지 않게, 한 글자 칠 때 16개만. 카드 안 스크롤은 style.css)
+const FEED_STEP = 16, FEED_LEAD = 6;
 const RANKS_STEP = 6; // 후보 카드 처음 개수이자 '더 보기' 한 번에 더 보이는 개수
 // 워커를 못 쓰는 브라우저에서 화면 스레드로 계산할 때: 조합 수 어림(과목마다 분반 묶음 수를 곱한 것)이 이보다 크면
 // 스피너를 먼저 띄우고 계산한다(계산하는 동안에는 500ms 뒤에 스피너를 그릴 수 없다)
@@ -396,7 +399,7 @@ function fitSelect(sel) {
   const text = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : "";
   sel.style.width = `${Math.ceil(canvas.measureText(text).width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2)}px`;
 }
-const fitTerm = () => { fitSelect($("year")); fitSelect($("term")); };
+const fitTerm = () => { fitSelect($("year")); fitSelect($("term")); fitSelect($("browse-select")); };
 if (document.fonts) document.fonts.addEventListener("loadingdone", fitTerm);
 window.addEventListener("resize", fitTerm);
 
@@ -470,8 +473,64 @@ function resultRow({ c, marks }) {
   return row;
 }
 
-// 넓은 화면 두 칸(style.css 의 같은 조건): 오른쪽 칸 폭의 스낵바, 늘 보이는 검색 결과 카드(검색 전에는 최근 검색어)
+// 넓은 화면 두 칸(style.css 의 같은 조건): 오른쪽 칸 폭의 스낵바, 자료를 받은 뒤 늘 있는 결과 카드(검색 전에는 최근 검색어와 과목 둘러보기)
 const twoPane = matchMedia("(min-width: 42.5em), (horizontal-viewport-segments: 2)");
+
+/** 넓은 화면 목록: items 를 FEED_STEP 개씩 이어 붙인다(끝의 FEED_LEAD 개 행 가운데 하나라도 보이면 다음). 다시 부르면 앞의 것은 멈춘다.
+ *  보이는지는 화면 기준으로 보되 카드 안 스크롤에 가려진 행은 안 보이는 것으로 친다(IntersectionObserver 가 조상의 잘림을 따진다).
+ *  끝의 여러 행을 보는 것은 스크롤 막대를 끌거나 End 로 한 번에 끝까지 가도(그 사이 행을 건너뛰어도) 멈추지 않게 하려고. */
+const feeds = new Map();
+function feedList(list, items, row) {
+  stopFeed(list);
+  let shown = 0;
+  const io = new IntersectionObserver((es) => { if (feeds.get(list) === io && es.some((e) => e.isIntersecting)) more(); });
+  feeds.set(list, io);
+  const more = () => {
+    io.disconnect();
+    const next = items.slice(shown, shown + FEED_STEP);
+    shown += next.length;
+    list.append(...next.map(row));
+    if (shown < items.length) for (const el of [...list.children].slice(-FEED_LEAD)) io.observe(el);
+  };
+  list.replaceChildren();
+  more();
+}
+function stopFeed(list) {
+  feeds.get(list)?.disconnect();
+  feeds.delete(list);
+}
+
+// 넓은 화면 검색 전 왼쪽: 과목 둘러보기(10/2 디자인, 최근 검색어로 카드를 채우던 것 대신). 목록 머리의 선택칸(교양 전체·학과)이 곧 목록
+// 제목이고, 행은 검색 결과 행과 같다(강조 없이 학과 · 교과구분 · 학점). 학사 과목만(대학원 과목은 검색으로). 교양 전체는 가나다,
+// 학과는 전필 → 전선 → 교양 → 그 밖이고 같은 묶음은 가나다. 고른 목록은 이 기기에 기억하고, 그 학기에 없는 학과면 교양 전체
+const collator = new Intl.Collator("ko");
+const CLS_ORDER = { 전필: 0, 전선: 1, 교양: 2 };
+const clsRank = (c) => CLS_ORDER[c.cls] ?? 3;
+const NO_MARKS = {};
+let browseKey = String(store.get("browse", "교양") || "교양"), browseData = null, browseDepts = [], browseDrawn = "";
+function browseCourses() {
+  const list = state.courses.filter((c) => c.program === "학사" && (browseKey === "교양" ? c.cls === "교양" : c.dept === browseKey));
+  return list.sort((a, b) => (browseKey === "교양" ? 0 : clsRank(a) - clsRank(b)) || collator.compare(a.name, b.name) || collator.compare(a.id, b.id));
+}
+/** 둘러보기를 보이거나 숨긴다. 학기(자료)나 고른 목록이 바뀌었을 때만 목록을 새로 그리고 true(그대로면 행과 스크롤 자리를 둔다). */
+function renderBrowse(show) {
+  $("browse").hidden = !show;
+  if (!show) return false;
+  const sel = $("browse-select");
+  if (browseData !== state.courses) {
+    browseData = state.courses;
+    browseDrawn = "";
+    browseDepts = [...new Set(state.courses.filter((c) => c.program === "학사").map((c) => c.dept).filter(Boolean))].sort(collator.compare);
+    sel.replaceChildren(h("option", { value: "교양" }, "교양 전체"), h("optgroup", { label: "학과" }, browseDepts.map((d) => h("option", { value: d }, d))));
+  }
+  if (browseKey !== "교양" && !browseDepts.includes(browseKey)) browseKey = "교양"; // 학기를 바꿔 그 학과가 없으면(기억은 그대로 둔다)
+  sel.value = browseKey;
+  fitSelect(sel);
+  if (browseDrawn === browseKey) return false;
+  browseDrawn = browseKey;
+  feedList($("browse-list"), browseCourses(), (c) => resultRow({ c, marks: NO_MARKS }));
+  return true;
+}
 
 // 최근 검색어: 담기로 이어졌거나 Enter 로 낸(결과가 있는) 검색어. 학기와 상관없이 이 기기에 10개까지, 같은 말(띄어쓰기·대소문자 무시)은 하나로
 const RECENT_MAX = 10;
@@ -491,13 +550,12 @@ function setRecent(list) {
   if (recent.length) store.set("recent", recent); else store.del("recent");
 }
 
-/** 검색 전 카드: 최근 검색어 칩(누르면 그 말로 검색, ×로 하나 지우기). 넓은 화면에서 하나도 없으면 빈 상태 한 줄.
+/** 검색 전 카드: 최근 검색어 칩(누르면 그 말로 검색, ×로 하나 지우기). 하나도 없으면 두지 않는다(빈 상태 문장 없음, 10/2 디자인).
  *  목록이 그대로면 다시 만들지 않는다(키보드 초점이 칩에 있을 때 다시 그려 초점을 잃지 않게). */
 let drawnRecent = "";
 function renderIdle(show) {
   const has = show && recent.length > 0;
   $("recent").hidden = !has;
-  $("recent-empty").hidden = !show || has;
   const key = has ? JSON.stringify(recent) : "";
   if (key === drawnRecent) return;
   drawnRecent = key;
@@ -508,39 +566,57 @@ function renderIdle(show) {
 /** 검색창이나 그 아래 카드(최근 검색어·결과)에 초점이 있다. */
 const searchFocused = () => document.activeElement === $("q") || $("results").contains(document.activeElement);
 
-let resultsShown = RESULTS_STEP, lastQuery = "", countTimer = null;
+// 넓은 화면은 결과 카드가 스크롤 칸이다(style.css). 새 검색은 맨 위부터, 검색을 지우면 둘러보던 자리로 돌아간다
+let resultsShown = RESULTS_STEP, lastQuery = "", countTimer = null, browseTop = 0;
 function renderResults({ more = false } = {}) {
   const raw = $("q").value;
+  const box = $("results"), list = $("results-list");
+  const wide = twoPane.matches;
+  // 카드 스크롤 자리는 화면을 바꾸기 전에 읽고 쓴다(바꾼 뒤에 하면 그 자리에서 레이아웃을 다시 계산해 타자가 느려진다)
+  if (raw.trim() && state.loaded) {
+    if (!lastQuery && !$("browse").hidden) browseTop = box.scrollTop;
+    if (wide && raw !== lastQuery && box.scrollTop) box.scrollTop = 0;
+  }
   $("q-clear").hidden = !raw;
-  const box = $("results");
   if (!raw.trim() || !state.loaded) {
+    const fromSearch = lastQuery !== "";
     lastQuery = "";
     clearTimeout(countTimer);
-    $("results-list").replaceChildren();
+    stopFeed(list);
+    list.replaceChildren();
     $("results-empty").hidden = $("results-more").hidden = true;
-    // 넓은 화면은 카드를 늘 두고(두 칸의 아래 끝을 맞춘다), 폰은 검색창에 초점이 있고 최근 검색어가 있을 때만 띄운다
-    const wide = twoPane.matches;
+    // 넓은 화면은 자료를 받은 뒤 카드를 늘 둔다(최근 검색어 + 과목 둘러보기). 폰은 빈 검색창에 초점이 있고 최근 검색어가 있을 때만.
+    // 불러오는 중에는 두지 않는다(검색창의 '불러오는 중'과 스피너)
     const idle = state.loaded && (wide || (searchFocused() && recent.length > 0));
-    box.hidden = !wide && !idle;
+    box.hidden = !idle;
     renderIdle(idle);
+    const redrawn = renderBrowse(wide && state.loaded);
+    if (fromSearch) box.scrollTop = redrawn ? 0 : browseTop;
     return;
   }
   renderIdle(false);
-  if (raw !== lastQuery) { resultsShown = RESULTS_STEP; lastQuery = raw; }
+  renderBrowse(false);
+  const fresh = raw !== lastQuery;
+  if (fresh) { resultsShown = RESULTS_STEP; lastQuery = raw; }
   const found = findCourses(raw);
-  const list = $("results-list");
-  const before = more ? list.children.length : 0;
-  list.replaceChildren(...found.hits.slice(0, resultsShown).map((hit) => resultRow(hit)));
   box.hidden = false;
   $("results-empty").hidden = found.hits.length > 0;
-  $("results-more").hidden = found.hits.length <= resultsShown;
-  if (more) { list.children[before]?.querySelector("button")?.focus(); return; }
+  if (wide) {
+    feedList(list, found.hits, resultRow);
+    $("results-more").hidden = true;
+  } else {
+    const before = more ? list.children.length : 0;
+    stopFeed(list);
+    list.replaceChildren(...found.hits.slice(0, resultsShown).map((hit) => resultRow(hit)));
+    $("results-more").hidden = found.hits.length <= resultsShown;
+    if (more) { list.children[before]?.querySelector("button")?.focus(); return; }
+  }
   clearTimeout(countTimer);
   countTimer = setTimeout(() => announce(found.hits.length ? `결과 ${found.hits.length}개` : "검색 결과 없음"), 500);
 }
 
 function syncAddButtons() {
-  for (const b of $("results-list").querySelectorAll(".btn-add")) {
+  for (const b of document.querySelectorAll("#results-list .btn-add, #browse-list .btn-add")) {
     const c = state.byId.get(b.dataset.id);
     if (c) setAddButton(b, c.name, isPicked(c.id));
   }
@@ -1430,7 +1506,9 @@ function renderTimetable(ev, day) {
   }
   box.replaceChildren(hours, grid);
   const textW = grid.clientWidth - 16; // 칸 안 글자 폭(좌우 여백 8)
-  const titleFont = `500 ${14 * k}px ${getComputedStyle(grid).fontFamily}`;
+  const family = getComputedStyle(grid).fontFamily;
+  const titleFont = `500 ${14 * k}px ${family}`, labelFont = `500 ${12 * k}px ${family}`; // t-block, t-label
+  const widthOf = (text) => { canvas.font = labelFont; return canvas.measureText(text).width; };
   const legs = ev.legs.filter((l) => l.day === day);
   let n = 0;
   legs.forEach((l, i) => {
@@ -1440,18 +1518,22 @@ function renderTimetable(ev, day) {
     const late = lateOf(l);
     const heightPct = ((m.end - m.start) / span) * 100;
     const px = (heightPct / 100) * gridPx;
-    // 칸 높이에 맞춰 과목명을 몇 줄까지 보일지 정한다(줄 18, 강의실 줄 16, 늦음 줄 18, 위아래 여백 6). 넘치면 마지막 줄에 말줄임.
-    // 과목명이 먼저다: 과목명을 다 보이고도 남으면 강의실(폰에서 75분 수업은 과목명이 한 줄이면 강의실까지).
+    // 강의실은 늘 보인다(10/2 사용자: '동이 왜 안 뜨지? 공간이 없으면 나란히 배치해서라도'. 예전에는 낮은 칸과, 과목명을 다 보이면
+    // 강의실 줄이 안 들어가는 칸에서 강의실을 뺐다). 낮은 칸(38px 미만, 과목명이 t-label 한 줄인 칸)은 과목명 옆에 한 줄로 둔다
+    // (과목명이 먼저 세 글자까지 줄고, 그래도 안 들어가면 호수를 빼고 건물만 '43-1동').
+    // 쌓는 칸은 강의실 줄을 늘 두고 과목명은 남는 줄 수만큼(1–3줄, 넘치면 마지막 줄에 말줄임). 과목명 한 줄 + 강의실 줄(34)이
+    // 겨우 들어가는 칸(38–40px)은 위아래 여백을 줄여 쓴다
     const short = px < 38 * k;
     const title = shortName(m.section.name);
     const need = Math.min(3, textLines(title, titleFont, textW));
+    const rooms = [roomLabel(m)];
+    if (m.building && rooms[0] !== buildingLabel(m.building)) rooms.push(buildingLabel(m.building));
     const fit = (avail) => {
-      const showRoom = !short && (avail >= 50 * k || avail - 16 * k >= need * 18 * k);
-      const lines = Math.max(1, Math.min(3, Math.floor((avail - (showRoom ? 16 * k : 0)) / (18 * k))));
-      return { showRoom, lines, used: Math.min(lines, need) * 18 * k + (showRoom ? 16 * k : 0) };
+      const lines = Math.max(1, Math.min(3, Math.floor((avail + 2 - 16 * k) / (18 * k))));
+      return { lines, used: Math.min(lines, need) * 18 * k + 16 * k };
     };
     // 늦음 알약은 오른쪽 위. 과목명 첫 줄 옆에 들어가거나(넓은 칸) 가운데 놓인 글이 알약 아래에서 시작하면(높은 칸) 그대로 두고,
-    // 둘 다 아니면 과목명 위에 알약 줄을 따로 둔다(과목명이 한 줄 밀린다). 낮은 칸은 과목명 위 오른쪽에 겹친다
+    // 둘 다 아니면 과목명 위에 알약 줄을 따로 둔다(과목명이 한 줄 밀린다). 낮은 칸은 한 줄의 오른쪽 끝(글은 알약 앞에서 끝난다)
     let lateRow = 0, pillW = 0;
     if (late) {
       canvas.font = `700 ${12 * k}px ${getComputedStyle(grid).fontFamily}`;
@@ -1462,7 +1544,19 @@ function renderTimetable(ev, day) {
       const below = (px - 6 - fit(px - 6).used) / 2 >= 16 * k + 2;
       if (!beside && !below) lateRow = 18 * k;
     }
-    const { showRoom, lines } = fit(px - 6 - lateRow);
+    let room = rooms[0], roomTop = false, lines = 1;
+    if (short) {
+      // 한 줄: 과목명(t-label) 옆에 강의실. 과목명은 세 글자까지 줄어들 수 있다. 늦음 알약 자리는 비운다
+      let head = "", count = 0;
+      for (const ch of title) { head += ch; if (ch.trim() && ++count >= 3) break; }
+      const rowW = textW - (late ? pillW + 6 : 0), tW = widthOf(title), minT = Math.min(tW, widthOf(`${head}…`));
+      room = rooms.find((r) => tW + 6 + widthOf(r) <= rowW) || rooms.find((r) => minT + 6 + widthOf(r) <= rowW) || "";
+    } else if (lateRow && px - 4 - lateRow < 34 * k) {
+      // 알약 줄 밑에 과목명과 강의실 줄이 다 안 들어가면 강의실을 알약 줄 왼쪽에(비어 있던 자리)
+      roomTop = true;
+      room = rooms.find((r) => widthOf(r) <= textW - pillW - 6) || "";
+      lines = Math.max(1, Math.min(3, Math.floor((px - 6 - lateRow) / (18 * k))));
+    } else ({ lines } = fit(px - 6 - lateRow));
     const cls = state.byId.get(m.section.courseId)?.cls || "";
     const nx = legs[i + 1];
     let next = "";
@@ -1472,15 +1566,15 @@ function renderTimetable(ev, day) {
     }
     const said = [`${n}. ${hm(m.start)}~${hm(m.end)} ${m.section.name}`, roomLabel(m), late ? `${late}분 늦음(${lateWhy(l)})` : "", next].filter(Boolean).join(", ");
     grid.append(h("li", {
-      class: `tt-block${short ? " short" : ""}${lateRow ? " is-late" : ""}`,
+      class: `tt-block${short ? " short" : ""}${roomTop ? " room-top" : lateRow ? " is-late" : ""}`,
       style: { top: top(m.start), height: `calc(${heightPct}% - 2px)`, background: clsFill(cls), "--lines": String(lines),
-        ...(late && short ? { "--late-w": `${Math.ceil(pillW + 6)}px` } : {}) }, // 낮은 칸: 과목명이 알약 밑으로 들어가지 않고 그 앞에서 말줄임
+        ...(late && (short || roomTop) ? { "--late-w": `${Math.ceil(pillW + 6)}px` } : {}) }, // 알약과 같은 줄의 글은 알약 앞에서 끝난다
       title: `${m.section.name} ${hm(m.start)}~${hm(m.end)} ${roomLabel(m)}`,
     },
     h("span", { class: "sr-only" }, said),
     late ? h("span", { class: "tt-late", "aria-hidden": "true", title: lateWhy(l) }, `${late}분 늦음`) : null,
     h("span", { class: "b-title", "aria-hidden": "true" }, title),
-    showRoom ? h("span", { class: "b-room", "aria-hidden": "true" }, roomLabel(m)) : null));
+    room ? h("span", { class: "b-room", "aria-hidden": "true" }, room) : null));
   });
 }
 
@@ -1618,10 +1712,11 @@ function applyMinZoom(map) {
   map.fire("zoomlevelschange");
 }
 
-// 지도 색은 CSS(--map-*)에서 읽는다. 기기 테마가 바뀌면 다시 읽고 다시 그린다
+// 지도 색은 디자인 토큰 map-*(style.css)에서 읽는다. 기기 테마가 바뀌면 다시 읽고 다시 그린다.
+// 10/2 토큰을 정하며 찻길·보행자 길 양옆 테두리(예전 road-case·ped-case)는 road-line·ped-line 으로 합쳤다
 const MAP_COLORS = ["land", "green", "park", "grass", "pitch", "campus", "campus-line", "contour", "contour-index", "contour-label", "water", "walk-area",
-  "road", "road-line", "road-secondary", "road-secondary-line", "road-primary", "road-primary-line", "road-trunk", "road-trunk-line", "road-case",
-  "ped", "ped-case", "foot", "steps", "building", "building-line", "halo"];
+  "road", "road-line", "road-secondary", "road-secondary-line", "road-primary", "road-primary-line", "road-trunk", "road-trunk-line",
+  "ped", "ped-line", "foot", "steps", "building", "building-line", "halo"];
 let mapColorCache = null;
 function mapColors() {
   if (!mapColorCache) {
@@ -1710,8 +1805,8 @@ function drawBasemap(ctx, map, b, m) {
   fill(A.road, C.road, C["road-line"], 0.9);
   for (const t of ["secondary", "primary", "trunk"]) fill(A[`road_${t}`], C[`road-${t}`], C[`road-${t}-line`], 0.9);
   const roadW = (f) => ROAD_M[f.kind] || 5;
-  stroke(Ln.road, C["road-case"], (f) => px(roadW(f), 2.6, 2));
-  stroke(Ln.pedestrian, C["ped-case"], px(5, 2.6, 2));
+  stroke(Ln.road, C["road-line"], (f) => px(roadW(f), 2.6, 2));
+  stroke(Ln.pedestrian, C["ped-line"], px(5, 2.6, 2));
   stroke(Ln.road, C.road, (f) => px(roadW(f), 1.6));
   stroke(Ln.pedestrian, C.ped, px(5, 1.6));
   const dots = [0.1, Math.max(3.5, 1.9 / k)]; // 둥근 끝 + 아주 짧은 선 = 점
@@ -1719,12 +1814,12 @@ function drawBasemap(ctx, map, b, m) {
   if (z >= 15.5) stroke(Ln.foot, C.foot, px(0.8, 1.6), { dash: dots });
   if (z >= 16.25) stroke(Ln.steps, C.steps, px(2.2, 3), { dash: [Math.max(1.2, 0.35 / k), Math.max(1.2, 0.35 / k)], cap: "butt" });
   fill(A.building, C.building, C["building-line"], 0.8);
-  // 많이 확대하면 계곡선(25 m) 가운데에 높이
+  // 많이 확대하면 계곡선(25 m) 가운데에 높이: t-label(12px 500), map-halo 2px 테두리(10/2 디자인: 지도 안 글자도 12px 이상)
   if (z >= 17 && Z.index) {
-    ctx.font = `650 9.5px ${C.font}`;
+    ctx.font = `500 12px ${C.font}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.lineJoin = "round";
     ctx.strokeStyle = C.halo;
     ctx.fillStyle = C["contour-label"];
@@ -1898,7 +1993,9 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
   const legs = ev.days[day] ? ev.legs.filter((l) => l.day === day) : [];
   // 선: 수업 가는 길(번호가 붙은 수업으로)은 실선, 마지막 수업 뒤 출발·도착 자리로 가는 길은 점선
   const homeLines = [], classLines = [], legLines = [];
+  let num = 0; // 도착하는 수업의 번호(핀 번호와 같다)
   for (const l of legs) {
+    if (l.meeting) num += 1;
     if (l.from === l.to) continue;
     let line = routeLine(state.routes, l.from, l.to);
     if (!line) {
@@ -1909,8 +2006,12 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
     (l.meeting ? classLines : homeLines).push(line);
     const mins = Math.round(l.minutes);
     // 걷는 시간 라벨(출발·도착 자리로 가는 구간은 ⌂ 를 붙인다). 라벨 자리는 placeLegLabels 가 배율마다 고른다
-    legLines.push({ line, home: !l.meeting, text: mins > 0 ? `${mins}분` : "" });
+    legLines.push({ line, home: !l.meeting, text: mins > 0 ? `${mins}분` : "", num: l.meeting ? num : 0, ends: [l.from, l.to] });
   }
+  // 같은 길을 오가는 두 구간(301동 → 83동 → 301동)은 두 라벨이 한 길에 나란히 서서 어느 쪽이 어느 쪽인지 모른다. 이 라벨들에만 앞에
+  // 도착하는 수업 번호를 붙인다(10/2 디자인: '2 26분', '3 32분'. ⌂ 19분의 ⌂ 처럼 '그 수업으로 가는 길'). ⌂ 구간은 ⌂ 가 이미 말한다
+  const sameRoad = (a, b) => (a.ends[0] === b.ends[0] && a.ends[1] === b.ends[1]) || (a.ends[0] === b.ends[1] && a.ends[1] === b.ends[0]);
+  for (const lg of legLines) lg.tag = !lg.home && lg.text && legLines.some((o) => o !== lg && !o.home && o.text && sameRoad(lg, o)) ? lg.num : 0;
   renderLegend(mp, legs, homeLines.length > 0); // 번호표를 먼저 채워야 지도 칸 높이가 정해진다
   mp.el.setAttribute("aria-label", `${DAY_KO[day]}요일 지도`);
   map.invalidateSize();
@@ -1977,12 +2078,30 @@ function placeMarks(mp) {
   mp.pins = merged;
 }
 
-/** 수업이 있는 날 핀 옆 건물 번호: 글, (많이 확대하면) 이름, 어림 폭, 핀 왼쪽에 둘지(오른쪽 가장자리에 걸리면). */
+/** 지도 글자 폭(px). 굵기 w 의 12px(지도 그림 글자는 px 고정). 글꼴을 받으면 다시 잰다. */
+const mapTextW = (() => {
+  let cache = new Map();
+  if (document.fonts) document.fonts.addEventListener("loadingdone", () => { cache = new Map(); });
+  return (w, text) => {
+    const k = `${w} ${text}`;
+    let v = cache.get(k);
+    if (v === undefined) {
+      canvas.font = `${w} 12px ${mapColors().font}`;
+      v = canvas.measureText(text).width;
+      cache.set(k, v);
+    }
+    return v;
+  };
+})();
+/** 건물 번호(.blabel b, 12px 700)와 이름(span, 12px 500) 가운데 넓은 쪽 + 테두리 여유. */
+const blabelW = (text, name) => Math.max(mapTextW(700, text), name ? mapTextW(500, name) : 0) + 4;
+
+/** 수업이 있는 날 핀 옆 건물 번호: 글, (많이 확대하면) 이름, 폭, 핀 왼쪽에 둘지(오른쪽 가장자리에 걸리면). */
 function pinTag(map, pin, withName) {
   const B = state.campus.buildings || {};
   const text = pin.bs.map((b) => (b === "GATE" ? "정문" : b)).join("·");
   const name = withName ? pin.bs.map((b) => (B[b] || [])[0]).filter(Boolean).join("·") : "";
-  const x = map.latLngToContainerPoint(pin.at).x, lw = Math.max(7.6 * text.length + 4, 10.2 * name.length);
+  const x = map.latLngToContainerPoint(pin.at).x, lw = blabelW(text, name);
   return { text, name, lw, left: x + pin.w / 2 + 3 + lw > map.getSize().x - 4 };
 }
 
@@ -2075,7 +2194,6 @@ function placeLegLabels(mp) {
     }
     return tot ? hit / tot : 1;
   };
-  canvas.font = `500 12px ${getComputedStyle(mp.el).fontFamily}`;
   const items = [];
   data.legs.forEach((lg, i) => {
     const pts = lines[i];
@@ -2083,7 +2201,9 @@ function placeLegLabels(mp) {
     const cum = [0];
     for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pts[k].x - pts[k - 1].x, pts[k].y - pts[k - 1].y));
     const len = cum[cum.length - 1];
-    const hw = (Math.ceil(canvas.measureText(lg.text).width) + 12 + (lg.home ? 12 : 0)) / 2 + 1, hh = LABEL_H / 2 + 1; // 좌우 6px, ⌂ 10px + 2px
+    // 상자: 좌우 6px, ⌂ 10px + 2px, 수업 번호(.num 16px 원, 왼쪽 -4px·오른쪽 4px 여백)
+    const numW = lg.tag ? Math.max(16, Math.ceil(mapTextW(700, String(lg.tag))) + 8) : 0;
+    const hw = (Math.ceil(mapTextW(500, lg.text)) + 12 + (lg.home ? 12 : 0) + numW) / 2 + 1, hh = LABEL_H / 2 + 1;
     const step = Math.max(3, len / 160), end = Math.min(12, len / 2);
     const cands = [];
     for (let s = end, k = 1; s <= len - end + 1e-6; s += step) {
@@ -2123,7 +2243,7 @@ function placeLegLabels(mp) {
     if (!c) continue; // 둘 데가 없거나 어느 구간 것인지 헷갈리는 자리뿐이면 숨긴다(크게 보기에서 확대하면 보인다)
     placed.push([c.box[0] - 2, c.box[1] - 2, c.box[2] + 2, c.box[3] + 2]);
     L.marker(map.layerPointToLatLng([c.x, c.y]), { interactive: false, keyboard: false,
-      icon: L.divIcon({ className: "", html: `<span class="leg-label${it.lg.home ? " to-home" : ""}" aria-hidden="true">${it.lg.home ? HOME_PIN.replace('width="12" height="12"', 'width="10" height="10"') : ""}${it.lg.text}</span>`, iconSize: [0, 0] }) }).addTo(mp.legLabels);
+      icon: L.divIcon({ className: "", html: `<span class="leg-label${it.lg.home ? " to-home" : ""}" aria-hidden="true">${it.lg.home ? HOME_PIN.replace('width="12" height="12"', 'width="10" height="10"') : ""}${it.lg.tag ? `<span class="num">${it.lg.tag}</span>` : ""}${it.lg.text}</span>`, iconSize: [0, 0] }) }).addTo(mp.legLabels);
   }
   mp.boxes = pins.concat(placed); // 수업이 없는 날 건물 번호가 피할 자리(placeLabels)
 }
@@ -2153,7 +2273,7 @@ function placeLabels(mp) {
   const placed = (mp.boxes || []).slice();
   for (const lb of allBuildingMarks()) {
     const p = map.latLngToLayerPoint(lb.at);
-    const w = Math.max(7.2 * lb.text.length + 4, withName ? 10.2 * lb.name.length : 0), hh = withName ? 28 : 15;
+    const w = blabelW(lb.text, withName ? lb.name : ""), hh = withName ? 28 : 15;
     const box = [p.x - w / 2 - 2, p.y - hh / 2 - 1, p.x + w / 2 + 2, p.y + hh / 2 + 1];
     if (box[0] < o.x + 2 || box[1] < o.y + 2 || box[2] > o.x + size.x - 2 || box[3] > o.y + size.y - 2) continue;
     if (placed.some((q) => !(box[2] < q[0] || box[0] > q[2] || box[3] < q[1] || box[1] > q[3]))) continue;
@@ -2609,6 +2729,23 @@ $("results-list").addEventListener("click", (e) => {
   else { addCourse(c.id); saveRecent(q.value); }
   setAddButton(b, c.name, isPicked(c.id));
 });
+// 과목 둘러보기: 목록을 바꾸면 새 목록을 맨 위부터(선택칸이 위로 지나갔으면 선택칸 바로 아래부터) 보이고 과목 수를 읽는다
+$("browse-select").addEventListener("change", (e) => {
+  browseKey = e.target.value;
+  store.set("browse", browseKey);
+  renderBrowse(true);
+  const box = $("results"), top = $("browse").getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+  if (box.scrollTop > top) box.scrollTop = top;
+  announce(`과목 ${browseCourses().length}개`);
+});
+$("browse-list").addEventListener("click", (e) => {
+  const b = e.target.closest(".btn-add");
+  const c = b && state.byId.get(b.dataset.id);
+  if (!c) return;
+  if (isPicked(c.id)) removeCourse(c.id);
+  else addCourse(c.id);
+  setAddButton(b, c.name, isPicked(c.id));
+});
 $("results-more").addEventListener("click", () => {
   resultsShown += RESULTS_STEP;
   renderResults({ more: true });
@@ -2663,5 +2800,5 @@ for (const id of ["cls-legend", "picked-legend"]) {
 }
 renderInfo();
 renderOnline();
-renderResults(); // 넓은 화면: 자료를 받기 전에도 검색 결과 카드 자리를 잡아 둔다(두 칸 아래 끝)
+renderResults(); // 검색창 지우기 단추와 결과 카드(자료를 받기 전에는 두지 않는다)
 start();
