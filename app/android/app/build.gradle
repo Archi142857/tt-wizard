@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "io.github.archi142857.ttwizard"
+    namespace = "com.ttwizard.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "io.github.archi142857.ttwizard"
+        applicationId "com.ttwizard.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // 판: 웹 화면의 APP_VERSION(web/js/app.js)과 같게. 스토어에 올릴 때마다 versionCode 를 1씩 올린다

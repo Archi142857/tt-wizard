@@ -101,6 +101,8 @@ def test_native_projects_match_config():
     pbx = (IOS / "App.xcodeproj" / "project.pbxproj").read_text(encoding="utf-8")
     assert f'applicationId "{app_id}"' in gradle and f'namespace = "{app_id}"' in gradle
     assert pbx.count(f"PRODUCT_BUNDLE_IDENTIFIER = {app_id};") == 2
+    activity = APP / "android" / "app" / "src" / "main" / "java" / Path(*app_id.split(".")) / "MainActivity.java"
+    assert activity.exists() and activity.read_text(encoding="utf-8").startswith(f"package {app_id};")
 
     web_version = re.search(r'const APP_VERSION = "([^"]+)"', (ROOT / "web" / "js" / "app.js").read_text(encoding="utf-8")).group(1)
     android_version = re.search(r'versionName "([^"]+)"', gradle).group(1)

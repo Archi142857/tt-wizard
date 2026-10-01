@@ -16,6 +16,9 @@ import dem_from_contours as dfc  # noqa: E402
 import fetch_campus_buildings as fcb  # noqa: E402
 import fetch_osm_footprints as fof  # noqa: E402
 
+# rasterio 1.4 안쪽 코드가 affine 3.0에서 예고된 `*` 곱을 아직 써서 나는 경고. 우리 코드와 무관해서 가린다.
+pytestmark = pytest.mark.filterwarnings("ignore:Use `@` matmul:PendingDeprecationWarning")
+
 P_LAT, P_LON = 37.4590, 126.9520  # 가짜 건물 위치
 GRAD_N, GRAD_E = 0.10, 0.02       # 북쪽으로 10 %, 동쪽으로 2 % 오르는 평면
 

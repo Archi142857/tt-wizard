@@ -26,7 +26,9 @@ app/
 .github/workflows/app.yml           안드로이드 디버그 APK·iOS 시뮬레이터 빌드
 ```
 
-- 앱 아이디 `io.github.archi142857.ttwizard`, 이름 `TT Wizard`. **스토어에 처음 올린 뒤에는 앱 아이디를 바꿀 수 없다.** 바꾸려면 그 전에.
+- 앱 아이디 `com.ttwizard.app`(10/1 사용자 결정: 개인 GitHub 아이디와 떼어 두고, 나중에 `ttwizard.com` 같은 주소를 사면 그대로 맞게), 이름 `TT Wizard`.
+  **스토어에 처음 올린 뒤에는 앱 아이디를 바꿀 수 없다.** 안드로이드 `namespace`·`applicationId`·`MainActivity` 패키지, iOS `PRODUCT_BUNDLE_IDENTIFIER`,
+  `capacitor.config.json` 이 같아야 한다(`tests/test_app.py`).
 - 안드로이드: minSdk 24, compile·targetSdk 36(Play 2026-08-31 요건), AGP 8.13, Gradle 8.14.3, JDK 21.
 - iOS: 15.0 이상, Xcode 26 이상(Capacitor 8 요건), iPhone 전용(`TARGETED_DEVICE_FAMILY = 1`, 디자인 규칙의 권장. iPad 를 넣으려면 `1,2` 와 iPad 스크린샷).
 

@@ -1,5 +1,5 @@
 {
-  "appId": "io.github.archi142857.ttwizard",
+  "appId": "com.ttwizard.app",
   "appName": "TT Wizard",
   "webDir": "www",
   "appendUserAgent": "TTWizardApp (+https://archi142857.github.io/tt-wizard/)",

@@ -1,4 +1,4 @@
-package io.github.archi142857.ttwizard;
+package com.ttwizard.app;
 
 import android.os.Bundle;
 import android.webkit.WebView;
