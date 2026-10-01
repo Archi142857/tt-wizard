@@ -1,0 +1,925 @@
+{
+ "type": "FeatureCollection",
+ "meta": {
+  "source": "OSM(© OpenStreetMap contributors, ODbL)·국토지리정보원 수치지형도 건물 번호로 tt-wizard 가 더함",
+  "zone_m": 60.0,
+  "gap_m": 8.0,
+  "min_run_m": 15.0,
+  "note": "type = path 는 graph_slopes.py 가 그래프에 더하고, type = entrance 는 slope_travel.py 가 출입구로 쓴다"
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9580155,
+      37.4666593
+     ],
+     [
+      126.9578911,
+      37.4667001
+     ],
+     [
+      126.957875,
+      37.4667113
+     ],
+     [
+      126.9578657,
+      37.4667453
+     ],
+     [
+      126.9579405,
+      37.4675751
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "highway": "footway",
+    "osm": 1544574885,
+    "name": "",
+    "length_m": 110.0,
+    "source": "OSM way 1544574885"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9578511,
+      37.466551
+     ],
+     [
+      126.9578522,
+      37.466409
+     ],
+     [
+      126.9578999,
+      37.4657772
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "highway": "footway",
+    "osm": 1544574883,
+    "name": "",
+    "length_m": 86.0,
+    "source": "OSM way 1544574883"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9579072,
+      37.4656958
+     ],
+     [
+      126.9579518,
+      37.4650303
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "highway": "footway",
+    "osm": 1544574886,
+    "name": "",
+    "length_m": 74.0,
+    "source": "OSM way 1544574886"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9565201,
+      37.4616407
+     ],
+     [
+      126.9565903,
+      37.4617886
+     ],
+     [
+      126.9566446,
+      37.4618684
+     ],
+     [
+      126.9566828,
+      37.4619073
+     ],
+     [
+      126.9567143,
+      37.4619759
+     ],
+     [
+      126.9568216,
+      37.4620797
+     ],
+     [
+      126.9568763,
+      37.4621091
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "highway": "footway",
+    "osm": 1544364802,
+    "name": "",
+    "length_m": 62.0,
+    "source": "OSM way 1544364802"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.95693,
+      37.46216
+     ],
+     [
+      126.9572608,
+      37.4625028
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "highway": "footway",
+    "osm": 1544364802,
+    "name": "",
+    "length_m": 48.0,
+    "source": "OSM way 1544364802"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9567988,
+      37.460624
+     ],
+     [
+      126.9566579,
+      37.460909
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "highway": "footway",
+    "osm": 1544364787,
+    "name": "",
+    "length_m": 34.0,
+    "source": "OSM way 1544364787"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9582024,
+      37.4647141
+     ],
+     [
+      126.9585298,
+      37.4647831
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "highway": "footway",
+    "osm": 1544574886,
+    "name": "",
+    "length_m": 30.0,
+    "source": "OSM way 1544574886"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9566821,
+      37.4615545
+     ],
+     [
+      126.9568137,
+      37.4617839
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "highway": "footway",
+    "osm": 1544364787,
+    "name": "",
+    "length_m": 28.0,
+    "source": "OSM way 1544364787"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9578353,
+      37.4644935
+     ],
+     [
+      126.9577862,
+      37.4647245
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "highway": "footway",
+    "osm": 1544364802,
+    "name": "",
+    "length_m": 26.0,
+    "source": "OSM way 1544364802"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9565609,
+      37.4611729
+     ],
+     [
+      126.9565755,
+      37.4612989
+     ],
+     [
+      126.9566106,
+      37.4614028
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "highway": "footway",
+    "osm": 1544364787,
+    "name": "",
+    "length_m": 26.0,
+    "source": "OSM way 1544364787"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9579867,
+      37.4648166
+     ],
+     [
+      126.9580024,
+      37.4647857
+     ],
+     [
+      126.958032,
+      37.4647548
+     ],
+     [
+      126.9580708,
+      37.4647368
+     ],
+     [
+      126.9581353,
+      37.4647202
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "highway": "footway",
+    "osm": 1544574886,
+    "name": "",
+    "length_m": 18.0,
+    "source": "OSM way 1544574886"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9576778,
+      37.4651446
+     ],
+     [
+      126.957727,
+      37.4651472
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "915",
+    "length_m": 4.4,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9573989,
+      37.4654895
+     ],
+     [
+      126.9574448,
+      37.4654921
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "916",
+    "length_m": 4.1,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9588603,
+      37.4669545
+     ],
+     [
+      126.958859,
+      37.4669298
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "931",
+    "length_m": 2.7,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9588818,
+      37.4668528
+     ],
+     [
+      126.9589381,
+      37.4668483
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "932",
+    "length_m": 5.0,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9592213,
+      37.4669435
+     ],
+     [
+      126.9592274,
+      37.4669709
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "933",
+    "length_m": 3.1,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9593137,
+      37.4669372
+     ],
+     [
+      126.9592731,
+      37.4669422
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "934",
+    "length_m": 3.6,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9598859,
+      37.4674387
+     ],
+     [
+      126.9599254,
+      37.4674577
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "935",
+    "length_m": 4.1,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.958008,
+      37.465651
+     ],
+     [
+      126.9579105,
+      37.4656469
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "946",
+    "length_m": 8.6,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.958014,
+      37.46548
+     ],
+     [
+      126.9579219,
+      37.4654761
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "946",
+    "length_m": 8.2,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.958225,
+      37.465485
+     ],
+     [
+      126.9579222,
+      37.4654721
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "946",
+    "length_m": 26.8,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.958231,
+      37.465345
+     ],
+     [
+      126.9579315,
+      37.4653323
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "946",
+    "length_m": 26.5,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.958002,
+      37.465029
+     ],
+     [
+      126.9579518,
+      37.4650303
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "946",
+    "length_m": 4.4,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.958116,
+      37.46488
+     ],
+     [
+      126.9579867,
+      37.4648166
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "946",
+    "length_m": 13.4,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.958007,
+      37.464878
+     ],
+     [
+      126.9579867,
+      37.4648166
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "kind": "footway",
+    "costFactor": 1,
+    "building": "946",
+    "length_m": 7.0,
+    "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9576778,
+     37.4651446
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "915",
+    "source": "추정: 가장 가까운 길 쪽 벽"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9573989,
+     37.4654895
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "916",
+    "source": "추정: 가장 가까운 길 쪽 벽"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9573292,
+     37.4659217
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "917",
+    "source": "마법 지도 그래프 막다른 끝(노드 9008)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9588603,
+     37.4669545
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "931",
+    "source": "추정: 가장 가까운 길 쪽 벽"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9588818,
+     37.4668528
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "932",
+    "source": "추정: 가장 가까운 길 쪽 벽"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9592213,
+     37.4669435
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "933",
+    "source": "마법 지도 그래프 막다른 끝(노드 9014)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9593137,
+     37.4669372
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "934",
+    "source": "마법 지도 그래프 막다른 끝(노드 9014)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9598859,
+     37.4674387
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "935",
+    "source": "추정: 가장 가까운 길 쪽 벽"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.958008,
+     37.465651
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "946",
+    "source": "building_entrances.csv(osm-path-join)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.958014,
+     37.46548
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "946",
+    "source": "building_entrances.csv(osm-path-join)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.958225,
+     37.465485
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "946",
+    "source": "building_entrances.csv(osm-path-join)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.958231,
+     37.465345
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "946",
+    "source": "building_entrances.csv(osm-path-join)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.958002,
+     37.465029
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "946",
+    "source": "building_entrances.csv(osm-path-join)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.958116,
+     37.46488
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "946",
+    "source": "building_entrances.csv(osm-path-join)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.958007,
+     37.464878
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "946",
+    "source": "building_entrances.csv(osm-path-join)"
+   }
+  }
+ ]
+}

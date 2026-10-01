@@ -141,9 +141,15 @@ python scripts/building_elevation.py         # → data/buildings_elevation.csv,
 
 ```bash
 python scripts/magicmap_travel.py            # 건물쌍 거리표 → data/travel.csv (평지 1.1 m/s, 알고리즘 입력)
-python scripts/graph_slopes.py               # 그래프에 노드 고도·구간별 경사 → data/magicmap/roads_graph_slope.json, *.csv
+python scripts/graph_patch.py                # 기숙사 쪽 그래프 보강(OSM 길·동 출입구) → data/graph_patch/dorm.geojson (gwanaksa.geojson 은 손으로 그린 것)
+python scripts/graph_slopes.py               # 그래프(+ 보강)에 노드 고도·구간별 경사 → data/magicmap/roads_graph_slope.json, *.csv
 python scripts/slope_travel.py               # 경사 반영 이동시간(방향별) → data/travel_slope.csv, data/route_stats.csv
 ```
+
+마법 지도 표에는 기숙사가 919동뿐이라, 다른 기숙사 동(`data/dorm_buildings.csv`: 900~906·915~918·921~926·931~935·946동, 지도 번호만인 919-A~D)은
+우리 경로 시간으로 더한다(평지는 `travel.csv` 에 source `route`). 받은 그래프는 고치지 않고, 더할 길·출입구는 `data/graph_patch/`:
+관악학생생활관(900~906·918·921~926동 둘레)은 국토지리정보원 1:1,000 수치지형도로 손으로 그린 `gwanaksa.geojson`, 나머지는
+`graph_patch.py` 가 OSM 으로 만드는 `dorm.geojson` (출처·고치는 법은 그 폴더 README).
 
 경사 반영 시간 = 마법 지도 표 시간 × 경사 계수. 경사 계수는 우리 출입구에서 그래프 위 최단 경로를 찾아, 30 m 창으로 잰 경사에
 Tobler 보행 함수를 적용한 시간 ÷ 같은 경로의 평지 시간이다. 방법·결과·한계는 `docs/travel_time_method.md`.
@@ -183,7 +189,8 @@ scripts/
   dem_from_contours.py       1:5,000 수치지형도 등고선·표고점 → DEM(1:1,000 표고점으로 검증), 건물 윤곽
   building_elevation.py      DEM + 윤곽 + 출입구 → 건물별·출입구별 고도 (buildings_elevation.csv, building_entrances.csv)
   magicmap_travel.py         마법 지도 건물쌍 거리표 → travel.csv
-  graph_slopes.py            마법 지도 도로 그래프에 노드 고도·구간별 경사
+  graph_patch.py             기숙사 쪽 도로 그래프 보강(마법 지도 그래프에 없는 OSM 길·기숙사 동 출입구) → graph_patch/dorm.geojson
+  graph_slopes.py            마법 지도 도로 그래프(+ graph_patch)에 노드 고도·구간별 경사
   slope_travel.py            경사 반영 건물쌍 이동시간 → travel_slope.csv, route_stats.csv, route_paths.json(지도용 경로)
   export_web.py              data/ → web/data/*.json (웹 화면 자료)
   campus_model.py            관악캠퍼스 3D·2D 모델링 → web/model/*.html (템플릿: campus_model_3d.html, campus_model_2d.html)
@@ -200,6 +207,7 @@ data/
   history/             지난 학기 편람 (웹 화면 courses.json 형식, 학기 선택용)
   topo/                수치지형도 원자료 (등고선·표고점·건물 레이어) — 건물 고도용
   magicmap/            캠퍼스 마법 지도에서 받은 도로 그래프·건물쌍 거리표와 경사를 붙인 결과
+  graph_patch/         마법 지도 그래프에 더할 길·출입구(기숙사 쪽, GeoJSON). dorm_buildings.csv = 기숙사 동 번호·좌표
   field/               오르막 실측 구간(routes.csv)·기록 (양식: *_template.csv, 측정 페이지 CSV 는 tracks/ — git 에 안 올림)
   lectures.json, buildings.csv, travel.csv, travel_slope.csv, route_stats.csv, route_paths.json, results.json, stats.csv, changes/
 web/                 정적 웹 화면: 과목 검색 → 시간표 · 동선 지도(OpenStreetMap) · 순위 목록 (GitHub Pages)

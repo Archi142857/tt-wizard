@@ -9,6 +9,8 @@
                                           거친 DEM(공개 DEM 90 m)은 쓰지 않는다
   data/osm_paths.geojson                  OSM 다리(bridge)·위층(layer ≥ 1)·지하(tunnel, layer < 0) 표시. 구름다리·육교처럼
                                           땅 위를 지나지 않는 엣지를 찾는 데만 쓴다
+  data/graph_patch/*.geojson              그래프에 더할 길(graph_patch.py: 기숙사 쪽 OSM 길·출입구 접속선). 받은 노드·엣지는
+                                          그대로 두고 더하기만 한다(src = "ttwizard", 번호는 받은 것 뒤에 이어서)
 
 방법
   노드 고도  DEM을 쌍선형 보간으로 읽는다. 터널·다리 안쪽 노드(닿은 엣지가 모두 터널이나 다리)는 땅 고도가 맞지 않으므로
@@ -25,7 +27,8 @@
 
 출력
   data/magicmap/roads_graph_slope.json   받은 그래프와 같은 구조에 노드 ele, 엣지 eleFrom·eleTo·rise·grade·ascent·
-                                         descent·maxGrade·surface 를 더한 것 (마법 지도 개발자 전달용)
+                                         descent·maxGrade·surface 를 더한 것 (마법 지도 개발자 전달용). 패치로 더한 노드·엣지는
+                                         src = "ttwizard"(출입구 노드는 building = 동 번호, 엣지는 osm = way 번호·split_of·connector)
   data/magicmap/graph_nodes_elevation.csv, graph_edges_slope.csv   같은 내용의 표
 """
 
@@ -43,6 +46,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import building_elevation as be  # noqa: E402
+import graph_patch as gp  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -266,6 +270,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--dem", nargs="+", default=[str(DATA / "dem")])
     ap.add_argument("--max-res", type=float, default=5.0, help="이보다 거친 DEM(m)은 쓰지 않는다")
     ap.add_argument("--osm", default=str(OSM_PATHS))
+    ap.add_argument("--patch", nargs="*", default=[str(gp.PATCH_DIR)], help="더할 길 GeoJSON(폴더면 그 안의 *.geojson). 없이 주면 안 더한다")
     ap.add_argument("--step", type=float, default=2.0, help="단면을 읽는 간격(m)")
     ap.add_argument("--window", type=float, default=10.0, help="최대 경사를 잴 최소 거리(m)")
     ap.add_argument("-o", "--output", default=str(OUT_JSON))
@@ -274,6 +279,12 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     graph = load_graph(Path(args.graph))
+    received = (len(graph["nodes"]), len(graph["edges"]))
+    patch = gp.read_patches(args.patch or [])
+    if patch:
+        gp.apply_patch(graph, patch)
+        print(f"패치: 노드 {len(graph['nodes']) - received[0]:,}개 · 엣지 {len(graph['edges']) - received[1]:,}개 더함"
+              f" ({', '.join(str(p) for p in args.patch)})")
     lon = [n["lng"] for n in graph["nodes"]]
     lat = [n["lat"] for n in graph["nodes"]]
     bbox = (min(lat) - 0.001, min(lon) - 0.001, max(lat) + 0.001, max(lon) + 0.001)
@@ -302,12 +313,14 @@ def main(argv: list[str] | None = None) -> int:
                      "rise_m": d.get("rise", ""), "grade_pct": d.get("grade", ""), "ascent_m": d.get("ascent", ""),
                      "descent_m": d.get("descent", ""), "max_grade_pct": d.get("maxGrade", "")})
 
+    patch_note = graph.get("meta", {}).get("patch")
     graph["meta"] = {
         "elevation": "국토지리정보원 1:5,000 수치지형도 등고선·표고점으로 만든 2 m DEM (tt-wizard scripts/dem_from_contours.py)",
         "nodes.ele": "지면 고도(m). 터널·다리 안쪽 노드는 양 끝 입구 사이 선형 보간. DEM 범위 밖이면 null",
         "edges": "eleFrom/eleTo/rise(m), grade(% = rise/distance, 방향별), ascent/descent(m, 방향별), "
                  "maxGrade(% , 10 m 이상 떨어진 두 점 사이 최대), surface(ground/tunnel/tunnel_osm/bridge_osm/no_dem)",
         "source": "도로 그래프: 캠퍼스 마법 지도 (https://moreadorecampus.com/)",
+        **({"patch": patch_note} if patch_note else {}),
     }
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)

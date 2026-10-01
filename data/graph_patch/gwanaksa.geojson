@@ -1,0 +1,1839 @@
+{
+ "type": "FeatureCollection",
+ "meta": {
+  "source": "관악학생생활관(900~906·918·919·921~926동) 정밀 보강: 국토지리정보원 1:1,000 수치지형도(2025, 376120572) 도로경계·건물·무벽건물, OSM, 마법 지도 그래프, 위성 사진으로 tt-wizard 가 그림(2026-10-02)"
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       126.95865256786298,
+       37.46003402109468
+      ],
+      [
+       126.95863523059931,
+       37.4600165383521
+      ],
+      [
+       126.95861581103911,
+       37.46000050685685
+      ],
+      [
+       126.95859449926918,
+       37.459986083531966
+      ],
+      [
+       126.9585715038981,
+       37.45997340955899
+      ],
+      [
+       126.95854705001422,
+       37.45996260899612
+      ],
+      [
+       126.95852137698243,
+       37.4599537875638
+      ],
+      [
+       126.95849473610119,
+       37.45994703160991
+      ],
+      [
+       126.95846738814261,
+       37.45994240726457
+      ],
+      [
+       126.95843960080002,
+       37.45993995979282
+      ],
+      [
+       126.9584116460676,
+       37.45993971315154
+      ],
+      [
+       126.95838379757805,
+       37.45994166975496
+      ],
+      [
+       126.95747109757805,
+       37.46004226975496
+      ],
+      [
+       126.9574430059197,
+       37.4600465304812
+      ],
+      [
+       126.95741559830772,
+       37.46005303267698
+      ],
+      [
+       126.9573891554268,
+       37.46006170975253
+      ],
+      [
+       126.95736394808172,
+       37.46007247284485
+      ],
+      [
+       126.957340234424,
+       37.4600852117278
+      ],
+      [
+       126.95731825730812,
+       37.46009979594091
+      ],
+      [
+       126.9572982418044,
+       37.46011607612547
+      ],
+      [
+       126.95728039289408,
+       37.46013388555412
+      ],
+      [
+       126.95726489337002,
+       37.460153041838325
+      ],
+      [
+       126.95725190196477,
+       37.46017334879622
+      ],
+      [
+       126.95701560196477,
+       37.46059404879622
+      ],
+      [
+       126.95700620470885,
+       37.46061304402483
+      ],
+      [
+       126.95699900388931,
+       37.460632639573795
+      ],
+      [
+       126.95699405867718,
+       37.46065267442127
+      ],
+      [
+       126.95682255867719,
+       37.46156377442127
+      ],
+      [
+       126.956819915683,
+       37.46158400253667
+      ],
+      [
+       126.95681957219396,
+       37.46160433823563
+      ],
+      [
+       126.95682153101016,
+       37.46162461574486
+      ],
+      [
+       126.95682577616363,
+       37.46164466976543
+      ],
+      [
+       126.95683227304859,
+       37.46166433682024
+      ],
+      [
+       126.95684096870347,
+       37.461683456586684
+      ],
+      [
+       126.95826136870348,
+       37.46441495658669
+      ],
+      [
+       126.95827327371461,
+       37.46443499976256
+      ],
+      [
+       126.95828759340839,
+       37.464454012616834
+      ],
+      [
+       126.95830418898967,
+       37.46447181086543
+      ],
+      [
+       126.95832289960406,
+       37.464488221996966
+      ],
+      [
+       126.95834354389694,
+       37.46450308694482
+      ],
+      [
+       126.95836592177135,
+       37.46451626162892
+      ],
+      [
+       126.9583898163274,
+       37.46452761835228
+      ],
+      [
+       126.9584149959646,
+       37.46453704703865
+      ],
+      [
+       126.95844121662667,
+       37.4645444562995
+      ],
+      [
+       126.9584682241671,
+       37.4645497743198
+      ],
+      [
+       126.95849575681247,
+       37.464552949554076
+      ],
+      [
+       126.95863085681246,
+       37.464563149554074
+      ],
+      [
+       126.95865410503431,
+       37.464564136825715
+      ],
+      [
+       126.95867737630209,
+       37.46456359512943
+      ],
+      [
+       126.95915947630209,
+       37.46453649512942
+      ],
+      [
+       126.9591865670798,
+       37.464533919742436
+      ],
+      [
+       126.95921322001476,
+       37.46452927368138
+      ],
+      [
+       126.95923918663948,
+       37.46452260025836
+      ],
+      [
+       126.95926422488444,
+       37.46451396168527
+      ],
+      [
+       126.9592881013348,
+       37.46450343849374
+      ],
+      [
+       126.95931059340636,
+       37.464491128784466
+      ],
+      [
+       126.95933149142053,
+       37.46447714731266
+      ],
+      [
+       126.95935060055909,
+       37.46446162441823
+      ],
+      [
+       126.9593677426803,
+       37.46444470481077
+      ],
+      [
+       126.9600360426803,
+       37.46371570481077
+      ],
+      [
+       126.96005185319781,
+       37.46369646856379
+      ],
+      [
+       126.96006512085008,
+       37.463676047483645
+      ],
+      [
+       126.96007570734068,
+       37.46365465443106
+      ],
+      [
+       126.96008350232051,
+       37.463632512398185
+      ],
+      [
+       126.960088424538,
+       37.46360985218424
+      ],
+      [
+       126.960105724538,
+       37.463495852184245
+      ],
+      [
+       126.96010765568005,
+       37.46347519911592
+      ],
+      [
+       126.9601071990978,
+       37.46345449195301
+      ],
+      [
+       126.96010435865098,
+       37.46343390574241
+      ],
+      [
+       126.96009915835114,
+       37.4634136145086
+      ],
+      [
+       126.95924685835115,
+       37.4607249145086
+      ],
+      [
+       126.95923924708107,
+       37.46070487551607
+      ],
+      [
+       126.95922933462494,
+       37.46068548644819
+      ],
+      [
+       126.9592172066244,
+       37.460666914822674
+      ],
+      [
+       126.95920296786299,
+       37.46064932109468
+      ],
+      [
+       126.95865256786298,
+       37.46003402109468
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "type": "area",
+    "source": "관악학생생활관(900~906·918·919·921~926동) 정밀 보강: 국토지리정보원 1:1,000 수치지형도(2025, 376120572) 도로경계·건물·무벽건물, OSM, 마법 지도 그래프, 위성 사진으로 tt-wizard 가 그림(2026-10-02)",
+    "note": "이 안은 graph_patch.py 가 OSM 길·출입구를 자동으로 더하지 않는다"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9585669,
+      37.4633712
+     ],
+     [
+      126.9585607,
+      37.4634021
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 3.5,
+    "source": "마법 지도 그래프에서 끊긴 길 잇기",
+    "note": "919 안뜰 북쪽: 8994 → 3300(계단·건물 통로 끝)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9590572,
+      37.4631065
+     ],
+     [
+      126.959074,
+      37.4629636
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 15.9,
+    "source": "마법 지도 그래프에서 끊긴 길 잇기",
+    "note": "919-B·919-C 사이 길 동쪽 끝(8997, 도로 3304–3305 위) → 도로"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.959074,
+      37.4629636
+     ],
+     [
+      126.9590954,
+      37.4627821
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 20.2,
+    "source": "마법 지도 그래프에서 끊긴 길 잇기",
+    "note": "〃"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9581191,
+      37.4607075
+     ],
+     [
+      126.9581395,
+      37.4606725
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 4.3,
+    "source": "마법 지도 그래프에서 끊긴 길 잇기",
+    "note": "905 서쪽 길 남쪽 끝 → 918 앞 길"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9582161,
+      37.4615896
+     ],
+     [
+      126.9582486,
+      37.4615318
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 7.0,
+    "source": "마법 지도 그래프에서 끊긴 길 잇기",
+    "note": "905 서쪽 길 북쪽 끝 → 900 동쪽 계단 아래"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9587108,
+      37.463373
+     ],
+     [
+      126.9588253,
+      37.4633436
+     ],
+     [
+      126.958806,
+      37.46327
+     ],
+     [
+      126.9588125,
+      37.4632034
+     ],
+     [
+      126.9588527,
+      37.4631471
+     ],
+     [
+      126.9589419,
+      37.4631512
+     ],
+     [
+      126.9590075,
+      37.4631346
+     ],
+     [
+      126.9590572,
+      37.4631065
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "service",
+    "costFactor": 1.05,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 53.0,
+    "source": "국토지리정보원 1:1,000 수치지형도(2025, 376120572) 도로경계·건물·무벽건물(차로 가운데)",
+    "note": "919-B 동쪽 차로: 안뜰 동쪽 → 921 남쪽 → 922 앞 도로"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9587718,
+      37.4641034
+     ],
+     [
+      126.9587869,
+      37.4641651
+     ],
+     [
+      126.9588514,
+      37.4641714
+     ],
+     [
+      126.9589529,
+      37.4641676
+     ],
+     [
+      126.9590545,
+      37.4641778
+     ],
+     [
+      126.9591321,
+      37.4641952
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "service",
+    "costFactor": 1.05,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 37.9,
+    "source": "국토지리정보원 1:1,000 수치지형도(2025, 376120572) 도로경계·건물·무벽건물(골목 가운데)",
+    "note": "925–920 사이 길 북쪽 끝 주차장 → 926 남쪽 골목"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9594414,
+      37.4634727
+     ],
+     [
+      126.9595051,
+      37.4634834
+     ],
+     [
+      126.9595616,
+      37.4634924
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "service",
+    "costFactor": 1.05,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 10.9,
+    "source": "국토지리정보원 1:1,000 수치지형도(2025, 376120572) 도로경계·건물·무벽건물",
+    "note": "923–924 사이 골목 동쪽 끝(마법 지도 3302 → 924 남쪽 출입구 앞)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9572426,
+      37.4622108
+     ],
+     [
+      126.9574592,
+      37.4621761
+     ],
+     [
+      126.9576175,
+      37.4622436
+     ],
+     [
+      126.9577757,
+      37.4623112
+     ],
+     [
+      126.957917,
+      37.4623923
+     ],
+     [
+      126.9579735,
+      37.4624869
+     ],
+     [
+      126.9579396,
+      37.462577
+     ],
+     [
+      126.9579048,
+      37.4626415
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 96.6,
+    "source": "광장(보행 공간) 안 직선: 수치지형도 도로경계·위성 사진",
+    "note": "버스정류장(대학원생활관) 쪽 → 광장 → 906 북서쪽 계단 아래"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.957917,
+      37.4623923
+     ],
+     [
+      126.9579792,
+      37.4622797
+     ],
+     [
+      126.9581544,
+      37.4622527
+     ],
+     [
+      126.9582007,
+      37.4622738
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 34.2,
+    "source": "광장(보행 공간) 안 직선: 수치지형도 도로경계·위성 사진",
+    "note": "광장 → 906 서쪽 지그재그 길 위 끝(마법 지도 3275)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.958004,
+      37.4616201
+     ],
+     [
+      126.958004,
+      37.4617157
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 10.6,
+    "source": "수치지형도 1:1,000 계단",
+    "note": "900 북쪽: 도로 → 작은 계단"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.958004,
+      37.4617157
+     ],
+     [
+      126.958004,
+      37.4617761
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 6.7,
+    "source": "국토지리정보원 1:1,000 수치지형도(2025, 376120572) 도로경계·건물·무벽건물",
+    "note": "작은 계단 위 → 도로"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9588957,
+      37.4636435
+     ],
+     [
+      126.9588936,
+      37.4636726
+     ],
+     [
+      126.9588935,
+      37.4636969
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "921",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 5.9,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9590147,
+      37.4634645
+     ],
+     [
+      126.9590586,
+      37.4634636
+     ],
+     [
+      126.9590827,
+      37.463449
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "921",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 6.6,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9590458,
+      37.4632183
+     ],
+     [
+      126.9590484,
+      37.4631681
+     ],
+     [
+      126.9590075,
+      37.4631346
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "921",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 10.8,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9592282,
+      37.463106
+     ],
+     [
+      126.9591942,
+      37.463105
+     ],
+     [
+      126.9591333,
+      37.4631144
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "922",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 8.5,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9592962,
+      37.4633013
+     ],
+     [
+      126.9592948,
+      37.4633339
+     ],
+     [
+      126.9591886,
+      37.4633429
+     ],
+     [
+      126.9590987,
+      37.4633429
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "922",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 21.0,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.959374,
+      37.4633592
+     ],
+     [
+      126.9593412,
+      37.4633879
+     ],
+     [
+      126.9593298,
+      37.4634653
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "923",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 13.0,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9594912,
+      37.4634451
+     ],
+     [
+      126.9594904,
+      37.4634681
+     ],
+     [
+      126.9595051,
+      37.4634834
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "923",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 4.7,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9595668,
+      37.4635373
+     ],
+     [
+      126.959565,
+      37.4635051
+     ],
+     [
+      126.9595616,
+      37.4634924
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "924",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 5.0,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9593058,
+      37.4635899
+     ],
+     [
+      126.9592745,
+      37.4635816
+     ],
+     [
+      126.9592722,
+      37.4634979
+     ],
+     [
+      126.9592722,
+      37.4634615
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "924",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 16.3,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9586709,
+      37.4640952
+     ],
+     [
+      126.9587718,
+      37.4641034
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "925",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 9.0,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9586007,
+      37.4639469
+     ],
+     [
+      126.958663,
+      37.463915
+     ],
+     [
+      126.9587773,
+      37.4639015
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "925",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 16.8,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.958842,
+      37.4642685
+     ],
+     [
+      126.9588201,
+      37.4642331
+     ],
+     [
+      126.9588514,
+      37.4641714
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "926",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 11.8,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9580063,
+      37.4625454
+     ],
+     [
+      126.9579396,
+      37.462577
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "906",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 6.9,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9581279,
+      37.4625107
+     ],
+     [
+      126.958047,
+      37.4624959
+     ],
+     [
+      126.9579735,
+      37.4624869
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "906",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 13.9,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9583734,
+      37.4620767
+     ],
+     [
+      126.9583764,
+      37.4620761
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "906",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 0.3,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9577399,
+      37.462115
+     ],
+     [
+      126.9576853,
+      37.4622211
+     ],
+     [
+      126.9576175,
+      37.4622436
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "901",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 19.2,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9574236,
+      37.461599
+     ],
+     [
+      126.9574773,
+      37.4615886
+     ],
+     [
+      126.9575069,
+      37.4615499
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "902",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 9.9,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9580484,
+      37.4615898
+     ],
+     [
+      126.958004,
+      37.4616201
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "900",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 5.2,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9582072,
+      37.4615055
+     ],
+     [
+      126.9582486,
+      37.4615318
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "900",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 4.7,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9576066,
+      37.4608712
+     ],
+     [
+      126.9576231,
+      37.4607498
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "903",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 13.6,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9573526,
+      37.4607016
+     ],
+     [
+      126.957344,
+      37.460711
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "904",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 1.3,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9576319,
+      37.46051
+     ],
+     [
+      126.9575791,
+      37.4604884
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "904",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 5.3,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9581784,
+      37.4610098
+     ],
+     [
+      126.9581885,
+      37.4610134
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "905",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 1.0,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9586833,
+      37.4607651
+     ],
+     [
+      126.9586799,
+      37.4608065
+     ],
+     [
+      126.9586911,
+      37.460836
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "918",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 8.0,
+    "source": "출입구 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9588957,
+     37.4636435
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "921",
+    "replace": true,
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "북쪽 캐노피"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9590147,
+     37.4634645
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "921",
+    "replace": true,
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "동쪽 캐노피(building_entrances.csv 의 921 출입구 자리)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9590458,
+     37.4632183
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "921",
+    "replace": true,
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "남쪽 캐노피"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9592282,
+     37.463106
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "922",
+    "replace": true,
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "서쪽 캐노피"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9592962,
+     37.4633013
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "922",
+    "replace": true,
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "북쪽 캐노피"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.959374,
+     37.4633592
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "923",
+    "replace": true,
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "서쪽 캐노피"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9594912,
+     37.4634451
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "923",
+    "replace": true,
+    "source": "수치지형도 1:1,000 계단(북쪽 벽 앞)",
+    "note": "북쪽 계단"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9595668,
+     37.4635373
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "924",
+    "replace": true,
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "남쪽 캐노피"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9593058,
+     37.4635899
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "924",
+    "replace": true,
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "서쪽 캐노피"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9586709,
+     37.4640952
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "925",
+    "replace": true,
+    "source": "마법 지도 그래프 막다른 끝(노드 8999, 동쪽 벽)",
+    "note": "동쪽"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9586007,
+     37.4639469
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "925",
+    "replace": true,
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "남쪽 캐노피"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.958842,
+     37.4642685
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "926",
+    "replace": true,
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "서쪽 캐노피"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9580063,
+     37.4625454
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "906",
+    "replace": true,
+    "source": "OSM 출입구(node 4752760188)",
+    "note": "북쪽 날개 서쪽 끝"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9581279,
+     37.4625107
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "906",
+    "replace": true,
+    "source": "OSM 출입구(node 4752760187)",
+    "note": "북쪽 날개 남쪽 벽(광장)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9583734,
+     37.4620767
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "906",
+    "replace": true,
+    "source": "OSM 출입구(node 4752760186) = 마법 지도 3263",
+    "note": "남쪽 끝"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9577399,
+     37.462115
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "901",
+    "replace": true,
+    "source": "추정(수치지형도·위성 사진)",
+    "note": "북쪽 1층 부속 건물 앞(광장) — 확인 필요"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9574236,
+     37.461599
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "902",
+    "replace": true,
+    "source": "추정(수치지형도·위성 사진)",
+    "note": "동쪽 오목한 곳, 자전거보관대 옆 — 확인 필요"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9580484,
+     37.4615898
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "900",
+    "replace": true,
+    "source": "추정(수치지형도·위성 사진) + 수치지형도 계단",
+    "note": "북쪽 오목한 곳(작은 계단 아래) — 확인 필요"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9582072,
+     37.4615055
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "900",
+    "replace": true,
+    "source": "추정(수치지형도·위성 사진) + 마법 지도 그래프 막다른 끝(3308 계단 끝)",
+    "note": "북동쪽 벽 — 확인 필요"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9576066,
+     37.4608712
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "903",
+    "replace": true,
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "남쪽 캐노피"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9573526,
+     37.4607016
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "904",
+    "replace": true,
+    "source": "OSM 출입구(node 4750650869) = 마법 지도 1611",
+    "note": "서쪽 끝"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9576319,
+     37.46051
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "904",
+    "replace": true,
+    "source": "OSM 길 끝 = 마법 지도 3312",
+    "note": "안뜰 쪽"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9581784,
+     37.4610098
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "905",
+    "replace": true,
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "서쪽 모서리 캐노피"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9586833,
+     37.4607651
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "918",
+    "replace": true,
+    "source": "추정(수치지형도·위성 사진) + 마법 지도 그래프 막다른 끝(3287)",
+    "note": "북서쪽 날개 서쪽 끝 — 확인 필요"
+   }
+  }
+ ]
+}

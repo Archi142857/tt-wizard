@@ -160,7 +160,8 @@ def test_slope_travel(tmp_path):
     out, stats, paths = tmp_path / "travel_slope.csv", tmp_path / "stats.csv", tmp_path / "paths.json"
     args = ["--graph", str(graph), "--pairs", str(tmp_path / "pairs.csv"), "--dem", str(tmp_path / "no_dem"),
             "--entrances", str(tmp_path / "ent.csv"), "--elevation", str(tmp_path / "elev.csv"),
-            "--points", str(tmp_path / "none.csv"), "-o", str(out), "--stats", str(stats), "--paths", str(paths)]
+            "--points", str(tmp_path / "none.csv"), "-o", str(out), "--stats", str(stats), "--paths", str(paths),
+            "--extra", "", "--flat", "", "--patch"]
     assert st.main(args) == 0
     t = {(r["from"], r["to"]): float(r["minutes"]) for r in csv.DictReader(open(out, encoding="utf-8"))}
     rows = {(r["from"], r["to"]): r for r in csv.DictReader(open(stats, encoding="utf-8-sig"))}
@@ -220,3 +221,225 @@ def test_campus_model(tmp_path):
         assert "__DATA__" not in page and "__LIBS__" not in page
         payload = page.split('<script type="application/json" id="data">', 1)[1].split("</script>", 1)[0]
         assert json.loads(payload)["counts"]["edges"] == 8
+
+
+def test_slope_travel_extra_points(tmp_path):
+    """표 밖 지점(기숙사 동): 우리 경로로 경사·평지 시간을 내고, 평지는 travel.csv 에 source = route 로. 출입구는 패치에서."""
+    pts = {1: (0, 0), 2: (0, 50), 3: (0, 100), 4: (0, 150), 5: (0, 200), 6: (40, 100)}
+    lon, lat = PROJ.inv([p[0] for p in pts.values()], [p[1] for p in pts.values()])
+    nodes = [{"id": i, "lng": float(a), "lat": float(b), "ele": 100 + 0.1 * pts[i][1] if i != 6 else 110.0}
+             for i, a, b in zip(pts, lon, lat)]
+    edges, k = [], 0
+    for a, b in [(1, 2), (2, 3), (3, 4), (4, 5), (3, 6)]:
+        d = float(np.hypot(*(np.subtract(pts[b], pts[a]))))
+        for u, v in ((a, b), (b, a)):
+            k += 1
+            edges.append({"id": k, "from": u, "to": v, "distance": d, "kind": "footway", "walkable": True,
+                          "isTunnel": False, "surface": "ground"})
+    graph = tmp_path / "graph.json"
+    graph.write_text(json.dumps({"nodes": nodes, "edges": edges}), encoding="utf-8")
+
+    def ll(x, y):
+        a, b = PROJ.inv(x, y)
+        return float(np.ravel(b)[0]), float(np.ravel(a)[0])
+
+    _write_csv(tmp_path / "ent.csv", ["building", "lat", "lon"], [("A", *ll(0, 0)), ("B", *ll(0, 200))])
+    _write_csv(tmp_path / "pairs.csv", ["from", "to", "distance_m", "time_s"],
+               [("A", "B", 200, 200 / 1.1), ("B", "A", 200, 200 / 1.1)])
+    # D 는 목록 좌표(노드 6 북쪽 15 m)가 있지만 패치 출입구(5 m)를 쓴다. E 는 목록 좌표만. F 는 지도 번호만(travel = N)
+    _write_csv(tmp_path / "dorms.csv", ["building", "name", "lat", "lon", "travel"],
+               [("D", "d", *ll(40, 115), "Y"), ("E", "e", *ll(0, 210), "Y"), ("F", "f", *ll(10, 10), "N")])
+    patch = tmp_path / "patch"
+    patch.mkdir()
+    lon_d, lat_d = PROJ.inv(40.0, 105.0)
+    (patch / "p.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": [
+        {"type": "Feature", "geometry": {"type": "Point", "coordinates": [float(np.ravel(lon_d)[0]), float(np.ravel(lat_d)[0])]},
+         "properties": {"type": "entrance", "building": "D", "source": "test"}}]}), encoding="utf-8")
+    flat = tmp_path / "travel.csv"
+    flat.write_text("from,to,minutes,source\nA,B,3.03,magicmap\nA,X,9.00,measured\nA,Z,5.00,route\n", encoding="utf-8")
+    out, stats, paths = tmp_path / "travel_slope.csv", tmp_path / "stats.csv", tmp_path / "paths.json"
+    args = ["--graph", str(graph), "--pairs", str(tmp_path / "pairs.csv"), "--dem", str(tmp_path / "no_dem"),
+            "--entrances", str(tmp_path / "ent.csv"), "--elevation", str(tmp_path / "none.csv"),
+            "--points", str(tmp_path / "none.csv"), "-o", str(out), "--stats", str(stats), "--paths", str(paths),
+            "--extra", str(tmp_path / "dorms.csv"), "--flat", str(flat), "--patch", str(patch)]
+    assert st.main(args) == 0
+    t = {(r["from"], r["to"]): float(r["minutes"]) for r in csv.DictReader(open(out, encoding="utf-8"))}
+    rows = {(r["from"], r["to"]): r for r in csv.DictReader(open(stats, encoding="utf-8-sig"))}
+    assert set(t) == {(a, b) for a in "ABDE" for b in "ABDE" if a != b}  # F 는 이동시간을 내지 않는다
+    ad = rows[("A", "D")]
+    assert ad["magicmap_min"] == "" and float(ad["route_m"]) == pytest.approx(145, abs=1)  # 100 m + 40 m + 패치 출입구 5 m
+    assert t[("A", "D")] == pytest.approx(float(ad["route_slope_min"]), abs=0.01) and t[("A", "D")] > t[("D", "A")]
+    assert t[("A", "B")] == pytest.approx(200 / 1.1 / 60 * math.exp(0.35), rel=1e-3)  # 표 쌍은 그대로 표 × 경사 계수
+    f = {(r["from"], r["to"]): r for r in csv.DictReader(open(flat, encoding="utf-8"))}
+    assert f[("A", "B")]["source"] == "magicmap" and f[("A", "X")]["source"] == "measured"  # 다른 출처는 그대로
+    assert ("A", "Z") not in f  # 이번에 안 나온 옛 route 행은 지운다
+    assert f[("A", "D")]["source"] == "route" and float(f[("A", "D")]["minutes"]) == pytest.approx(145 / 1.1 / 60, abs=0.01)
+    shapes = json.loads(paths.read_text(encoding="utf-8"))["paths"]
+    assert "A|D" in shapes and "B|E" in shapes and "D|E" not in shapes  # 기숙사 동끼리는 그리지 않는다
+
+
+def test_apply_patch():
+    """그래프 패치: 받은 노드·엣지는 그대로, 더한 것은 src = ttwizard. 길 끝은 노드(3 m)·엣지(20 m)에 잇는다."""
+    gp = pytest.importorskip("graph_patch")
+    g = _graph()
+    before_nodes = json.loads(json.dumps(g["nodes"]))
+    before_edges = json.loads(json.dumps(g["edges"]))
+
+    def lonlat(x, y):
+        a, b = PROJ.inv(x, y)
+        return [float(np.ravel(a)[0]), float(np.ravel(b)[0])]
+
+    feats = [
+        {"type": "Feature", "geometry": {"type": "LineString", "coordinates": [lonlat(15, 25), lonlat(15, 75)]},
+         "properties": {"type": "path", "kind": "footway", "costFactor": 1, "osm": 123}},
+        {"type": "Feature", "geometry": {"type": "LineString", "coordinates": [lonlat(60, 110), lonlat(50, 101)]},
+         "properties": {"type": "path", "role": "entrance_link", "kind": "footway", "costFactor": 1, "building": "906"}},
+        {"type": "Feature", "geometry": {"type": "Point", "coordinates": lonlat(60, 110)},
+         "properties": {"type": "entrance", "building": "906"}},
+    ]
+    gp.apply_patch(g, feats, PROJ)
+    assert g["nodes"][:len(before_nodes)] == before_nodes and g["edges"][:len(before_edges)] == before_edges
+    new_nodes, new_edges = g["nodes"][len(before_nodes):], g["edges"][len(before_edges):]
+    assert all(n["src"] == "ttwizard" and n["id"] > 11 for n in new_nodes)
+    assert all(e["src"] == "ttwizard" and e["id"] > len(before_edges) for e in new_edges)
+    xy = {n["id"]: tuple(np.round(np.ravel(PROJ.fwd(n["lng"], n["lat"])), 2)) for n in g["nodes"]}
+    # 길 양 끝: 노드 1~2, 2~3 엣지 위 수선의 발(0, 25)·(0, 75)에 새 노드 + 원래 엣지를 나눈 엣지(split_of) + 15 m 접속선
+    feet = [i for i, p in xy.items() if p in ((0.0, 25.0), (0.0, 75.0))]
+    assert len(feet) == 2
+    splits = [e for e in new_edges if e.get("split_of")]
+    assert len(splits) == 8 and {e["split_of"] for e in splits} <= {1, 3}
+    conns = [e for e in new_edges if e.get("connector")]
+    assert len(conns) == 4 and all(e["distance"] == pytest.approx(15, abs=0.01) for e in conns)
+    main = [e for e in new_edges if e.get("osm") == 123 and not e.get("connector")]
+    assert len(main) == 2 and main[0]["distance"] == pytest.approx(50, abs=0.01)
+    # 출입구 접속선: 건물 쪽 끝은 출입구 노드(building), 길 쪽 끝은 3 m 안의 노드 4(50, 100)에 붙는다
+    door = [n for n in new_nodes if n.get("entrance")]
+    assert len(door) == 1 and door[0]["building"] == "906"
+    link = [e for e in new_edges if e.get("role") == "entrance_link"]
+    assert {(e["from"], e["to"]) for e in link} == {(door[0]["id"], 4), (4, door[0]["id"])}
+    # 경사 계산이 더한 그래프에서도 돈다
+    ele, res, index = gs.compute(g, FakeDem(), PROJ, np.zeros((0, 2)), np.zeros((0, 2)))
+    assert len(ele) == len(g["nodes"]) and all(np.isfinite(ele[index[n["id"]]]) for n in new_nodes)
+
+
+def test_patch_entrances_reported(tmp_path):
+    """사용자 제보(replace = true) 출입구가 있는 동은 그것만 쓰고, 패치를 다시 만들 때도 그 동은 건너뛴다."""
+    gp = pytest.importorskip("graph_patch")
+    auto = {"type": "FeatureCollection", "features": [
+        {"type": "Feature", "geometry": {"type": "Point", "coordinates": [126.9579, 37.4618]},
+         "properties": {"type": "entrance", "building": "901", "source": "추정"}},
+        {"type": "Feature", "geometry": {"type": "Point", "coordinates": [126.9574, 37.4614]},
+         "properties": {"type": "entrance", "building": "902", "source": "추정"}}]}
+    manual = {"type": "FeatureCollection", "features": [
+        {"type": "Feature", "geometry": {"type": "Point", "coordinates": [126.9577, 37.4620]},
+         "properties": {"type": "entrance", "building": "901", "replace": True, "source": "사용자 제보"}}]}
+    (tmp_path / "dorm.geojson").write_text(json.dumps(auto), encoding="utf-8")
+    (tmp_path / "manual.geojson").write_text(json.dumps(manual), encoding="utf-8")
+    e = gp.patch_entrances([tmp_path])
+    assert e["901"] == [(126.9577, 37.462)] and e["902"] == [(126.9574, 37.4614)]
+    if pytest.importorskip("shapely") and (ROOT / "data" / "dorm_buildings.csv").exists():
+        fc = gp.build(manual=[tmp_path / "manual.geojson"])
+        doors = {f["properties"]["building"] for f in fc["features"] if f["properties"]["type"] == "entrance"}
+        links = {f["properties"]["building"] for f in fc["features"] if f["properties"].get("role") == "entrance_link"}
+        assert "901" not in doors and "901" not in links and "902" in doors
+
+
+def _ll(x, y):
+    a, b = PROJ.inv(x, y)
+    return [float(np.ravel(a)[0]), float(np.ravel(b)[0])]
+
+
+def test_apply_patch_exact_ends():
+    """손으로 그린 패치: snap·link 를 작게 주면 정확히 둔 끝만 붙는다. 같은 엣지에 두 번 붙으면 조각을 나눠 이어지고,
+    짧은 접속선이 제 출입구 노드에 붙지 않는다."""
+    gp = pytest.importorskip("graph_patch")
+    g = _graph()
+    n0 = len(g["nodes"])
+    feats = [
+        # 엣지 1–2 (0,0)–(0,50) 에 두 출입구가 y = 20, 30 에서 붙는다
+        {"type": "Feature", "geometry": {"type": "LineString", "coordinates": [_ll(5, 20), _ll(0, 20)]},
+         "properties": {"type": "path", "role": "entrance_link", "building": "A", "snap": 0.5, "link": 1.0}},
+        {"type": "Feature", "geometry": {"type": "LineString", "coordinates": [_ll(5, 30), _ll(0, 30)]},
+         "properties": {"type": "path", "role": "entrance_link", "building": "B", "snap": 0.5, "link": 1.0}},
+        # 노드 2(0, 50)에서 1.5 m: snap 0.5 라 노드가 아니라 엣지 2–3 위 (0, 51.5)에 붙는다
+        {"type": "Feature", "geometry": {"type": "LineString", "coordinates": [_ll(20, 51.5), _ll(0, 51.5)]},
+         "properties": {"type": "path", "kind": "footway", "snap": 0.5, "link": 1.0}},
+        # 기본 snap(3 m) 접속선 2.5 m: 제 출입구 노드가 아니라 엣지 2–3 위 (0, 75)에 붙는다
+        {"type": "Feature", "geometry": {"type": "LineString", "coordinates": [_ll(2.5, 75), _ll(0, 75)]},
+         "properties": {"type": "path", "role": "entrance_link", "building": "C"}},
+    ]
+    gp.apply_patch(g, feats, PROJ)
+    xy = {n["id"]: tuple(np.round(np.ravel(PROJ.fwd(n["lng"], n["lat"])), 1)) for n in g["nodes"]}
+    at = {p: i for i, p in xy.items()}
+    adj = {}
+    for e in g["edges"][18:]:
+        adj.setdefault(e["from"], {})[e["to"]] = e["distance"]
+    f20, f30 = at[(0.0, 20.0)], at[(0.0, 30.0)]
+    assert adj[f20][f30] == pytest.approx(10, abs=0.01)  # 두 번째 분할은 첫 조각을 나눈다
+    assert adj[1][f20] == pytest.approx(20, abs=0.01) and adj[f30][2] == pytest.approx(20, abs=0.01)
+    assert all(e.get("split_of") in (1, 2, 3, 4) for e in g["edges"][18:] if e.get("split_of") is not None)
+    f515 = at[(0.0, 51.5)]
+    assert f515 > n0 and adj[f515][at[(20.0, 51.5)]] == pytest.approx(20, abs=0.01)
+    doors = {n["building"]: n["id"] for n in g["nodes"] if n.get("entrance")}
+    assert adj[doors["C"]][at[(0.0, 75.0)]] == pytest.approx(2.5, abs=0.01)
+    assert not any(e.get("connector") for e in g["edges"][18:])
+
+
+def test_router_starts_at_door():
+    """출입구 노드 자리의 출입구는 그 노드에서만 출발한다(20 m 안의 다른 길로 벽을 넘는 직선 접속을 하지 않는다)."""
+    pts = {1: (0, 0), 2: (0, 100), 3: (10, 0), 4: (10, 50), 5: (6, 50)}
+    lon, lat = PROJ.inv([p[0] for p in pts.values()], [p[1] for p in pts.values()])
+    nodes = [{"id": i, "lng": float(a), "lat": float(b), "ele": 100.0} for i, a, b in zip(pts, lon, lat)]
+    nodes[4]["entrance"], nodes[4]["building"] = True, "D"
+    edges, k = [], 0
+    for a, b in [(1, 2), (1, 3), (3, 4), (4, 5)]:
+        d = float(np.hypot(*(np.subtract(pts[b], pts[a]))))
+        for u, v in ((a, b), (b, a)):
+            k += 1
+            edges.append({"id": k, "from": u, "to": v, "distance": d, "walkable": True, "isTunnel": False})
+    r = st.Router({"nodes": nodes, "edges": edges}, PROJ)
+    lon5, lat5 = PROJ.inv(6.0, 50.0)
+    att = r.attach(float(np.ravel(lon5)[0]), float(np.ravel(lat5)[0]))
+    assert list(att) == [4] and att[4][0] == 0.0  # 노드 5(출입구, 인덱스 4)만. 6 m 옆 엣지 1–2 에는 붙지 않는다
+    lon0, lat0 = PROJ.inv(3.0, 50.0)  # 출입구 노드가 아닌 곳은 예전처럼 가까운 길들에 붙는다
+    assert len(st.Router({"nodes": nodes, "edges": edges}, PROJ).attach(float(np.ravel(lon0)[0]), float(np.ravel(lat0)[0]))) > 1
+    out = r.routes({"D": [(float(np.ravel(lon5)[0]), float(np.ravel(lat5)[0]))], "N": [tuple(_ll(0, 100))]})
+    s, z, geom = out[("D", "N")]
+    assert float(s[-1]) == pytest.approx(4 + 50 + 10 + 100, abs=0.01)  # 5→4→3→1→2: 벽 너머 6 m 직선 대신 실제 길
+
+
+def test_reported_entrances_win(tmp_path):
+    """replace = true 출입구(손으로 그린 패치·사용자 제보)는 building_entrances.csv 의 출입구보다 우선한다."""
+    _write_csv(tmp_path / "ent.csv", ["building", "lat", "lon"], [("X", 37.4600, 126.9500), ("Y", 37.4610, 126.9510)])
+    patch = tmp_path / "patch"
+    patch.mkdir()
+    (patch / "m.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": [
+        {"type": "Feature", "geometry": {"type": "Point", "coordinates": [126.9502, 37.4602]},
+         "properties": {"type": "entrance", "building": "X", "replace": True}},
+        {"type": "Feature", "geometry": {"type": "Point", "coordinates": [126.9512, 37.4612]},
+         "properties": {"type": "entrance", "building": "Y"}}]}), encoding="utf-8")
+    pts = st.load_points(["X", "Y"], tmp_path / "ent.csv", tmp_path / "none.csv", tmp_path / "none.csv", None, [patch])
+    assert pts["X"] == [(126.9502, 37.4602)] and pts["Y"] == [(126.951, 37.461)]
+
+
+def test_build_skips_curated_area(tmp_path):
+    """손으로 그린 패치의 type = area 안에서는 OSM 길·출입구를 자동으로 만들지 않는다."""
+    gp = pytest.importorskip("graph_patch")
+    pytest.importorskip("shapely")
+    if not (ROOT / "data" / "dorm_buildings.csv").exists():
+        pytest.skip("기숙사 목록 없음")
+    lon, lat = 126.9578, 37.4620  # 901동 둘레
+    d = 0.0012
+    area = {"type": "FeatureCollection", "features": [
+        {"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[[lon - d, lat - d], [lon + d, lat - d], [lon + d, lat + d],
+                                                                            [lon - d, lat + d], [lon - d, lat - d]]]},
+         "properties": {"type": "area"}}]}
+    (tmp_path / "area.geojson").write_text(json.dumps(area), encoding="utf-8")
+    base = gp.build(manual=[])
+    fc = gp.build(manual=[tmp_path / "area.geojson"])
+    doors = lambda c: {f["properties"]["building"] for f in c["features"] if f["properties"]["type"] == "entrance"}  # noqa: E731
+    assert "901" in doors(base) and "901" not in doors(fc) and "931" in doors(fc)
+    from shapely.geometry import box, shape
+    A = box(lon - d, lat - d, lon + d, lat + d)
+    runs = [f for f in fc["features"] if f["properties"]["type"] == "path" and f["properties"].get("role") != "entrance_link"]
+    assert runs and not any(shape(f["geometry"]).intersects(A) for f in runs)

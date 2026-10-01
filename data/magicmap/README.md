@@ -18,8 +18,8 @@
 
 | 파일 | 만드는 스크립트 | 내용 |
 | --- | --- | --- |
-| `roads_graph_slope.json` | `scripts/graph_slopes.py` | 받은 그래프와 같은 구조에 노드 `ele`, 엣지 `eleFrom`·`eleTo`·`rise`·`grade`·`ascent`·`descent`·`maxGrade`·`surface`를 더한 것 (마법 지도 전달용) |
+| `roads_graph_slope.json` | `scripts/graph_slopes.py` | 받은 그래프와 같은 구조에 노드 `ele`, 엣지 `eleFrom`·`eleTo`·`rise`·`grade`·`ascent`·`descent`·`maxGrade`·`surface`를 더한 것 (마법 지도 전달용). 기숙사 쪽에 우리가 더한 길·출입구(`../graph_patch/`)도 들어 있다: 노드 9,194번·엣지 19,351번부터, `src: "ttwizard"` (출입구 노드는 `building`, 엣지는 `osm`·`split_of`·`connector`·`role`) |
 | `graph_nodes_elevation.csv`, `graph_edges_slope.csv` | 〃 | 같은 내용의 표 |
-| `../travel.csv` | `scripts/magicmap_travel.py` | 시간표 알고리즘 입력(`from,to,minutes,source`) |
+| `../travel.csv` | `scripts/magicmap_travel.py` | 시간표 알고리즘 입력(`from,to,minutes,source`). 표에 없는 기숙사 동 쌍은 `slope_travel.py` 가 우리 경로 평지 시간(source `route`)으로 더한다 |
 
 경사 계산 방법은 `docs/elevation_method.md`의 '도로 그래프 경사'.

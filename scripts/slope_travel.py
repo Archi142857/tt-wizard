@@ -1,17 +1,20 @@
 """경사를 반영한 건물 사이 보행 시간 → data/travel_slope.csv (시간표 알고리즘 입력).
 
-  python scripts/slope_travel.py                  # 마법 지도 거리표의 모든 지점 쌍(방향별)
+  python scripts/slope_travel.py                  # 마법 지도 거리표의 모든 지점 쌍(방향별) + 기숙사 동
   python scripts/slope_travel.py --window 20      # 경사를 재는 창 길이(m)를 바꿔 민감도 확인
 
 입력
   data/magicmap/roads_graph_slope.json   graph_slopes.py 결과(노드 고도, 엣지 surface). 걸을 수 있는 엣지만 쓴다
   data/dem/                              지면 엣지의 단면을 2 m마다 읽는다. 없으면 노드 고도 사이를 직선으로 본다
-  data/building_entrances.csv            지상 출입구 좌표. 출입구가 없는 건물은 data/buildings_elevation.csv 의
+  data/building_entrances.csv            지상 출입구 좌표(data/graph_patch/*.geojson 의 replace = true 출입구가 있으면 그것, 없는 기숙사 동은
+                                         그 패치의 출입구). 그래도 없는 건물은 data/buildings_elevation.csv 의
   data/buildings_for_magicmap.csv        캠퍼스맵 좌표, 그것도 없으면 이 목록(GATE 등)의 좌표. 좌표가 없는 71-1동은 71동 위치
   data/magicmap/building_pair_times.csv  지점 목록과 마법 지도 평지 시간
+  data/dorm_buildings.csv                기숙사 동(travel = Y). 마법 지도 표에는 919동뿐이라 나머지 동은 표 시간이 없다
 
 방법
-  경로      출입구에서 가장 가까운 길(마법 지도 그래프의 가장 큰 연결 요소)과, 그보다 20 m 안쪽으로 더 먼 길까지 직선으로 잇고
+  경로      출입구가 그래프의 출입구 노드(graph_patch 출입구 접속선)면 그 노드에서 출발하고, 아니면
+            출입구에서 가장 가까운 길(마법 지도 그래프의 가장 큰 연결 요소)과, 그보다 20 m 안쪽으로 더 먼 길까지 직선으로 잇고
             출발 건물의 모든 출입구에서 도착 건물의 모든 출입구까지 가장 짧은 경로를 찾는다(Dijkstra). 오갈 때 같은 경로
   경사      경로를 따라 고도를 이어 붙이고(지면 구간은 DEM, 터널·다리는 양 끝 사이 직선, 출입구~길 접속 구간은 평지),
             2 m마다 앞뒤 15 m(창 30 m) 두 점의 높이차 ÷ 거리를 그 자리의 경사로 본다. DEM이 5 m 등고선으로 만든 것이라
@@ -19,15 +22,19 @@
   속도      Tobler 보행 함수 v(g) = v0 · exp(−3.5 |g + 0.05|) / exp(−3.5 × 0.05). 평지에서 v0, 완만한 내리막(−5 %)에서 가장 빠르다
   경사 계수  F = 경사 반영 시간 ÷ 평지 시간 (같은 경로, 방향별). v0와 무관하다
   결과      마법 지도 표 시간 × F. 평지 기준이 travel.csv(마법 지도)와 같아 두 파일의 차이는 경사 효과뿐이다.
-            --base route 면 우리 경로의 경사 반영 시간(v0 = --speed)을 그대로 쓴다
+            --base route 면 우리 경로의 경사 반영 시간(v0 = --speed)을 그대로 쓴다.
+            표에 없는 쌍(기숙사 동)은 우리 경로 시간: 경사 반영은 travel_slope.csv, 평지(경로 길이 ÷ 1.1 m/s)는
+            travel.csv 에 source = route 로 더한다(마법 지도 표 시간과 우리 경로 평지 시간은 중앙값 0.07분 차이)
             (출입구가 여러 곳인 건물을 거치면 더 빠른 쌍이 있어 삼각부등식이 성립하지 않는다. 탐색은 이를 감안해 하한을 잰다)
 
 출력
   data/travel_slope.csv   from,to,minutes,source (= slope). python -m ttwizard search ... --travel data/travel_slope.csv
   data/route_stats.csv    쌍마다 마법 지도 시간, 우리 경로의 평지·경사 시간, 경사 계수, 최종 시간, 경로 길이, 오르막·내리막,
                           우리 경로와 마법 지도 표가 크게 다른 쌍 표시(check)
+  data/travel.csv         표에 없는 쌍만 source = route 로 바꿔 쓴다(마법 지도·실측 행은 그대로)
   data/route_paths.json   웹 지도에 그릴 경로 모양. {"ids": [...], "paths": {"a|b": 인코딩한 선}} (a → b 방향,
-                          Google polyline 형식·소수 5자리, 1 m 넘게 벗어나지 않는 점만 남김)
+                          Google polyline 형식·소수 5자리, 1 m 넘게 벗어나지 않는 점만 남김).
+                          기숙사 동끼리는 그리지 않는다(수업이 없어 지도에 그 구간이 나올 일이 없고, 파일만 커진다)
 """
 
 from __future__ import annotations
@@ -44,6 +51,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import building_elevation as be  # noqa: E402
+import graph_patch as gp  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -55,6 +63,9 @@ POINTS = DATA / "buildings_for_magicmap.csv"
 OUT = DATA / "travel_slope.csv"
 OUT_STATS = DATA / "route_stats.csv"
 OUT_PATHS = DATA / "route_paths.json"
+EXTRA = DATA / "dorm_buildings.csv"
+FLAT = DATA / "travel.csv"
+DOOR = 0.5  # 출입구 좌표가 그래프의 출입구 노드에서 이 안(m)이면 그 노드에서 출발
 ALIASES = {"71-1": "71"}  # 71-1동은 좌표가 없어 가까운 71동(체육관) 위치로 경사 계수만 잰다. 시간은 마법 지도 표 값
 STAT_FIELDS = ["from", "to", "magicmap_min", "route_flat_min", "route_slope_min", "slope_factor", "minutes",
                "route_m", "ascent_m", "descent_m", "net_rise_m", "check"]
@@ -73,15 +84,26 @@ def _rows(path: Path) -> list[dict]:
         return list(csv.DictReader(f))
 
 
+def extra_ids(path: Path = EXTRA) -> list[str]:
+    """마법 지도 표 밖에서 이동시간을 낼 지점(기숙사 동 목록의 travel = Y)."""
+    return [r["building"].strip() for r in _rows(path) if (r.get("travel") or "").strip().upper() == "Y"]
+
+
 def load_points(ids, entrances: Path = ENTRANCES, elevation: Path = ELEVATION,
-                listing: Path = POINTS) -> dict[str, list[tuple[float, float]]]:
-    """지점 id → [(lon, lat)]: 지상 출입구 → 캠퍼스맵 건물 좌표 → 목록 좌표 순으로 찾는다."""
+                listing: Path = POINTS, extra: Path | None = None, patch=()) -> dict[str, list[tuple[float, float]]]:
+    """지점 id → [(lon, lat)]: 그래프 패치의 제보 출입구(replace = true) → 지상 출입구 → 그래프 패치의 출입구 →
+    캠퍼스맵 건물 좌표 → 목록 좌표 → 기숙사 동 목록 좌표 순으로 찾는다."""
     ents = defaultdict(list)
     for r in _rows(entrances):
         if r.get("lat") and r.get("lon"):
             ents[r["building"]].append((float(r["lon"]), float(r["lat"])))
+    for b, pts in gp.patch_entrances(patch).items():
+        if not ents.get(b):
+            ents[b] = list(pts)
+    for b, pts in gp.reported_entrances(patch).items():  # 제보·손으로 그린 출입구가 building_entrances.csv 보다 우선
+        ents[b] = list(pts)
     coords = {}
-    for path in (listing, elevation):  # 뒤에 읽는 캠퍼스맵 좌표가 목록의 근사값보다 우선
+    for path in (extra, listing, elevation):  # 뒤에 읽는 캠퍼스맵 좌표가 목록의 근사값보다 우선
         for r in _rows(path):
             if r.get("lat") and r.get("lon"):
                 coords[r["building"]] = (float(r["lon"]), float(r["lat"]))
@@ -218,6 +240,15 @@ class Router:
         self.SA, self.SB = self.P[seg[:, 0]], self.P[seg[:, 1]]
         self.half = np.hypot(*(self.SB - self.SA).T) / 2
         self.stree = cKDTree((self.SA + self.SB) / 2)
+        # 출입구 노드(graph_patch 의 출입구 접속선 건물 쪽 끝): 출입구가 이 노드 자리면 직선 접속 없이 이 노드에서 출발한다
+        first = {}
+        for u, v in map(tuple, seg):
+            first.setdefault(int(u), (int(u), int(v)))
+            first.setdefault(int(v), (int(u), int(v)))
+        self.doors = {k: first[k] for k, n in enumerate(nodes) if n.get("entrance") and k in first}
+        door_ids = list(self.doors)
+        self.door_ids = door_ids
+        self.dtree = cKDTree(self.P[door_ids]) if door_ids else None
         self.profiles = self._profiles(keys, surface, dem)
 
     def _profiles(self, keys, surface, dem) -> dict[tuple[int, int], tuple[np.ndarray, np.ndarray]]:
@@ -249,6 +280,12 @@ class Router:
     def attach(self, lon: float, lat: float) -> dict[int, tuple]:
         """출입구 → {노드: (거리, 출입구~접점 직선거리, 엣지, 엣지 위 접점 위치 s, 출입구 좌표(m))}."""
         q = np.array(self.proj.fwd(lon, lat), float).ravel()
+        if self.dtree is not None:  # 출입구 노드 자리: 그 노드에서 바로 출발(벽 너머 길로 직선을 긋지 않는다)
+            dd, j = self.dtree.query(q)
+            if dd <= DOOR:
+                node = self.door_ids[int(j)]
+                k = self.doors[node]
+                return {node: (0.0, 0.0, k, 0.0 if node == k[0] else self.dist[k], (float(q[0]), float(q[1])))}
         cand = np.array(self.stree.query_ball_point(q, r=self.cap + self.half.max()), int)
         if not len(cand):
             return {}
@@ -364,6 +401,25 @@ class Router:
         return out
 
 
+def write_flat(path: Path, route_flat: dict[tuple[str, str], float]) -> None:
+    """travel.csv 에 표 밖 쌍의 평지 시간(source = route)을 쓴다. 다른 출처(마법 지도·실측 등) 행은 그대로 둔다."""
+    rows = {}
+    for r in _rows(path):
+        k = (r["from"].strip(), r["to"].strip())
+        src = (r.get("source") or "").strip()
+        if src != "route" or k in route_flat:
+            rows[k] = (r["minutes"], src)
+    for k, m in route_flat.items():
+        if rows.get(k, ("", "route"))[1] == "route":
+            rows[k] = (f"{m:.2f}", "route")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="", encoding="utf-8") as f:  # travel.py 가 BOM 없는 UTF-8로 읽는다
+        w = csv.writer(f, lineterminator="\n")
+        w.writerow(["from", "to", "minutes", "source"])
+        for (a, b), (m, src) in sorted(rows.items()):
+            w.writerow([a, b, m, src])
+
+
 def main(argv: list[str] | None = None) -> int:
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
@@ -376,6 +432,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--entrances", default=str(ENTRANCES))
     ap.add_argument("--elevation", default=str(ELEVATION))
     ap.add_argument("--points", default=str(POINTS))
+    ap.add_argument("--extra", default=str(EXTRA), help="표 밖 지점(기숙사 동, travel = Y). 빈 값이면 표 지점만")
+    ap.add_argument("--patch", nargs="*", default=[str(gp.PATCH_DIR)], help="출입구를 더 읽을 그래프 패치(graph_patch.py)")
+    ap.add_argument("--flat", default=str(FLAT), help="표 밖 쌍의 평지 시간을 source = route 로 더할 travel.csv. 빈 값이면 안 쓴다")
     ap.add_argument("--window", type=float, default=30.0, help="경사를 재는 창 길이(m)")
     ap.add_argument("--speed", type=float, default=1.1, help="평지 보행 속도(m/s). --base route 일 때 쓴다")
     ap.add_argument("--slack", type=float, default=20.0, help="가장 가까운 길보다 이만큼 먼 길까지 접속 후보(m)")
@@ -391,8 +450,11 @@ def main(argv: list[str] | None = None) -> int:
     for r in _rows(Path(args.pairs)):
         if r["from"] != r["to"]:
             magic[(r["from"], r["to"])] = float(r["time_s"]) / 60
-    ids = sorted({a for a, _ in magic} | {b for _, b in magic}, key=be.building_key)
-    points = load_points(ids, Path(args.entrances), Path(args.elevation), Path(args.points))
+    base_ids = {a for a, _ in magic} | {b for _, b in magic}
+    extra = [b for b in (extra_ids(Path(args.extra)) if args.extra else []) if b not in base_ids]
+    ids = sorted(base_ids | set(extra), key=be.building_key)
+    points = load_points(ids, Path(args.entrances), Path(args.elevation), Path(args.points),
+                         Path(args.extra) if args.extra else None, args.patch or [])
     missing = [b for b in ids if b not in points]
 
     dem = None
@@ -404,14 +466,15 @@ def main(argv: list[str] | None = None) -> int:
         dem.layers = [L for L in dem.layers if abs(L.res[0]) <= args.max_res]
         dem = dem if dem.layers else None
     print(f"그래프: 노드 {len(graph['nodes']):,}개 · 엣지 {len(graph['edges']):,}개 · 지점 {len(ids)}개"
-          f" (출입구 여러 곳 {sum(1 for b in ids if len(points.get(b, [])) > 1)}개)"
+          + (f"(표 밖 기숙사 동 {len(extra)}개)" if extra else "")
+          + f" (출입구 여러 곳 {sum(1 for b in ids if len(points.get(b, [])) > 1)}개)"
           + (f" · 위치 없음 {missing}" if missing else ""))
     print("단면: " + (", ".join(f"{L.name} ({L.res[0]:g} m)" for L in dem.layers) + " + 노드 고도" if dem
                      else "DEM 없음 → 노드 고도 사이 직선") + f" · 경사 창 {args.window:g} m")
 
     router = Router(graph, be.LocalProj(), dem=dem)
     profiles = router.routes(points)
-    rows, minutes = [], {}
+    rows, minutes, route_flat = [], {}, {}
     for (a, b), (s, z, _) in profiles.items():
         ds, g = window_grades(s, z, args.window)
         L = float(s[-1])
@@ -423,6 +486,8 @@ def main(argv: list[str] | None = None) -> int:
             m = magic.get((x, y))
             final = m * f if (args.base == "magicmap" and m is not None) else t / 60
             minutes[(x, y)] = final
+            if m is None:
+                route_flat[(x, y)] = flat / 60
             rel = abs(flat / 60 - m) if m is not None else 0.0
             rows.append({"from": x, "to": y, "magicmap_min": "" if m is None else f"{m:.2f}",
                          "route_flat_min": f"{flat / 60:.2f}", "route_slope_min": f"{t / 60:.2f}",
@@ -436,17 +501,22 @@ def main(argv: list[str] | None = None) -> int:
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w", newline="", encoding="utf-8") as f:  # travel.py 가 BOM 없는 UTF-8로 읽는다
-        w = csv.writer(f)
+        w = csv.writer(f, lineterminator="\n")
         w.writerow(["from", "to", "minutes", "source"])
         for r in rows:
             w.writerow([r["from"], r["to"], r["minutes"], "slope"])
     with open(args.stats, "w", newline="", encoding="utf-8-sig") as f:
-        w = csv.DictWriter(f, fieldnames=STAT_FIELDS)
+        w = csv.DictWriter(f, fieldnames=STAT_FIELDS, lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
+    if args.flat and route_flat:
+        write_flat(Path(args.flat), route_flat)
     proj = router.proj
     paths = {}
+    skip = set(extra)
     for (a, b), (_, _, xy) in profiles.items():
+        if a in skip and b in skip:  # 기숙사 동끼리: 지도에 나올 일이 없다
+            continue
         xy = simplify(xy, 1.0)
         lon, lat = proj.inv(xy[:, 0], xy[:, 1])
         paths[f"{a}|{b}"] = encode_polyline(zip(np.atleast_1d(lat), np.atleast_1d(lon)))
@@ -455,7 +525,10 @@ def main(argv: list[str] | None = None) -> int:
 
     F = np.array([float(r["slope_factor"]) for r in rows])
     gap = np.array([float(r["route_flat_min"]) - float(r["magicmap_min"]) for r in rows if r["magicmap_min"]])
-    print(f"\n저장: {out} ({len(rows):,}쌍, 기준 {'마법 지도 시간 × 경사 계수' if args.base == 'magicmap' else '우리 경로'})")
+    print(f"\n저장: {out} ({len(rows):,}쌍, 기준 {'마법 지도 시간 × 경사 계수' if args.base == 'magicmap' else '우리 경로'}"
+          + (f", 표 밖 {len(route_flat):,}쌍은 우리 경로" if route_flat else "") + ")")
+    if args.flat and route_flat:
+        print(f"      {args.flat} (표 밖 {len(route_flat):,}쌍 평지 시간, source = route)")
     print(f"      {args.stats}\n      {args.paths} (경로 {len(paths):,}개)")
     if len(gap):
         print(f"  우리 경로(평지) − 마법 지도 표: 중앙값 {np.median(gap):+.2f}분, |차이| 90% {np.percentile(np.abs(gap), 90):.2f}분,"

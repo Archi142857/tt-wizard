@@ -95,8 +95,8 @@ def export_campus(data: Path) -> dict:
         return [[0 if a == b else (round(table[(a, b)], 2) if (a, b) in table else None) for b in ids] for a in ids]
 
     # 이름은 캠퍼스맵 목록을 먼저, 좌표는 알고리즘이 쓰는 buildings.csv 를 가장 앞세운다(없는 쌍의 추정에 쓰는 좌표).
-    # 마법 지도용 목록은 GATE 처럼 다른 데 없는 지점(근사 좌표)만 채운다
-    files = ["campus_buildings.csv", "buildings_elevation.csv", "buildings.csv", "buildings_for_magicmap.csv"]
+    # 마법 지도용 목록은 GATE 처럼 다른 데 없는 지점(근사 좌표)만, 기숙사 동 목록은 캠퍼스맵에 없는 동(901동, 919-A~D)만 채운다
+    files = ["campus_buildings.csv", "buildings_elevation.csv", "buildings.csv", "buildings_for_magicmap.csv", "dorm_buildings.csv"]
     names, coords = {}, {}
     for path in files:
         for r in _rows(data / path):
@@ -118,6 +118,9 @@ def export_campus(data: Path) -> dict:
         "slope": dense(slope),
         "buildings": buildings,
         "homes": [[b, label] for b, label in HOMES if b in buildings],
+        # 기숙사 동 [동, 종류(학부·대학원·글로벌·가족·BK)]. ids 에 있으면 이동시간이 있고, 919-A~D 처럼 없으면 지도 번호만
+        "dorms": [[r["building"].strip(), (r.get("kind") or "").strip()] for r in _rows(data / "dorm_buildings.csv")
+                  if r["building"].strip() in buildings],
         "estimate": {"walk_kmh": 4.0, "detour": 1.35, "default_minutes": 15.0},  # ttwizard/travel.py 와 같은 값
         "meta": {"semester": state.get("lectures_semester") or state.get("semester", ""), "updated": state.get("last_fetch", "")},
     }
