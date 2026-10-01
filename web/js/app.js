@@ -520,17 +520,62 @@ function resultRow({ c, kind, prof }, { q, qId }) {
   return row;
 }
 
+// 넓은 화면 두 칸(style.css 의 같은 조건): 오른쪽 칸 폭의 스낵바, 늘 보이는 검색 결과 카드(검색 전에는 최근 검색어)
+const twoPane = matchMedia("(min-width: 42.5em), (horizontal-viewport-segments: 2)");
+
+// 최근 검색어: 담기로 이어졌거나 Enter 로 낸(결과가 있는) 검색어. 학기와 상관없이 이 기기에 10개까지, 같은 말(띄어쓰기·대소문자 무시)은 하나로
+const RECENT_MAX = 10;
+let recent = (() => {
+  const v = store.get("recent", []);
+  return Array.isArray(v) ? v.filter((x) => typeof x === "string" && x.trim()).slice(0, RECENT_MAX) : [];
+})();
+function saveRecent(raw) {
+  const text = String(raw || "").trim().replace(/\s+/g, " ").slice(0, 60);
+  if (!text) return;
+  const k = keyChars(text).key;
+  recent = [text, ...recent.filter((x) => keyChars(x).key !== k)].slice(0, RECENT_MAX);
+  store.set("recent", recent);
+}
+function setRecent(list) {
+  recent = list;
+  if (recent.length) store.set("recent", recent); else store.del("recent");
+}
+
+/** 검색 전 카드: 최근 검색어 칩(누르면 그 말로 검색, ×로 하나 지우기). 넓은 화면에서 하나도 없으면 빈 상태 한 줄.
+ *  목록이 그대로면 다시 만들지 않는다(키보드 초점이 칩에 있을 때 다시 그려 초점을 잃지 않게). */
+let drawnRecent = "";
+function renderIdle(show) {
+  const has = show && recent.length > 0;
+  $("recent").hidden = !has;
+  $("recent-empty").hidden = !show || has;
+  const key = has ? JSON.stringify(recent) : "";
+  if (key === drawnRecent) return;
+  drawnRecent = key;
+  $("recent-list").replaceChildren(...(has ? recent : []).map((text) => h("li", { class: "chip" },
+    h("button", { type: "button", class: "chip-q", "data-q": text }, h("span", {}, text)),
+    h("button", { type: "button", class: "chip-x", "data-del": text, "aria-label": `${text} 지우기` }, icon(I.x, 16)))));
+}
+/** 검색창이나 그 아래 카드(최근 검색어·결과)에 초점이 있다. */
+const searchFocused = () => document.activeElement === $("q") || $("results").contains(document.activeElement);
+
 let resultsShown = RESULTS_STEP, lastQuery = "", countTimer = null;
 function renderResults({ more = false } = {}) {
   const raw = $("q").value;
   $("q-clear").hidden = !raw;
   const box = $("results");
   if (!raw.trim() || !state.loaded) {
-    box.hidden = true;
     lastQuery = "";
     clearTimeout(countTimer);
+    $("results-list").replaceChildren();
+    $("results-empty").hidden = $("results-more").hidden = true;
+    // 넓은 화면은 카드를 늘 두고(두 칸의 아래 끝을 맞춘다), 폰은 검색창에 초점이 있고 최근 검색어가 있을 때만 띄운다
+    const wide = twoPane.matches;
+    const idle = state.loaded && (wide || (searchFocused() && recent.length > 0));
+    box.hidden = !wide && !idle;
+    renderIdle(idle);
     return;
   }
+  renderIdle(false);
   if (raw !== lastQuery) { resultsShown = RESULTS_STEP; lastQuery = raw; }
   const found = findCourses(raw);
   const list = $("results-list");
@@ -1535,6 +1580,265 @@ function midpoint(line) {
   return line[0];
 }
 
+// ---------------------------------------------------------------- 바탕 지도
+// 10/1 사용자 결정: OSM 타일 대신 우리 자료(data/basemap.json: 수치지형도 1:5,000 건물·도로·물·등고선 + OSM 숲·길)로 직접 그린다
+// (레포 docs/basemap.md, 참고 구현 docs/basemap_reference.html). 타일 서버를 안 써서 오프라인에서도 바탕이 있고, 다크 모드는 필터가 아니라
+// 지도 색(--map-*)으로 그린다. 면·선은 처음 한 번 메르카토르 좌표(0~1)로 풀어 두고, 캔버스 하나에 화면에 걸리는 것만 그린다
+
+let basemap = null, basemapWait = null, dataBounds = null;
+
+/** Google polyline(소수 prec 자리) → [u, v, u, v, …] 메르카토르 좌표(0~1, Leaflet 화소 좌표 = 값 × 256 × 2^배율). */
+function decodeWorld(s, prec) {
+  const f = 10 ** prec, out = [];
+  let i = 0, lat = 0, lon = 0;
+  while (i < s.length) {
+    for (let k = 0; k < 2; k++) {
+      let sh = 0, r = 0, b;
+      do { b = s.charCodeAt(i++) - 63; r |= (b & 31) << sh; sh += 5; } while (b >= 32);
+      const d = r & 1 ? ~(r >> 1) : r >> 1;
+      if (k === 0) lat += d; else lon += d;
+    }
+    const phi = ((lat / f) * Math.PI) / 180;
+    out.push((lon / f + 180) / 360, (1 - Math.log(Math.tan(Math.PI / 4 + phi / 2)) / Math.PI) / 2);
+  }
+  return Float64Array.from(out);
+}
+
+function boxOf(arrays) {
+  let x0 = 1, y0 = 1, x1 = 0, y1 = 0;
+  for (const a of arrays) {
+    for (let i = 0; i < a.length; i += 2) {
+      if (a[i] < x0) x0 = a[i];
+      if (a[i] > x1) x1 = a[i];
+      if (a[i + 1] < y0) y0 = a[i + 1];
+      if (a[i + 1] > y1) y1 = a[i + 1];
+    }
+  }
+  return [x0, y0, x1, y1];
+}
+
+/** 자료 v1: 면 = [소수 자리, 바깥 고리, 구멍…], 선 = [OSM highway, polyline], 등고선 = [높이 m, polyline]. */
+function prepareBasemap(B) {
+  const areas = {}, lines = {}, contours = {};
+  for (const [k, list] of Object.entries(B.area || {})) {
+    areas[k] = list.map(([prec, ...rings]) => { const rs = rings.map((r) => decodeWorld(r, prec)); return { rings: rs, bb: boxOf(rs) }; });
+  }
+  for (const [k, list] of Object.entries(B.line || {})) lines[k] = list.map(([kind, s]) => { const p = decodeWorld(s, 5); return { kind, pts: p, bb: boxOf([p]) }; });
+  for (const [k, list] of Object.entries(B.contour || {})) contours[k] = list.map(([z, s]) => { const p = decodeWorld(s, 5); return { z, pts: p, bb: boxOf([p]) }; });
+  const [south, west, north, east] = B.bounds;
+  return { areas, lines, contours, bounds: L.latLngBounds([south, west], [north, east]) };
+}
+
+/** 처음 지도를 만들 때 한 번 받는다(웹은 서비스 워커가 저장, 앱은 앱에 넣은 것). 실패하면 다음에 다시. */
+function loadBasemap() {
+  if (!basemapWait) {
+    basemapWait = getJson("data/basemap.json").then((B) => {
+      basemap = prepareBasemap(B);
+      dataBounds = basemap.bounds;
+      for (const mp of [maps.small, maps.full]) {
+        if (!mp) continue;
+        mp.map.setMaxBounds(dataBounds);
+        applyMinZoom(mp.map);
+        mp.base.redraw();
+      }
+    }).catch(() => { basemapWait = null; });
+  }
+  return basemapWait;
+}
+
+/** 빈 땅이 보이지 않게(사용자 결정): 캠퍼스가 다 들어오는 배율과, 화면이 자료 범위 안에 드는 배율 중 큰 쪽보다 덜 축소하지 않는다. */
+function mapMinZoom(map) {
+  const fit = map.getBoundsZoom(campusBounds, false);
+  return dataBounds ? Math.max(fit, map.getBoundsZoom(dataBounds, true)) : Math.max(12, fit);
+}
+/** 최소 배율을 바꾼다. setMinZoom 은 지금 배율이 더 낮으면 애니메이션으로 확대하는데, 그사이 setView 로 옮겨도
+ *  애니메이션이 끝나는 순간 그 자리로 되돌아간다(전체 화면 지도가 경로 대신 최소 배율로 열렸다). 그래서 애니메이션 없이 */
+function applyMinZoom(map) {
+  const mz = mapMinZoom(map);
+  map.options.minZoom = mz;
+  if (map.getZoom() < mz) map.setZoom(mz, { animate: false });
+  map.fire("zoomlevelschange");
+}
+
+// 지도 색은 CSS(--map-*)에서 읽는다. 기기 테마가 바뀌면 다시 읽고 다시 그린다
+const MAP_COLORS = ["land", "green", "park", "grass", "pitch", "campus", "campus-line", "contour", "contour-index", "contour-label", "water", "walk-area",
+  "road", "road-line", "road-secondary", "road-secondary-line", "road-primary", "road-primary-line", "road-trunk", "road-trunk-line", "road-case",
+  "ped", "ped-case", "foot", "foot-case", "foot-low", "steps", "building", "building-line", "halo"];
+let mapColorCache = null;
+function mapColors() {
+  if (!mapColorCache) {
+    const cs = getComputedStyle(document.documentElement);
+    mapColorCache = Object.fromEntries(MAP_COLORS.map((k) => [k, cs.getPropertyValue(`--map-${k}`).trim()]));
+    mapColorCache.font = getComputedStyle(document.body).fontFamily;
+  }
+  return mapColorCache;
+}
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  mapColorCache = null;
+  for (const mp of [maps.small, maps.full]) if (mp) mp.base.redraw();
+});
+
+// 선 폭은 미터로 정하고 배율마다 화소로 바꾼다(최소 화소 아래로는 가늘어지지 않는다). 캠퍼스 안 찻길 폭(m)은 OSM highway 값으로
+const ROAD_M = { service: 4.5, residential: 6, living_street: 5, unclassified: 6, tertiary: 7, tertiary_link: 6 };
+
+/** 바탕을 그린다. b = 캔버스가 덮는 범위(layer 좌표), m = 화소 배수. 순서: 땅 → 등고선 → 물 → 도로면 → 길(선) → 건물 → 등고선 높이. */
+function drawBasemap(ctx, map, b, m) {
+  const size = b.getSize(), C = mapColors();
+  ctx.setTransform(m, 0, 0, m, 0, 0);
+  ctx.globalAlpha = 1;
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.land;
+  ctx.fillRect(0, 0, size.x, size.y);
+  if (!basemap) return;
+  const z = map.getZoom(), S = 256 * 2 ** z, o = map.getPixelOrigin();
+  const ox = o.x + b.min.x, oy = o.y + b.min.y;
+  const k = (156543.034 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / 2 ** z; // 화소 하나가 몇 m
+  const pad = 12 / S;
+  const x0 = ox / S - pad, y0 = oy / S - pad, x1 = (ox + size.x) / S + pad, y1 = (oy + size.y) / S + pad;
+  const seen = (f) => f.bb[2] >= x0 && f.bb[0] <= x1 && f.bb[3] >= y0 && f.bb[1] <= y1;
+  const trace = (p, close) => {
+    ctx.moveTo(p[0] * S - ox, p[1] * S - oy);
+    for (let i = 2; i < p.length; i += 2) ctx.lineTo(p[i] * S - ox, p[i + 1] * S - oy);
+    if (close) ctx.closePath();
+  };
+  const fill = (list, color, line, width) => {
+    if (!list) return;
+    ctx.fillStyle = color;
+    if (line) { ctx.strokeStyle = line; ctx.lineWidth = width; ctx.lineJoin = "round"; }
+    for (const f of list) {
+      if (!seen(f)) continue;
+      ctx.beginPath();
+      for (const r of f.rings) trace(r, true);
+      ctx.fill("evenodd");
+      if (line) ctx.stroke();
+    }
+  };
+  // 폭이 같은 선끼리 한 번에 긋는다(점선은 선마다 처음부터)
+  const stroke = (list, color, width, { dash = null, cap = "round", alpha = 1 } = {}) => {
+    if (!list || !(alpha > 0)) return;
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = alpha;
+    ctx.lineCap = cap;
+    ctx.lineJoin = "round";
+    ctx.setLineDash(dash || []);
+    let cur = -1;
+    for (const f of list) {
+      if (!seen(f)) continue;
+      const w = typeof width === "function" ? width(f) : width;
+      if (w !== cur) {
+        if (cur >= 0) ctx.stroke();
+        ctx.beginPath();
+        ctx.lineWidth = cur = w;
+      }
+      trace(f.pts, false);
+    }
+    if (cur >= 0) ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.setLineDash([]);
+  };
+  const px = (meters, min, extra = 0) => Math.max(min, meters / k) + extra;
+  const { areas: A, lines: Ln, contours: Z } = basemap;
+  fill(A.green, C.green);
+  fill(A.park, C.park);
+  fill(A.grass, C.grass);
+  fill(A.campus, C.campus, C["campus-line"], 1.2);
+  fill(A.pitch, C.pitch);
+  if (z >= 15.75) stroke(Z.minor, C.contour, 0.7);
+  stroke(Z.index, C["contour-index"], 1.1);
+  fill(A.water, C.water);
+  fill(A.walk, C["walk-area"]);
+  fill(A.road, C.road, C["road-line"], 0.9);
+  for (const t of ["secondary", "primary", "trunk"]) fill(A[`road_${t}`], C[`road-${t}`], C[`road-${t}-line`], 0.9);
+  const roadW = (f) => ROAD_M[f.kind] || 5;
+  stroke(Ln.road, C["road-case"], (f) => px(roadW(f), 2.6, 2));
+  stroke(Ln.pedestrian, C["ped-case"], px(5, 2.6, 2));
+  stroke(Ln.road, C.road, (f) => px(roadW(f), 1.6));
+  stroke(Ln.pedestrian, C.ped, px(5, 1.6));
+  if (z >= 16.5) stroke(Ln.walk, C["foot-case"], px(1.6, 2.6, 1.6), { alpha: 0.7 });
+  if (z >= 15.25) stroke(Ln.walk, C.foot, px(0.9, 1.3), { dash: [Math.max(3, 1.6 / k), Math.max(2, 1 / k)], cap: "butt", alpha: z < 16.5 ? Number(C["foot-low"]) || 1 : 1 });
+  stroke(Ln.steps, C.steps, px(2.2, 3.2), { dash: [Math.max(1.4, 0.35 / k), Math.max(1.1, 0.3 / k)], cap: "butt" });
+  fill(A.building, C.building, C["building-line"], 0.8);
+  // 많이 확대하면 계곡선(25 m) 가운데에 높이
+  if (z >= 17 && Z.index) {
+    ctx.font = `650 9.5px ${C.font}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineWidth = 3;
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = C.halo;
+    ctx.fillStyle = C["contour-label"];
+    for (const f of Z.index) {
+      if (!seen(f)) continue;
+      const i = Math.floor(f.pts.length / 4) * 2;
+      const x = f.pts[i] * S - ox, y = f.pts[i + 1] * S - oy;
+      if (x < 0 || y < 0 || x > size.x || y > size.y) continue;
+      ctx.strokeText(String(f.z), x, y);
+      ctx.fillText(String(f.z), x, y);
+    }
+  }
+}
+
+/** 바탕 지도 층: Leaflet 의 캔버스 그리기 틀(L.Renderer: 화면보다 조금 넓은 캔버스, 확대·축소 애니메이션 동안 늘였다 줄임)에 그림만 우리 것. */
+const BaseMap = typeof L === "undefined" ? null : L.Renderer.extend({
+  options: { padding: 0.1, pane: "ttw-base" },
+  _initContainer() {
+    const c = (this._container = document.createElement("canvas"));
+    c.setAttribute("aria-hidden", "true");
+    this._ctx = c.getContext("2d");
+  },
+  _destroyContainer() {
+    L.DomUtil.remove(this._container);
+    this._ctx = null;
+  },
+  _update() {
+    if (this._map._animatingZoom && this._bounds) return;
+    L.Renderer.prototype._update.call(this);
+    const b = this._bounds, c = this._container, size = b.getSize();
+    this._m = Math.min(2, window.devicePixelRatio || 1); // 3배 화면도 2배로(캔버스 메모리)
+    L.DomUtil.setPosition(c, b.min);
+    c.width = Math.round(this._m * size.x);
+    c.height = Math.round(this._m * size.y);
+    c.style.width = `${size.x}px`;
+    c.style.height = `${size.y}px`;
+    this.redraw();
+  },
+  redraw() {
+    if (this._ctx && this._bounds && this._map) drawBasemap(this._ctx, this._map, this._bounds, this._m || 1);
+  },
+  // 끌거나 미끄러지는 동안에도 그려 둔 범위(화면 + 여유 10%)를 벗어나면 다시 그린다. Leaflet 그리기 틀은 다 멈춘 뒤에만 다시 그려서
+  // 세게 밀면 멈출 때까지 바탕이 비었다(타일은 옮기는 동안에도 받는다)
+  getEvents() {
+    return { ...L.Renderer.prototype.getEvents.call(this), move: this._onMove };
+  },
+  _onMove() {
+    if (this._frame || !this._bounds || this._map._animatingZoom) return;
+    this._frame = requestAnimationFrame(() => {
+      this._frame = 0;
+      const map = this._map;
+      if (!map || map._animatingZoom) return;
+      const a = map.containerPointToLayerPoint([0, 0]), b = map.containerPointToLayerPoint(map.getSize());
+      if (!this._bounds.contains(a) || !this._bounds.contains(b)) this._update();
+    });
+  },
+  onRemove() {
+    cancelAnimationFrame(this._frame);
+    this._frame = 0;
+    L.Renderer.prototype.onRemove.call(this);
+  },
+});
+
+/** 건물 번호 목록(번호만인 건물 먼저, 짧은 번호 먼저): 수업이 없는 날 모든 건물 번호를 겹치지 않게 놓을 때 이 순서로. */
+let buildingMarks = null;
+function allBuildingMarks() {
+  if (!buildingMarks) {
+    buildingMarks = Object.entries(state.campus.buildings || {})
+      .filter(([, v]) => v && v[1] !== null && v[1] !== undefined)
+      .map(([id, v]) => ({ id, text: id === "GATE" ? "정문" : id, name: v[0] || "", at: L.latLng(v[1], v[2]), pri: /^\d+$/.test(id) ? 0 : 1 }))
+      .sort((a, b) => a.pri - b.pri || a.id.length - b.id.length);
+  }
+  return buildingMarks;
+}
+
 /** 지도 둘 다 확대·축소된다. 마우스: 확대·축소 버튼, 휠, 끌기. 터치: 두 손가락으로 확대·이동, 두 번 눌러 확대.
  *  시간표 옆 작은 지도는 터치에서 한 손가락 끌기를 끈다(페이지 스크롤이 지도에 걸리지 않게). 전체 화면 지도는 한 손가락으로 끈다. */
 function makeMap(el, full) {
@@ -1546,27 +1850,26 @@ function makeMap(el, full) {
     zoomControl: false, attributionControl: false, // 저작권 표기는 지도 밖 .map-attr(늘 보이고, 스크린리더가 읽는다)
     dragging: full || mouse, touchZoom: true, doubleClickZoom: true, scrollWheelZoom: full || mouse, boxZoom: mouse,
     keyboard: true, inertia: !still, zoomAnimation: !still, fadeAnimation: !still, markerZoomAnimation: !still,
-    zoomSnap: 0.25, zoomDelta: 0.5, maxBounds: campusBounds, maxBoundsViscosity: 1.0,
+    zoomSnap: 0.25, zoomDelta: 0.5, maxZoom: 19.5, maxBounds: dataBounds || campusBounds, maxBoundsViscosity: 1.0,
   });
   const buttons = full || mouse;
   if (buttons) L.control.zoom({ position: "topright", zoomInTitle: "확대", zoomOutTitle: "축소" }).addTo(map);
   el.setAttribute("role", "region");
   el.setAttribute("aria-label", "지도");
-  // 타일을 못 불러오면(오프라인) 선과 핀만 그리고 '지도 배경 없음'
-  const note = el.parentElement.querySelector(".map-note");
-  const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, className: "map-tiles" });
-  let ok = 0;
-  tiles.on("loading", () => { ok = 0; });
-  tiles.on("tileload", () => { ok += 1; note.hidden = true; });
-  tiles.on("tileerror", () => { if (!ok) note.hidden = false; });
-  tiles.addTo(map);
-  map.setView(campusBounds.getCenter(), 15, { animate: false });
-  // 수업 뒤 출발·도착 자리로 가는 길은 경로선(overlayPane, 400) 아래 칸에 그린다: 겹치는 길에서 경로를 덮지 않게
+  // 바탕 지도(타일 자리 200), 수업 뒤 출발·도착 자리로 가는 길은 경로선(overlayPane, 400) 아래 칸: 겹치는 길에서 경로를 덮지 않게
+  const basePane = map.createPane("ttw-base");
+  basePane.style.zIndex = "200";
+  basePane.style.pointerEvents = "none";
   map.createPane("ttw-back").style.zIndex = "390";
+  const base = new BaseMap().addTo(map);
+  map.setView(campusBounds.getCenter(), 15, { animate: false });
   const legend = el.closest(".mapcard").querySelector(".legend");
-  const mp = { map, el, tiles, full, buttons, legend, back: L.layerGroup().addTo(map), lines: L.layerGroup().addTo(map), marks: L.layerGroup().addTo(map), data: null };
-  // 배율이 바뀌면 붙어 보이는 번호를 다시 묶고, 옆으로 비킨 선을 그 배율의 화소 간격으로 다시 그린다
+  const mp = { map, el, base, full, buttons, legend, back: L.layerGroup().addTo(map), lines: L.layerGroup().addTo(map), marks: L.layerGroup().addTo(map),
+    names: L.layerGroup().addTo(map), data: null };
+  // 배율이 바뀌면 붙어 보이는 번호를 다시 묶고, 옆으로 비킨 선을 그 배율의 화소 간격으로 다시 그린다. 건물 번호는 옮길 때마다(화면 가장자리)
   map.on("zoomend", () => { if (mp.data) { placeMarks(mp); drawReturn(mp); } });
+  map.on("moveend", () => { if (mp.data) placeLabels(mp); });
+  loadBasemap();
   return mp;
 }
 
@@ -1642,7 +1945,7 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
   renderLegend(mp, legs, homeLines.length > 0); // 번호표를 먼저 채워야 지도 칸 높이가 정해진다
   mp.el.setAttribute("aria-label", `${DAY_KO[day]}요일 지도`);
   map.invalidateSize();
-  map.setMinZoom(Math.max(12, map.getBoundsZoom(campusBounds, false)));
+  applyMinZoom(map);
   mp.lines.clearLayers();
   const homeAt = coordOf(R.home);
   const stops = [], pts = homeAt ? [homeAt] : [];
@@ -1659,10 +1962,11 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
   for (const line of classLines) drawn.push(L.polyline(line, { className: "map-route-case", weight: 8, lineCap: "round", lineJoin: "round", interactive: false }).addTo(mp.lines));
   for (const line of classLines) drawn.push(L.polyline(line, { className: "map-route", weight: 4, lineCap: "round", lineJoin: "round", interactive: false }).addTo(mp.lines));
   for (const st of stops) pts.push(st.at);
-  // 요일·순위를 바꾸면 그날 경로 전체가 들어오게(애니메이션 없이). 핀이 오른쪽 위 버튼(크게 보기, 확대·축소), 왼쪽 위 '지도 배경 없음',
-  // 오른쪽 아래 저작권 표기에 가리지 않게 가장자리를 비운다. 폰의 작은 지도는 폭이 좁아 위쪽을 비운다
-  const k = remPx() / 16; // 글자를 키우면 저작권 표기와 '지도 배경 없음'도 커진다
-  const top = Math.max(mp.full || mp.buttons ? 40 : 56, Math.round(24 + 16 * k)), bottom = Math.max(32, Math.round(16 + 16 * k));
+  // 요일·순위를 바꾸면 그날 경로 전체가 들어오게(애니메이션 없이). 핀이 오른쪽 위 버튼(크게 보기, 확대·축소), 오른쪽 아래 저작권 표기와
+  // 핀 오른쪽 건물 번호에 가리지 않게 가장자리를 비운다. 폰의 작은 지도는 폭이 좁아 위쪽을 비운다
+  const k = remPx() / 16; // 글자를 키우면 저작권 표기도 커진다
+  const attr = mp.el.parentElement.querySelector(".map-attr"); // 좁은 지도에서는 저작권 표기가 두 줄이 된다
+  const top = Math.max(mp.full || mp.buttons ? 40 : 56, Math.round(24 + 16 * k)), bottom = Math.max(32, Math.round(16 + 16 * k), (attr ? attr.offsetHeight : 0) + 8);
   const pad = mp.full ? { paddingTopLeft: [24, top], paddingBottomRight: [68, bottom] }
     : mp.buttons ? { paddingTopLeft: [20, top], paddingBottomRight: [56, bottom] } : { paddingTopLeft: [20, top], paddingBottomRight: [20, bottom] };
   if (pts.length > 1) map.fitBounds(L.latLngBounds(pts), { ...pad, maxZoom: 17, animate: false });
@@ -1670,6 +1974,7 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
   mp.data = { stops, labels, homeAt, homeLines };
   drawReturn(mp);
   placeMarks(mp);
+  placeLabels(mp);
   if (reveal && !reduceMotion.matches) revealRoute(mp, drawn);
 }
 
@@ -1694,17 +1999,63 @@ function placeMarks(mp) {
   for (const st of merged) {
     const label = st.nums.join("·");
     const w = label.length > 1 ? 12 + 7 * label.length : 24;
+    st.w = w;
     const name = [label, ...new Set(st.names), st.bs.map(buildingLabel).join("·")].join(", "); // 1, 동물생화학 2, 26동
     L.marker(st.at, { keyboard: false, interactive: false, zIndexOffset: 100,
       icon: L.divIcon({ className: "", html: `<div class="pin" role="img" aria-label="${esc(name)}">${label}</div>`, iconSize: [w, 24], iconAnchor: [w / 2, 12] }) }).addTo(marks);
   }
   const taken = [data.homeAt, ...merged.map((m) => m.at)].filter(Boolean).map((a) => map.latLngToContainerPoint(a));
+  // 건물 번호가 피할 자리(layer 좌표라 옮겨도 그대로): 핀, 구간 라벨
+  const boxes = [data.homeAt, ...merged.map((m) => m.at)].filter(Boolean).map((a) => { const p = map.latLngToLayerPoint(a); return [p.x - 16, p.y - 14, p.x + 16, p.y + 14]; });
   for (const lb of data.labels) {
     const pt = map.latLngToContainerPoint(lb.at);
     if (taken.some((q) => Math.abs(q.x - pt.x) < 30 && Math.abs(q.y - pt.y) < 22)) continue;
     taken.push(pt);
+    const p = map.latLngToLayerPoint(lb.at);
+    boxes.push([p.x - 28, p.y - 12, p.x + 28, p.y + 12]);
     L.marker(lb.at, { interactive: false, keyboard: false,
       icon: L.divIcon({ className: "", html: `<span class="leg-label${lb.home ? " to-home" : ""}" aria-hidden="true">${lb.home ? HOME_PIN.replace('width="12" height="12"', 'width="10" height="10"') : ""}${lb.text}</span>`, iconSize: [0, 0] }) }).addTo(marks);
+  }
+  mp.pins = merged;
+  mp.boxes = boxes;
+}
+
+/**
+ * 건물 번호(사용자 결정 10/1). 수업이 있는 날: 그날 수업 건물 번호만 핀 오른쪽에(겹쳐도 숨기지 않는다).
+ * 수업이 없는 날: 배율 15.5 이상에서 모든 건물 번호, 화면에서 겹치거나(핀·구간 라벨 자리도) 가장자리에 걸리면 숨긴다. 배율 17.25 이상이면 이름도.
+ * 꾸밈이라 스크린리더는 읽지 않는다(핀 이름과 아래 번호표가 같은 것을 말한다).
+ */
+function placeLabels(mp) {
+  const { map, names, data } = mp;
+  names.clearLayers();
+  if (!data || !state.campus) return;
+  const z = map.getZoom(), withName = z >= 17.25, B = state.campus.buildings || {};
+  const icon = (html) => L.divIcon({ className: "", html, iconSize: [0, 0] });
+  const size = map.getSize();
+  if (data.stops.length) {
+    for (const pin of mp.pins || []) {
+      const text = pin.bs.map((b) => (b === "GATE" ? "정문" : b)).join("·");
+      const name = withName ? pin.bs.map((b) => (B[b] || [])[0]).filter(Boolean).join("·") : "";
+      // 오른쪽 가장자리에 걸리면 핀 왼쪽에
+      const x = map.latLngToContainerPoint(pin.at).x, lw = Math.max(7.6 * text.length + 4, 10.2 * name.length);
+      const side = x + pin.w / 2 + 3 + lw > size.x - 4 ? " left" : "";
+      L.marker(pin.at, { interactive: false, keyboard: false, zIndexOffset: 50,
+        icon: icon(`<div class="blabel day${side}" style="--pin-half:${pin.w / 2}px" aria-hidden="true"><b>${esc(text)}</b>${name ? `<span>${esc(name)}</span>` : ""}</div>`) }).addTo(names);
+    }
+    return;
+  }
+  if (z < 15.5) return;
+  const o = map.containerPointToLayerPoint([0, 0]);
+  const placed = (mp.boxes || []).slice();
+  for (const lb of allBuildingMarks()) {
+    const p = map.latLngToLayerPoint(lb.at);
+    const w = Math.max(7.2 * lb.text.length + 4, withName ? 10.2 * lb.name.length : 0), hh = withName ? 28 : 15;
+    const box = [p.x - w / 2 - 2, p.y - hh / 2 - 1, p.x + w / 2 + 2, p.y + hh / 2 + 1];
+    if (box[0] < o.x + 2 || box[1] < o.y + 2 || box[2] > o.x + size.x - 2 || box[3] > o.y + size.y - 2) continue;
+    if (placed.some((q) => !(box[2] < q[0] || box[0] > q[2] || box[3] < q[1] || box[1] > q[3]))) continue;
+    placed.push(box);
+    L.marker(lb.at, { interactive: false, keyboard: false,
+      icon: icon(`<div class="blabel" aria-hidden="true"><b>${esc(lb.text)}</b>${withName && lb.name ? `<span>${esc(lb.name)}</span>` : ""}</div>`) }).addTo(names);
   }
 }
 
@@ -1860,13 +2211,13 @@ function renderPage() {
     ["건물", "서울대학교 캠퍼스맵"],
     ["길", link("https://moreadorecampus.com/", "캠퍼스 마법 지도")],
     ["경사", "국토지리정보원 수치지형도 · 공공누리 제1유형"],
-    ["지도", [link("https://www.openstreetmap.org/copyright", "© OpenStreetMap contributors"), " · ODbL"]],
+    ["지도", ["국토지리정보원 수치지형도 · 공공누리 제1유형, ", link("https://www.openstreetmap.org/copyright", "© OpenStreetMap contributors"), " · ODbL"]],
   ] : [
     ["지도 표시", [link("https://github.com/Leaflet/Leaflet/blob/main/LICENSE", "Leaflet"), " · BSD-2-Clause"]],
     ["글꼴", [link("https://github.com/orioncactus/pretendard/blob/main/LICENSE", "Pretendard"), " · SIL OFL 1.1"]],
     ["로고 글꼴", [link("https://github.com/google/fonts/blob/main/ofl/fredoka/OFL.txt", "Fredoka"), " · SIL OFL 1.1"]],
     ["지도 자료", [link("https://www.openstreetmap.org/copyright", "OpenStreetMap"), " · ODbL"]],
-    ["경사 자료", [link("https://www.kogl.or.kr/info/licenseType1.do", "국토지리정보원 수치지형도"), " · 공공누리 제1유형"]],
+    ["지도·경사 자료", [link("https://www.kogl.or.kr/info/licenseType1.do", "국토지리정보원 수치지형도"), " · 공공누리 제1유형"]],
   ];
   $("page-list").replaceChildren(...rows.map(([k, v]) => h("li", {}, h("span", { class: "k" }, k), h("span", { class: "v" }, v))));
 }
@@ -1961,15 +2312,17 @@ function showSnackbar(text, action, fn) {
   placeSnackbar();
   armSnackbar();
 }
-// 넓은 화면의 입력 화면은 시간표 만들기가 오른쪽 칸 안에 있어(sticky) 높이가 그때그때 달라서, 스낵바를 그 버튼 바로 위에 띄운다
-const wideInput = matchMedia("(min-width: 52.5em)"); // bp-expanded 840px, style.css 의 두 칸과 같다
+/** 넓은 화면 입력 화면: 시간표 만들기가 오른쪽 칸 안(sticky)이라 자리가 그때그때 달라서, 스낵바를 그 버튼 바로 위에 같은 폭으로 띄운다. */
 function placeSnackbar() {
   const bar = $("snackbar");
-  bar.style.bottom = "";
-  if (bar.hidden || screen !== "input" || !wideInput.matches) return;
+  bar.style.bottom = bar.style.left = bar.style.right = bar.style.maxWidth = "";
+  if (bar.hidden || screen !== "input" || !twoPane.matches) return;
   const r = $("run").getBoundingClientRect();
-  if (r.bottom <= 0 || r.top >= innerHeight) return;
+  if (!r.width || r.bottom <= 0 || r.top >= innerHeight) return;
   bar.style.bottom = `${Math.round(innerHeight - r.top + 8)}px`;
+  bar.style.left = `${Math.round(r.left)}px`;
+  bar.style.right = `${Math.round(document.documentElement.clientWidth - r.right)}px`;
+  bar.style.maxWidth = "none";
 }
 window.addEventListener("scroll", placeSnackbar, { passive: true });
 window.addEventListener("resize", placeSnackbar);
@@ -2042,7 +2395,7 @@ function renderOnline() {
 window.addEventListener("offline", renderOnline);
 window.addEventListener("online", () => {
   renderOnline();
-  for (const mp of [maps.small, maps.full]) if (mp) mp.tiles.redraw();
+  if (!basemap && (maps.small || maps.full)) loadBasemap(); // 처음 받다 끊겼으면 다시
 });
 
 // 외부 링크(처리방침·문의·출처)는 앱 밖으로. 스토어 앱은 Capacitor Browser(iOS 인앱 Safari, 안드로이드 Custom Tab), 웹은 새 탭
@@ -2071,7 +2424,45 @@ q.addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
   if (e.isComposing || e.keyCode === 229) return; // 한글 조합 중의 Enter 는 무시한다
   e.preventDefault();
+  if (state.loaded && findCourses(q.value).hits.length) saveRecent(q.value);
   q.blur(); // 키보드만 닫는다
+});
+// 폰(한 칸): 빈 검색창에 초점이 오면 최근 검색어를 띄우고, 초점이 검색창과 그 카드 밖으로 나가면 내린다. 다른 곳을 누른 순간
+// 카드가 사라져 누른 자리가 밀리지 않게(눌림이 엉뚱한 곳에 가지 않게) 조금 뒤에 내린다. 넓은 화면은 초점과 상관없이 늘 둔다
+q.addEventListener("focus", () => { if (!q.value.trim()) renderResults(); });
+for (const el of [q, $("results")]) {
+  el.addEventListener("focusout", () => setTimeout(() => {
+    if (!twoPane.matches && !q.value.trim() && !searchFocused()) renderResults();
+  }, 250));
+}
+twoPane.addEventListener("change", () => { renderResults(); placeSnackbar(); });
+// 지운 칩·고른 칩은 다시 그리면 사라지므로 초점을 옮긴다. 키보드(detail 0)와 마우스로 눌렀을 때만:
+// 터치로 누를 때 검색창에 초점을 주면 화상 키보드가 올라온다(크롬은 누른 버튼에 초점이 간다)
+const keptFocus = (e, el) => document.activeElement === el && (e.detail === 0 || !coarsePointer.matches);
+$("recent-list").addEventListener("click", (e) => {
+  const del = e.target.closest("[data-del]");
+  if (del) {
+    const had = keptFocus(e, del);
+    const i = recent.indexOf(del.dataset.del);
+    setRecent(recent.filter((x) => x !== del.dataset.del));
+    renderResults();
+    // 키보드로 지웠으면 초점을 다음(없으면 앞) 검색어로, 다 지웠으면 검색창으로
+    if (had) ($("recent-list").querySelectorAll(".chip-q")[Math.min(i, recent.length - 1)] || q).focus({ preventScroll: true });
+    return;
+  }
+  const b = e.target.closest("[data-q]");
+  if (!b) return;
+  const had = keptFocus(e, b);
+  q.value = b.dataset.q;
+  saveRecent(b.dataset.q); // 다시 쓴 검색어는 맨 앞으로
+  renderResults();
+  if (had) q.focus({ preventScroll: true });
+});
+$("recent-clear").addEventListener("click", (e) => {
+  const had = keptFocus(e, e.currentTarget);
+  setRecent([]);
+  renderResults();
+  if (had) q.focus({ preventScroll: true });
 });
 // 가상 키보드가 떠 있는 동안에만 하단 주요 버튼을 숨긴다. 초점만 보면 키보드를 내려도(안드로이드 뒤로, 키보드 내림 버튼)
 // 검색창에 초점이 남아 버튼이 계속 안 보였다(10/1 사용자 제보). 키보드는 보이는 높이가 키보드 없을 때보다 크게 줄어든 것으로 안다:
@@ -2098,15 +2489,16 @@ $("q-clear").addEventListener("click", () => {
   renderResults();
   q.focus();
 });
-// 검색창에 초점이 있을 때 담기·지우기를 눌러도 키보드가 닫히지 않게 초점을 옮기지 않는다
-for (const el of [$("results-list"), $("q-clear")]) {
+// 검색창에 초점이 있을 때 담기·지우기·최근 검색어를 눌러도 키보드가 닫히지 않게 초점을 옮기지 않는다
+for (const el of [$("results-list"), $("q-clear"), $("recent")]) {
   el.addEventListener("mousedown", (e) => { if (document.activeElement === q && e.target.closest("button")) e.preventDefault(); });
 }
 $("results-list").addEventListener("click", (e) => {
   const b = e.target.closest(".btn-add");
   const c = b && state.byId.get(b.dataset.id);
   if (!c) return;
-  if (isPicked(c.id)) removeCourse(c.id); else addCourse(c.id);
+  if (isPicked(c.id)) removeCourse(c.id);
+  else { addCourse(c.id); saveRecent(q.value); }
   setAddButton(b, c.name, isPicked(c.id));
 });
 $("results-more").addEventListener("click", () => {
@@ -2163,4 +2555,5 @@ for (const id of ["cls-legend", "picked-legend"]) {
 }
 renderInfo();
 renderOnline();
+renderResults(); // 넓은 화면: 자료를 받기 전에도 검색 결과 카드 자리를 잡아 둔다(두 칸 아래 끝)
 start();

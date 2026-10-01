@@ -61,6 +61,14 @@
       <button type="button" class="icon-btn" id="q-clear" aria-label="지우기" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
     </div>
     <div class="card results" id="results" hidden>
+      <div class="recent" id="recent" hidden>
+        <div class="list-head">
+          <h2 class="recent-title" id="recent-title">최근 검색어</h2>
+          <button type="button" class="btn-text small" id="recent-clear">모두 지우기</button>
+        </div>
+        <ul class="recent-list" id="recent-list" aria-labelledby="recent-title"></ul>
+      </div>
+      <p class="empty" id="recent-empty" hidden>최근 검색어가 없어요</p>
       <ul class="list" id="results-list"></ul>
       <p class="empty" id="results-empty" hidden>검색 결과가 없어요</p>
       <div class="more" id="results-more" hidden><button type="button" class="btn-text">더 보기</button></div>
@@ -79,6 +87,7 @@
     </div>
     <div class="cls-legend" id="picked-legend" aria-hidden="true" hidden></div>
 
+    <div class="pane-foot">
     <h2 class="section-title">조건</h2>
     <div class="card settings">
       <fieldset>
@@ -93,6 +102,7 @@
           <label><input type="radio" name="mode" value="flat">평지</label>
         </div>
       </fieldset>
+    </div>
     </div>
     <div class="bottom-bar">
       <button type="button" class="btn-primary" id="run" disabled>시간표 만들기</button>
@@ -117,8 +127,7 @@
           <div class="map-box">
             <button type="button" class="icon-btn map-expand" id="map-expand" aria-label="지도 크게 보기"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path></svg></span></button>
             <div class="map" id="map"></div>
-            <p class="map-note" hidden>지도 배경 없음</p>
-            <span class="map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
+            <span class="map-attr">© 국토지리정보원 · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
           </div>
           <ul class="legend" id="map-legend"></ul>
         </div>
@@ -145,8 +154,7 @@
   <main class="mapcard" hidden>
     <div class="map-box">
       <div class="map" id="map-full"></div>
-      <p class="map-note" hidden>지도 배경 없음</p>
-      <span class="map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
+      <span class="map-attr">© 국토지리정보원 · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
     </div>
     <ul class="legend" id="map-full-legend"></ul>
   </main>

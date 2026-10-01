@@ -110,6 +110,17 @@
   --gutter-left: max(var(--space-5), var(--safe-area-inset-left, env(safe-area-inset-left, 0px)));
   --gutter-right: max(var(--space-5), var(--safe-area-inset-right, env(safe-area-inset-right, 0px)));
   --bottom-bar-h: calc(var(--cta-height) + var(--space-3) * 2 + var(--safe-bottom));
+  /* 넓은 화면 두 칸에서 오른쪽(담은 과목·조건) 칸의 폭. width-result 1080 의 3분의 1(디자인 토큰에 넣기 전까지 여기) */
+  --width-pane: 360px;
+  /* 바탕 지도 색(app.js 가 캔버스에 그릴 때 읽는다). 디자인 세션이 지도 토큰을 정하기 전까지 백엔드 시안(docs/basemap_reference.html 의 T):
+     OSM 기본 지도 구조(땅·학교 땅·건물·숲·물·흰 길과 테두리·등급 색 큰길·점선 보행로)에 연보라 캠퍼스 땅·남색 글자·파랑 물·차가운 회색 건물 */
+  --map-land: #f1f0f2; --map-green: #c9e2c2; --map-park: #d3eacb; --map-grass: #d7edcf; --map-pitch: #bfe4d2;
+  --map-campus: #f5f6ff; --map-campus-line: #d7dcfa; --map-contour: #dfdce6; --map-contour-index: #cac4d6; --map-contour-label: #968eae;
+  --map-water: #afc9f2; --map-walk-area: #fbfbfe; --map-road: #ffffff; --map-road-line: #c3c0d0;
+  --map-road-secondary: #f2f1c4; --map-road-secondary-line: #c2c08a; --map-road-primary: #f9d9af; --map-road-primary-line: #d2ae78;
+  --map-road-trunk: #f7bba8; --map-road-trunk-line: #d99683; --map-road-case: #c3c0d0; --map-ped: #e3e4f4; --map-ped-case: #b3b6d2;
+  --map-foot: #f0857a; --map-foot-case: #ffffff; --map-foot-low: 1; --map-steps: #ec6f62; --map-building: #dad6df; --map-building-line: #bcb6c9;
+  --map-label: #1d2a78; --map-name: #51596a; --map-halo: #ffffff;
   color-scheme: light;
 }
 
@@ -163,6 +174,18 @@
     --shadow-md: 0 8px 24px #00000080;
     --shadow-press: inset 0 0 0 100px #0000002e;
     color-scheme: dark;
+  }
+}
+/* 화면 전용: 다크 바탕 지도 색(시안). 타일을 필터로 뒤집던 것 대신 따로 맞춘 한 벌 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --map-land: #17171b; --map-green: #1b261f; --map-park: #1e2a21; --map-grass: #1f2b22; --map-pitch: #1b2d27;
+    --map-campus: #1c1d25; --map-campus-line: #2b2e40; --map-contour: #25252c; --map-contour-index: #32313c; --map-contour-label: #7a7690;
+    --map-water: #1c2b45; --map-walk-area: #22222a; --map-road: #3b3c45; --map-road-line: #0d0d10;
+    --map-road-secondary: #5e5e3e; --map-road-secondary-line: #3b3b27; --map-road-primary: #7a6142; --map-road-primary-line: #4a3b28;
+    --map-road-trunk: #7d4e43; --map-road-trunk-line: #4c2f28; --map-road-case: #0b0b0e; --map-ped: #35364a; --map-ped-case: #121218;
+    --map-foot: #c9726a; --map-foot-case: #17171b; --map-foot-low: .75; --map-steps: #d97a6d; --map-building: #35343e; --map-building-line: #474656;
+    --map-label: #e5e8f0; --map-name: #afb2bb; --map-halo: #17171b;
   }
 }
 
@@ -250,18 +273,37 @@ h2.section-title .count { color: var(--text3); }
   padding: var(--space-3) var(--gutter-right) calc(var(--space-3) + var(--safe-bottom)) var(--gutter-left); background: linear-gradient(transparent, var(--bg) 24%); }
 body.is-typing .bottom-bar { display: none; }
 .bottom-bar .btn-text { flex-shrink: 0; min-height: var(--cta-height); }
-/* 넓은 화면(태블릿 가로·펼친 폴더블·PC, bp-expanded 840px~): 입력 화면을 두 칸으로(10/1 사용자). 왼쪽은 학기·검색, 오른쪽은 담은 과목·조건.
-   시간표 만들기는 오른쪽 칸 맨 아래(조건 밑)에 칸 폭으로 두고, 오른쪽 칸이 화면보다 길면 화면 아래에 붙는다(sticky) */
-@media (min-width: 52.5em) {
+/* 넓은 화면(폭 680px 이상: 태블릿·펼친 폴더블·PC·가로로 눕힌 폰)의 입력 화면은 두 칸(10/1 사용자, 흔한 배치를 따랐다).
+   - 왼쪽 큰 칸은 학기·검색(늘어나는 칸), 오른쪽 좁은 칸은 담은 과목·조건·시간표 만들기(폭 고정 width-pane 360px).
+     Android 지원 창 배치(주 칸 약 2/3, 보조 칸 360dp, 사이 24dp), Polaris·GOV.UK 2/3+1/3, Apple 인스펙터·Microsoft 보조 칸(오른쪽)과 같다.
+     좁을 때는 두 칸이 반씩(폭 784px까지, 펼친 폴더블은 가운데 접힌 자리가 두 칸 사이 틈에 온다)
+   - 두 칸 모두 화면 높이만큼(상단 바 아래) 내려가 아래 끝이 같다: 왼쪽은 검색 결과 카드, 오른쪽은 담은 과목 카드가 늘어나고
+     (검색 전에는 최근 검색어, 담기 전에는 빈 상태 한 줄), 조건과 시간표 만들기는 오른쪽 아래에 붙는다.
+     두 칸 다 sticky 라 짧은 쪽은 그대로 있고 긴 쪽만 페이지와 함께 내려간다: 검색 결과를 내려도 담은 과목·시간표 만들기가 보이고
+     (장바구니 요약), 담은 과목이 많아 오른쪽을 내려도 검색창이 보인다. 시간표 만들기는 늘 화면 아래에 붙는다
+   - 높이는 조건에 넣지 않는다: 앱(WebView)은 화상 키보드가 올라오면 창 높이가 줄어 타자 중에 한 칸으로 바뀌어 버린다 */
+@media (min-width: 42.5em), (horizontal-viewport-segments: 2) {
   #view-input { max-width: var(--width-result); padding-bottom: 0; }
-  #view-input > main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--space-8); align-items: start; }
+  #view-input > main { display: grid; grid-template-columns: minmax(0, 1fr) min(var(--width-pane), calc((100% - var(--space-6)) / 2));
+    column-gap: var(--space-6); align-items: start; }
+  .input-left, .input-right { position: sticky; top: calc(var(--topbar-h) + var(--safe-top)); display: flex; flex-direction: column;
+    min-height: calc(100vh - var(--topbar-h) - var(--safe-top)); min-height: calc(100dvh - var(--topbar-h) - var(--safe-top)); }
+  .input-left { padding-bottom: calc(var(--space-6) + var(--safe-bottom)); }
+  .input-left .results, .input-right .picked { flex: 1 0 auto; }
   .input-right > h2.section-title:first-child { margin-top: var(--space-2); }
   .input-right .bottom-bar { position: sticky; z-index: 1; margin-top: var(--space-4);
     padding: var(--space-3) 0 calc(var(--space-6) + var(--safe-bottom)); }
   .input-right .btn-primary { max-width: none; }
-  /* 되돌리기 스낵바는 오른쪽 칸(담은 과목) 폭에 맞춰 시간표 만들기 위에 띄운다 */
-  #view-input:not([hidden]) ~ .snackbar { left: calc(50% + var(--space-4)); max-width: none; margin: 0;
+  /* 되돌리기 스낵바는 오른쪽 칸 폭으로 시간표 만들기 위에(app.js placeSnackbar 가 버튼 자리에 맞춘다) */
+  #view-input:not([hidden]) ~ .snackbar { max-width: var(--width-pane); margin: 0 0 0 auto;
     right: max(var(--gutter-right), calc((100% - var(--width-result)) / 2 + var(--gutter-right))); }
+}
+/* 접히는 폰을 책처럼 펴 두어 화면이 좌우 두 쪽으로 나뉘면(Viewport Segments) 두 칸을 한 쪽씩, 접힌 자리 양옆 12px 를 비운다
+   (Samsung·Android: 폴더블은 반반, 접힌 자리 가까이에 누를 것을 두지 않는다) */
+@media (horizontal-viewport-segments: 2) {
+  #view-input { max-width: none; }
+  #view-input > main { grid-template-columns: calc(env(viewport-segment-right 0 0, 50vw) - var(--gutter-left) - var(--space-3)) minmax(0, 1fr);
+    column-gap: calc(env(viewport-segment-left 1 0, 50vw) - env(viewport-segment-right 0 0, 50vw) + var(--space-6)); }
 }
 .spinner { flex-shrink: 0; width: 20px; height: 20px; border: 2px solid currentColor; border-right-color: transparent;
   border-radius: 50%; animation: tt-spin .8s linear infinite; will-change: transform; }
@@ -325,6 +367,19 @@ body.is-typing .bottom-bar { display: none; }
 .r-meta { display: block; overflow: hidden; font-size: 0.8125rem; line-height: 1.125rem; color: var(--text3); white-space: nowrap; text-overflow: ellipsis; }
 .results .more { display: flex; justify-content: center; border-top: 1px solid var(--line); padding: var(--space-1) 0; }
 .results .empty { padding: var(--space-4); }
+/* 검색 전: 최근 검색어(담기로 이어진 검색어, 최대 10개). 넓은 화면은 늘 보이고(비었으면 빈 상태 한 줄), 폰은 검색창에 초점이 있을 때만.
+   글자를 넣으면 검색 결과로 바뀐다(Carbon 검색 패턴, Apple HIG Searching) */
+.recent { padding: 0 var(--space-4) var(--space-4); }
+.recent .list-head { margin-right: calc(var(--space-2) * -1); }
+.recent-title { margin: 0; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; color: var(--text2); }
+.recent-list { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.recent-list .chip { max-width: 100%; min-width: 0; padding: 0; }
+.chip .chip-q { position: relative; display: flex; align-items: center; width: auto; min-width: 0; height: 32px; padding: 0 2px 0 var(--space-3);
+  color: var(--text); font: inherit; }
+.chip .chip-q > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip .chip-q:focus-visible { outline: none; }
+.recent-list .chip:has(.chip-q:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.chip .chip-x { flex-shrink: 0; }
 
 /* ---------------------------------------------------------------- 담은 과목 */
 .picked { overflow: hidden; container-type: inline-size; }
@@ -470,8 +525,7 @@ dialog.sheet.is-dragging { transition: none; }
 .mapcard { display: flex; flex-direction: column; gap: var(--space-2); }
 .map-box { position: relative; display: flex; flex: 1; min-height: 0; }
 .map-box > .map-attr { right: 0; bottom: 0; z-index: 2; border-bottom-right-radius: var(--radius-md); }
-.map-box > .map-note { z-index: 2; }
-.map { position: relative; z-index: 0; flex: 1; min-width: 0; min-height: 0; overflow: hidden; border-radius: var(--radius-md); background: var(--bg); }
+.map { position: relative; z-index: 0; flex: 1; min-width: 0; min-height: 0; overflow: hidden; border-radius: var(--radius-md); background: var(--map-land); }
 /* 오른쪽 위 버튼 줄: 크게 보기(32px), 그 아래 마우스일 때 확대·축소 */
 .map-expand { position: absolute; top: 0; right: 0; z-index: 2; }
 .map-expand span { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius-sm);
@@ -490,8 +544,6 @@ dialog.sheet.is-dragging { transition: none; }
 /* 파선 견본 '기숙사 가는 길': 좁은 두 칸 번호표에서는 한 줄을 다 쓴다 */
 .legend li.line { grid-column: 1 / -1; }
 .line-key { flex-shrink: 0; color: var(--route-home); }
-.map-note { position: absolute; left: var(--space-2); top: var(--space-2); margin: 0; font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text3);
-  pointer-events: none; }
 .map-attr { position: absolute; right: 0; bottom: 0; padding: 1px 6px; border-top-left-radius: var(--radius-xs); background: var(--card); opacity: .9;
   font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text2); }
 .map-attr a { color: inherit; }
@@ -527,13 +579,22 @@ dialog.sheet.is-dragging { transition: none; }
 .view-map .mapcard { flex: 1; min-height: 0; gap: 0; margin: 0 calc(var(--gutter-right) * -1) 0 calc(var(--gutter-left) * -1); }
 .view-map .map { border-radius: 0; }
 .view-map .map-box > .map-attr { right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px)); border-bottom-right-radius: 0; }
-.view-map .map-box > .map-note { left: var(--gutter-left); top: var(--space-3); }
 .view-map .legend { grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); padding: var(--space-3) var(--gutter-right) calc(var(--space-3) + var(--safe-bottom)) var(--gutter-left); }
 .view-map .legend li.line { grid-column: auto; }
 .view-map .map-box:has(+ .legend:empty) > .map-attr { bottom: var(--safe-bottom); }
 
+/* 바탕 지도 건물 번호: 수업이 있는 날은 그날 수업 건물 번호만 핀 오른쪽에(겹쳐도 그대로), 없는 날은 모든 건물을 겹치지 않게(app.js placeLabels).
+   많이 확대하면 이름도. 글자 모양은 디자인 세션이 정하기 전까지 시안 그대로(번호 12px 750, 이름 10px 550, 바탕색 테두리) */
+.blabel { width: max-content; transform: translate(-50%, -50%); text-align: center; white-space: nowrap; pointer-events: none;
+  text-shadow: 0 0 2px var(--map-halo), 0 0 2px var(--map-halo), 0 0 3px var(--map-halo), 0 0 3px var(--map-halo), 0 0 4px var(--map-halo); }
+.blabel b { display: block; font-size: 12px; line-height: 14px; font-weight: 750; letter-spacing: -0.1px; color: var(--map-label); }
+.blabel span { display: block; font-size: 10px; line-height: 12px; font-weight: 550; letter-spacing: -0.2px; color: var(--map-name); }
+.blabel.day { transform: translate(calc(var(--pin-half, 12px) + 3px), -50%); text-align: left; }
+.blabel.day.left { transform: translate(calc(-100% - var(--pin-half, 12px) - 3px), -50%); text-align: right; }
+.blabel.day b { font-size: 12.5px; }
+
 /* Leaflet 안 */
-.leaflet-container { font-family: inherit; background: var(--bg); }
+.leaflet-container { font-family: inherit; background: var(--map-land); }
 .leaflet-div-icon { background: transparent; border: 0; }
 .leaflet-container .leaflet-bar { border: 0; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); }
 .leaflet-container .leaflet-bar a, .leaflet-container .leaflet-bar a:hover { width: var(--touch); height: var(--touch); border-bottom-color: var(--line); background: var(--card);
@@ -618,6 +679,8 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
   .course-hit:hover .c-title { background: none; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
   .term-select:hover { background-color: var(--surface-hover); }
   .btn-add.is-on:hover { background: var(--danger-weak); color: var(--danger); }
+  .recent-list .chip:has(.chip-q:hover) { background: var(--surface-hover); }
+  .chip .chip-x:hover { color: var(--text2); }
 }
 
 /* ---------------------------------------------------------------- 작은 컨트롤의 누르는 영역을 48px로 넓힌다 */
@@ -627,8 +690,6 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
 /* ---------------------------------------------------------------- 다크 전용 */
 @media (prefers-color-scheme: dark) {
   body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; } /* 밝은 글자가 굵어 보이지 않게 */
-  /* 지도 타일만 어둡게(경로·핀·라벨은 필터 밖이라 토큰 색 그대로) */
-  .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) saturate(.35) brightness(.9) contrast(.9); }
   .select, .term-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23afb2bb' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
   dialog.sheet::backdrop { background: var(--scrim, #000000a6); }
 }
