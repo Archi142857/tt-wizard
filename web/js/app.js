@@ -2,6 +2,7 @@
 // 화면은 입력 · 결과 · 정보 셋이고 전체 화면 지도, 자료 출처·오픈소스 라이선스가 그 위에 뜬다. 화면만 방문 기록(pushState)을
 // 남기고 시트(<dialog>)는 남기지 않는다. 화면 문구는 디자인 규칙 '문구'를 따른다(문장은 해요체 한 줄, 그 밖에는 명사구).
 import { DAY_KO, parseCourses, TravelMatrix, search, findConflicts, countFeasible, routeLine } from "./engine.js";
+import { indexCourses as indexSearch, searchCourses, splitMarks, normKey } from "./search.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -36,7 +37,6 @@ const CLS_GROUPS = [["전필", "req"], ["전선", "elec"], ["교양", "gen"], ["
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 const coarsePointer = matchMedia("(pointer: coarse)");
 const finePointer = matchMedia("(hover: hover) and (pointer: fine)"); // 마우스: 지도 확대·축소 버튼, 휠, 끌기
-const collator = new Intl.Collator("ko");
 
 const state = {
   campus: null, routes: null, routesLoading: null, travel: {},
@@ -422,71 +422,21 @@ function hideBanner() {
 
 // ---------------------------------------------------------------- 검색
 
-const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
-function choOf(ch) {
-  const code = ch.charCodeAt(0) - 0xac00;
-  return code >= 0 && code < 11172 ? CHO[Math.floor(code / 588)] : ch;
-}
-
-/** 검색용 글자 열과 각 글자의 원래 위치. skip 에 맞는 글자는 빼고 소문자로(cho 면 음절을 초성으로) 바꾼다. */
-function keyChars(text, skip = /\s/, cho = false) {
-  const s = String(text || "");
-  const keys = [], pos = [];
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i];
-    if (skip.test(ch)) continue;
-    const low = ch.toLowerCase();
-    keys.push(cho ? choOf(ch) : low.length === 1 ? low : ch);
-    pos.push(i);
-  }
-  return { key: keys.join(""), pos };
-}
-
+// 찾는 규칙과 줄 세우기는 search.js(백엔드, docs/search.md): 줄임말·초성 섞기·치는 중인 글자·영문 자판·학과 줄임·특별 낱말
+let searchIndex = [];
 function indexCourses() {
   state.byId = new Map(state.courses.map((c) => [c.id, c]));
-  for (const c of state.courses) {
-    c.nameKey = keyChars(c.name).key;
-    c.choKey = keyChars(c.name, /\s/, true).key;
-    c.idKey = keyChars(c.id, /[\s.]/).key; // 교과목번호는 공백·마침표·대소문자를 무시한다
-    c.deptKey = keyChars(c.dept).key;
-    c.profs = [...new Set(c.sections.map((s) => String(s.instructor || "").trim()).filter(Boolean))];
-    c.profKeys = c.profs.map((p) => keyChars(p).key);
-  }
+  searchIndex = indexSearch(state.courses);
 }
 
-/** 과목명(앞부분이 맞는 것 먼저) → 교과목번호 → 학과 → 교수 순. 초성만 넣으면 과목명 초성으로 찾는다. */
+/** 검색창 값 그대로(끝의 띄어쓰기로 다 친 낱말을 안다) → { hits: [{ c, kind, marks }] } 좋은 순 */
 function findCourses(raw) {
-  const q = keyChars(raw).key;
-  const qId = keyChars(raw, /[\s.]/).key;
-  const onlyCho = /^[ㄱ-ㅎ]+$/.test(q);
-  const hits = [];
-  if (!q) return { q, qId, hits };
-  for (const c of state.courses) {
-    let rank = -1, kind = "", prof = "";
-    if (onlyCho) {
-      if (c.choKey.includes(q)) { rank = c.choKey.startsWith(q) ? 0 : 1; kind = "cho"; }
-    } else if (c.nameKey.startsWith(q)) { rank = 0; kind = "name"; }
-    else if (c.nameKey.includes(q)) { rank = 1; kind = "name"; }
-    else if (qId && c.idKey.includes(qId)) { rank = 2; kind = "id"; }
-    else if (c.deptKey.includes(q)) { rank = 3; kind = "dept"; }
-    else {
-      const k = c.profKeys.findIndex((p) => p.includes(q));
-      if (k >= 0) { rank = 4; kind = "prof"; prof = c.profs[k]; }
-    }
-    if (rank >= 0) hits.push({ c, rank, kind, prof });
-  }
-  hits.sort((a, b) => a.rank - b.rank || collator.compare(a.c.name, b.c.name) || collator.compare(a.c.id, b.c.id));
-  return { q, qId, hits };
+  return searchCourses(searchIndex, raw);
 }
 
-/** text 에서 q 와 맞는 부분을 굵게. */
-function marked(text, q, skip = /\s/, cho = false) {
-  const s = String(text || "");
-  const { key, pos } = keyChars(s, skip, cho);
-  const at = q ? key.indexOf(q) : -1;
-  if (at < 0) return [s];
-  const a = pos[at], b = pos[at + q.length - 1] + 1;
-  return [s.slice(0, a), h("b", {}, s.slice(a, b)), s.slice(b)];
+/** 강조 범위([[시작, 끝), ...])를 굵게 */
+function marked(text, ranges) {
+  return splitMarks(text, ranges).map((p) => (p.mark ? h("b", {}, p.text) : p.text));
 }
 
 const isPicked = (id) => state.picks.some((p) => p.id === id);
@@ -507,10 +457,10 @@ function setAddButton(b, name, picked) {
   b.replaceChildren(...(picked ? [icon(I.check, 16), "담음"] : ["담기"]));
 }
 
-function resultRow({ c, kind, prof }, { q, qId }) {
-  const title = kind === "name" ? marked(c.name, q) : kind === "cho" ? marked(c.name, q, /\s/, true) : [c.name];
-  // 메타: 학과 · 교과구분 · 학점. 교과목번호·교수로 찾았으면 학과 자리에 그것을 보인다
-  const first = kind === "id" ? marked(c.id, qId, /[\s.]/) : kind === "dept" ? marked(c.dept, q) : kind === "prof" ? marked(prof, q) : c.dept ? [c.dept] : null;
+function resultRow({ c, marks }) {
+  const title = marked(c.name, marks.name);
+  // 메타: 학과 · 교과구분 · 학점. 교수·교과목번호로 찾았으면 학과 자리에 그것을 보인다
+  const first = marks.prof ? marked(marks.prof.name, marks.prof.ranges) : marks.id ? marked(c.id, marks.id) : c.dept ? marked(c.dept, marks.dept) : null;
   const rest = [c.cls, fmtCredit(c.credit)].filter(Boolean).join(" · ");
   const btn = h("button", { type: "button", class: "btn-add", "data-id": c.id });
   const row = h("li", { class: "result" },
@@ -532,8 +482,8 @@ let recent = (() => {
 function saveRecent(raw) {
   const text = String(raw || "").trim().replace(/\s+/g, " ").slice(0, 60);
   if (!text) return;
-  const k = keyChars(text).key;
-  recent = [text, ...recent.filter((x) => keyChars(x).key !== k)].slice(0, RECENT_MAX);
+  const k = normKey(text);
+  recent = [text, ...recent.filter((x) => normKey(x) !== k)].slice(0, RECENT_MAX);
   store.set("recent", recent);
 }
 function setRecent(list) {
@@ -580,7 +530,7 @@ function renderResults({ more = false } = {}) {
   const found = findCourses(raw);
   const list = $("results-list");
   const before = more ? list.children.length : 0;
-  list.replaceChildren(...found.hits.slice(0, resultsShown).map((hit) => resultRow(hit, found)));
+  list.replaceChildren(...found.hits.slice(0, resultsShown).map((hit) => resultRow(hit)));
   box.hidden = false;
   $("results-empty").hidden = found.hits.length > 0;
   $("results-more").hidden = found.hits.length <= resultsShown;
