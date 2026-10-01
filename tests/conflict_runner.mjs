@@ -1,5 +1,5 @@
 // tests/test_web.py 가 부른다: 탐색 워커가 쓰는 엔진 기능(겹침 원인 찾기, 진행 알림)을 가짜 과목으로 확인하고 JSON으로 출력한다.
-import { feasible, findConflicts, search, TravelMatrix } from "../web/js/engine.js";
+import { bruteForce, countFeasible, feasible, findConflicts, search, TravelMatrix } from "../web/js/engine.js";
 
 const sec = (course, no, slots) => ({
   key: `${course}-${no}`, courseId: course, no, name: course, instructor: "", status: "",
@@ -26,7 +26,22 @@ const ticks = [];
 const withTicks = search(many, travel, "301", { topK: 5, useBound: false, onProgress: (d) => ticks.push(d), progressMs: 0 });
 const plain = search(many, travel, "301", { topK: 5 });
 
+// 5) 조합 수 세기: 손으로 센 경우, 상한·시간 제한, 무작위 작은 묶음을 완전탐색과 비교
+const two = [course("A", [sec("A", "001", mon9), sec("A", "002", tue9)]), course("B", [sec("B", "001", mon9), sec("B", "002", wed9)])]; // 겹치지 않는 조합 3개
+let seed = 7;
+const rnd = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % n; };
+const slots = [mon9, mon10, tue9, wed9, [[3, 540, 615, "25"]], [[0, 540, 690, "500"]]];
+const randomOk = Array.from({ length: 40 }, () => {
+  const cs = Array.from({ length: 2 + rnd(3) }, (_, i) => course(`R${i}`, Array.from({ length: 1 + rnd(4) }, (_, j) => sec(`R${i}`, `00${j}`, slots[rnd(slots.length)]))));
+  return countFeasible(cs).count === bruteForce(cs, travel, "301").length;
+}).every(Boolean);
+
 console.log(JSON.stringify({
+  count: [countFeasible(ok), countFeasible(pair), countFeasible(triple), countFeasible(two)],
+  countLimit: countFeasible(many, { limit: 10000, budgetMs: 1e9 }),
+  countAll: countFeasible(many, { limit: 40000, budgetMs: 1e9 }),
+  countBudget: countFeasible(many, { limit: 1e9, budgetMs: 0 }).exact,
+  randomOk,
   pair: findConflicts(pair),
   triple: findConflicts(triple).sort(),
   ok: findConflicts(ok),

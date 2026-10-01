@@ -137,15 +137,19 @@ def test_search_worker_contract():
     worker = (ROOT / "web" / "js" / "search-worker.js").read_text(encoding="utf-8")
     if "search-worker.js" in app:  # 화면이 워커를 붙였으면
         assert app.count('"./search-worker.js"') == 1, 'new Worker(new URL("./search-worker.js", import.meta.url), { type: "module" }) 모양으로'
-    assert 'from "./engine.js"' in worker and "findConflicts" in worker and '"progress"' in worker
+    assert 'from "./engine.js"' in worker and "findConflicts" in worker and '"progress"' in worker and "countFeasible" in worker and "total" in worker
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node 없음")
 def test_conflicts_and_progress():
-    """겹치지 않는 조합이 없을 때 까닭인 과목(가장 작은 묶음), 진행 알림(결과는 같다)."""
+    """겹치지 않는 조합이 없을 때 까닭인 과목(가장 작은 묶음), 진행 알림(결과는 같다), 전체 조합 수."""
     run = subprocess.run(["node", str(ROOT / "tests" / "conflict_runner.mjs")], capture_output=True, text=True,
                          encoding="utf-8", check=True)
     r = json.loads(run.stdout)
     assert r["pair"] == ["A", "B"] and r["triple"] == ["A", "B", "C"] and r["ok"] == []
     assert r["feasible"] == [False, False, True]
     assert r["ticks"] >= 2 and r["ticksMonotone"] and r["lastTick"] == 1 and r["sameResult"]
+    # 전체 조합 수: 정확히 셀 때, 상한(1만)·시간 제한에 걸리면 exact=false, 무작위 작은 묶음은 완전탐색과 같다
+    assert r["count"] == [{"count": 1, "exact": True}, {"count": 0, "exact": True}, {"count": 0, "exact": True}, {"count": 3, "exact": True}]
+    assert r["countLimit"] == {"count": 10000, "exact": False} and r["countAll"] == {"count": 8 ** 5, "exact": True}
+    assert r["countBudget"] is False and r["randomOk"]

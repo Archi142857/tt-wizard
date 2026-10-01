@@ -266,6 +266,35 @@ export function findConflicts(courses) {
   return set.map((c) => c.id);
 }
 
+/**
+ * 시간이 겹치지 않는 조합 수(결과 제목의 '전체 조합 n개'). 분반은 받은 그대로 센다: 화면이 같은 시간·건물 분반을 묶어서 넘기면
+ * search 결과와 같은 단위다. limit 개를 넘거나 budgetMs 안에 다 못 세면 멈추고 exact=false(count 개보다 많다는 뜻).
+ */
+export function countFeasible(courses, { limit = 10000, budgetMs = 300 } = {}) {
+  courses = courses.filter((c) => c.sections.length);
+  if (!courses.length) return { count: 0, exact: true };
+  const order = courses.map((_, i) => i).sort((i, j) => courses[i].sections.length - courses[j].sections.length);
+  const last = order.length - 1;
+  const t0 = now();
+  const chosen = [];
+  let count = 0, nodes = 0, exact = true;
+  (function rec(depth) {
+    if ((++nodes & 1023) === 0 && now() - t0 > budgetMs) { exact = false; return; }
+    for (const s of courses[order[depth]].sections) {
+      if (!exact) return;
+      if (chosen.some((c) => conflicts(c, s))) continue;
+      if (depth === last) {
+        if (++count > limit) { count = limit; exact = false; return; } // limit 개보다 많다
+        continue;
+      }
+      chosen.push(s);
+      rec(depth + 1);
+      chosen.pop();
+    }
+  })(0);
+  return { count, exact };
+}
+
 /** 검증용 완전탐색 (search 와 결과가 같아야 한다). */
 export function bruteForce(courses, travel, home, weights = WEIGHTS) {
   courses = courses.filter((c) => c.sections.length);
