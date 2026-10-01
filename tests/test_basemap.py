@@ -63,7 +63,8 @@ def test_basemap_file():
         assert k in ("road", "pedestrian", "walk", "steps") and all(isinstance(kind, str) and isinstance(p, str) for kind, p in items)
     assert d["line"]["walk"] and d["line"]["steps"]
     assert all(z % 5 == 0 for z, _ in d["contour"]["minor"]) and all(z % 25 == 0 for z, _ in d["contour"]["index"])
-    assert isinstance(d["green_approx"], bool)
+    # OSM 숲·잔디 자료가 레포에 있으면 어림이 아니라 그것으로 칠했어야 한다
+    assert d["green_approx"] is not (ROOT / "data" / "osm_basemap.geojson").exists()
 
 
 # ---------------------------------------------------------------- 만들기 (작은 가짜 도엽)

@@ -16,7 +16,7 @@
 ```
 app/
   package.json, package-lock.json   Capacitor 8.5.2 (core·cli·android·ios) + 플러그인 app·browser·haptics, 글꼴 pretendard
-  capacitor.config.json             앱 아이디·이름, User-Agent 꼬리표, 시스템 바(SystemBars)
+  capacitor.config.json             앱 아이디·이름, 시스템 바(SystemBars)
   src/native.js                     앱 연결 스크립트 (웹에서는 아무것도 안 한다)
   assets/icons/                     디자인 세션 아이콘 원본(design\v3\app-icons, 10/1 판)
   android/                          네이티브 안드로이드 프로젝트 (커밋한다. 빌드 결과·복사본은 .gitignore)
@@ -90,7 +90,7 @@ Xcode 26 이상. 위와 같고 마지막 두 줄만 `npx cap sync ios`, `npx cap
 | 첫 화면 전 흰 화면 번쩍임 막기 | 웹뷰 바탕을 같은 색으로: `MainActivity.java`, iOS `MainViewController`(`SceneDelegate.swift`) |
 | 시스템 바·안전 영역 | Capacitor 8 SystemBars(`insetsHandling: css`): 안드로이드 15 의 edge-to-edge 에서 `env(safe-area-inset-*)` 가 맞게 나온다. 옛 웹뷰(140 미만)는 `--safe-area-inset-*` 변수로 준다 |
 | 예측 뒤로 가기(안드로이드 13+) | `AndroidManifest.xml` `enableOnBackInvokedCallback` |
-| 지도 바탕 | 타일 대신 우리 자료(`data/basemap.json`)로 직접 그리기로 했다(10/1, `docs/basemap.md`). 앱은 앱에 넣은 것만 쓴다(`native.js` `BUNDLED_ONLY`). 바꾸기 전까지 쓰는 OSM 타일을 위해 웹뷰 User-Agent 끝에 `TTWizardApp (+https://archi142857.github.io/tt-wizard/)` (`appendUserAgent`) |
+| 지도 바탕 | 타일을 쓰지 않고 우리 자료(`data/basemap.json`)로 그린다(10/1, `docs/basemap.md`). 앱은 앱에 넣은 것만 쓴다(`native.js` `BUNDLED_ONLY`). OSM 타일용 User-Agent 꼬리표(`appendUserAgent`)는 뗐다 |
 | iOS 개인정보 매니페스트 | `PrivacyInfo.xcprivacy`: 추적·수집 없음, UserDefaults `CA92.1` |
 | iOS 수출 규정 질문 생략 | `Info.plist` `ITSAppUsesNonExemptEncryption = false`(HTTPS 만 쓴다) |
 | 한국어 시스템 문구(인앱 Safari 의 '완료' 등) | `CFBundleDevelopmentRegion = ko` |
@@ -116,7 +116,7 @@ Xcode 26 이상. 위와 같고 마지막 두 줄만 `npx cap sync ios`, `npx cap
    `build.gradle` 이 읽는다) Actions 에 서명한 AAB(`bundleRelease`) 단계를 더한다. iOS 는 Apple 개발자 계정의 인증서·프로비저닝(또는 Mac 의 Xcode 자동 서명).
 2. 앱에서만 되는 쓸모(심사 4.2·Play 최소 기능): 시간표 저장, 이미지·캘린더 내보내기, 위젯, 수강편람 알림 중 하나 이상(`앱_확장_계획.md`).
 3. 정보 화면의 개인정보 처리방침·문의 주소(`app.js` 의 `PRIVACY_URL`·`CONTACT_URL`), 스토어 등록 자료(디자인), 데이터 보안·개인정보 라벨.
-4. 바탕 지도 적용(프론트엔드, `docs/basemap.md`) 뒤 OSM 타일 떼기, iPad 지원 여부, 캠퍼스 마법 지도 자료의 스토어 배포 허락(신용범 님).
+4. iPad 지원 여부, 캠퍼스 마법 지도 자료의 스토어 배포 허락(신용범 님).
 5. Google Play: 개인 계정이면 테스터 12명이 14일 동안 비공개 테스트를 한 뒤 프로덕션 신청.
 
 ## 확인한 것 (10/1)
