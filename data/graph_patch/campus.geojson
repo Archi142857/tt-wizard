@@ -1,0 +1,8554 @@
+{
+ "type": "FeatureCollection",
+ "meta": {
+  "source": "관악캠 전체 점검(2026-10-02): 카카오 로드뷰(2026-07·08)·스카이뷰와 국토지리정보원 1:1,000 수치지형도로 출입구·길을 확인한 결과",
+  "note": "type = entrance(replace = true): 그 동의 출입구 전부(no = building_entrances.csv 번호, a1… = 더한 것). status = confirmed(사진으로 확인)·moved(옮김)·added(더함)·unverified(사진에서 안 보임)·unchecked(아직 안 봄). type = block: 실제로 없는 엣지. type = barrier: 접속선이 넘지 못하는 장애물 선"
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953464,
+     37.460804
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "3",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4564750844)",
+    "floor": "1층",
+    "note": "로드뷰 없음(사람만 다니는 인문대 안마당). 스카이뷰로는 나무·지붕에 가려 문이 안 보임"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953696,
+     37.460751
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "3",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4564750856)",
+    "floor": "1층",
+    "note": "로드뷰 없음(사람만 다니는 인문대 안마당). 스카이뷰로는 나무·지붕에 가려 문이 안 보임"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953742,
+     37.460983
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "3",
+    "replace": true,
+    "no": "3",
+    "status": "unverified",
+    "source": "building_entrances.csv #3 (osm-entrance 4564750857)",
+    "floor": "1층",
+    "note": "로드뷰 없음(사람만 다니는 인문대 안마당). 스카이뷰로는 나무·지붕에 가려 문이 안 보임"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9533443,
+     37.4604888
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "3",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "3동 남서쪽 끝 출입구(2동·3동 연결통로 밑): OSM 에 문 노드와 거기까지 가는 길 조각이 있는데 어느 동에도 배정되지 않았고 길 조각은 본길과 2 m 떨어져 떠 있었다. 3동은 수업이 가장 많은 동(2,386)이고 남쪽에서 오는 48쌍이 평균 47 m 짧아진다. 로드뷰 없음 → 확인 필요",
+    "evidence": "OSM 출입구 노드 4564750855 (entrance=yes, wheelchair=yes) © OpenStreetMap contributors; OSM 길 조각(받은 그래프 280–281–282)이 이 문에서 끝난다; 수치지형도: 2동·3동 사이 연결통로(무벽건물 53 m²)",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.955161,
+     37.460385
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "10",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4564750880)",
+    "floor": "지하1층",
+    "note": "서쪽(지하1층)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.955226,
+     37.46024
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "10",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4564750881)",
+    "floor": "1층",
+    "note": "남쪽 안뜰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.955599,
+     37.460179
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "10",
+    "replace": true,
+    "no": "3",
+    "status": "unverified",
+    "source": "building_entrances.csv #3 (osm-entrance 4564750885)",
+    "floor": "1층",
+    "note": "북동쪽 끝. 화단·철제 계단 난간 뒤(384), 문은 안 보임",
+    "evidence": "카카오 로드뷰 pano 1198671987"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9555276,
+     37.4600443
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "10",
+    "replace": true,
+    "no": "4",
+    "status": "moved",
+    "source": "building_entrances.csv #4 (osm-entrance 4564750883)",
+    "floor": "2층",
+    "note": "10·11동 동쪽 끝 현관(흰 틀 캐노피, 유리문, 경사로·점자블록, 학과 안내판). 화소→방위 325° 와 동쪽 벽의 교점(388). OSM 노드는 3 m 서쪽 벽 위"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.95564,
+     37.460131
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "10-1",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-path-join 456540230)",
+    "floor": "지하1층",
+    "note": "OSM 길 이음점(건물 아래 통로 쪽). 로드뷰에서 안 보임"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9557819,
+     37.4599956
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "10-1",
+    "replace": true,
+    "no": "3",
+    "status": "moved",
+    "source": "building_entrances.csv #3 (osm-entrance 4564750884)",
+    "floor": "지하1층",
+    "note": "주출입구(\"10-1 교육정보관 Education Information Hall\" 캐노피, 유리문). 화소→방위 116° 와 벽의 교점(387). OSM 노드는 5 m 앞 광장 위",
+    "evidence": "카카오 로드뷰 pano 1198671985, 1198671989"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.955347,
+     37.460079
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "11",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4564750882)",
+    "floor": "1층",
+    "note": "북쪽 안뜰 쪽. 나무에 가림(381)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.955053,
+     37.459747
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "11",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-path-end 300586780)",
+    "floor": "1층",
+    "note": "서쪽 끝 OSM 길 끝"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9555276,
+     37.4600443
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "11",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "10·11동이 만나는 동쪽 끝 현관(10#4 와 같은 문). 수치지형도에서 문은 10동 윤곽의 벽이지만 11동 조각과 4 m 사이라 두 동이 같이 쓴다고 봄 → 11동으로 통하는지 확인 필요",
+    "evidence": "카카오 로드뷰 pano 1198671987",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954648,
+     37.459655
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "12",
+    "replace": true,
+    "no": "1",
+    "status": "confirmed",
+    "source": "building_entrances.csv #1 (osm-entrance 4564809431)",
+    "floor": "1층",
+    "note": "서쪽 \"College of Education 12\" 글자 아래 유리 현관(390)",
+    "evidence": "카카오 로드뷰 pano 1212805317"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954902,
+     37.459704
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "12",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4564809433)",
+    "floor": "1층",
+    "note": "북쪽 안뜰 쪽"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954632,
+     37.459386
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "12",
+    "replace": true,
+    "no": "3",
+    "status": "suspect",
+    "source": "building_entrances.csv #3 (osm-path-end 167597859)",
+    "floor": "1층",
+    "note": "남서쪽 필로티 앞 OSM 길 끝(벽에서 6.6 m). 경로에 안 쓰임",
+    "evidence": "카카오 로드뷰 pano 1212805170, 1212805321"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954932,
+     37.459326
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "12",
+    "replace": true,
+    "no": "4",
+    "status": "confirmed",
+    "source": "building_entrances.csv #4 (osm-entrance 4564809432)",
+    "floor": "1층",
+    "note": "남동쪽 필로티 가장자리. 유리 로비는 필로티 안쪽(391)",
+    "evidence": "카카오 로드뷰 pano 1198671967, 1212805162"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.95472,
+     37.461014
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "14",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-path-end 456540167)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(보행 구역·나무)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.955255,
+     37.460678
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "14",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-path-end 167982827)",
+    "floor": "1층",
+    "note": "큰 바깥 계단 아래에 찍혀 있다(2025-07 로드뷰). 문은 계단 위 건물 남동쪽 모서리로 보이나 사진에서 문은 안 보임",
+    "evidence": "카카오 로드뷰 pano 1198671999",
+    "max_links": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9511534,
+     37.4623247
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "15-1",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남서쪽 정면 기둥 네 개 현관(유리문). 화소→방위(91.2°)와 수치지형도 벽의 교점. 마법 지도 엣지 2632–2642 가 건물로 들어가는 자리(-75.3,369.4)와 같다",
+    "evidence": "카카오 로드뷰 pano 1213022657, 1213022658"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951428,
+     37.4628247
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "15-1",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "OSM 출입구 node 4564809471(휠체어 가능). 북쪽 끝(16동·17동 사이 광장 쪽). 로드뷰에서 안 보임. OSM 건물(우천법학관, way 6808893)에 동 번호가 없어 지금까지 안 쓰였다"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951189,
+     37.462884
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "16",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4564809464)",
+    "floor": "지하1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.950839,
+     37.463247
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "16",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 14007509789)",
+    "floor": "지하1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951096,
+     37.463354
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "16",
+    "replace": true,
+    "no": "3",
+    "status": "unverified",
+    "source": "building_entrances.csv #3 (osm-entrance 4564809455)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.950875,
+     37.463954
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "16",
+    "replace": true,
+    "no": "4",
+    "status": "unverified",
+    "source": "building_entrances.csv #4 (osm-entrance 4564809456)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9512823,
+     37.4642826
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "16",
+    "replace": true,
+    "no": "5",
+    "status": "moved",
+    "source": "building_entrances.csv #5 (osm-entrance 4564809460)",
+    "floor": "1층",
+    "note": "북동쪽 모서리 출입구(튀어나온 현관). 화소→벽 (-63.5, 586.3)·(-64.7, 586.6). 2026-08 에는 문 앞에서 공사 중(작업자·굴착기·안전 펜스)",
+    "evidence": "카카오 로드뷰 pano 1213022695"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951244,
+     37.464043
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "16",
+    "replace": true,
+    "no": "6",
+    "status": "unverified",
+    "source": "building_entrances.csv #6 (osm-entrance 4564809461)",
+    "floor": "2층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9526691,
+     37.4586135
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "20",
+    "replace": true,
+    "no": "1",
+    "status": "moved",
+    "source": "building_entrances.csv #1 (osm-entrance 4564809439)",
+    "floor": "지하1층",
+    "note": "북서쪽(주차장 쪽) \"College of Pharmacy\" 유리 로비. 로드뷰 두 장(1212805278 방위 82°, 1212805280 방위 155°)의 시선과 벽의 교점 (60.8,-41.4)·(57.6,-44.4) 의 가운데. OSM 노드는 7 m 남서쪽 벽",
+    "evidence": "카카오 로드뷰 pano 1212805278, 1212805280"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952446,
+     37.458363
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "20",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4332551611)",
+    "floor": "1층",
+    "note": "표시 자리는 돌벽. 바로 옆이 필로티 통로(차·사람이 건물 밑으로 지나감) → 통로 안쪽 문으로 보임. 그대로 둠",
+    "evidence": "카카오 로드뷰 pano 1212805272, 1212805274"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9528228,
+     37.4584765
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "20",
+    "replace": true,
+    "no": "4",
+    "status": "moved",
+    "source": "building_entrances.csv #4 (osm-entrance 4564809440)",
+    "floor": "1층",
+    "note": "남동쪽 테라스의 넓은 유리 현관. OSM 노드가 벽을 따라 7 m 남서쪽에 있었고 그 자리는 화단·난간(판자담)이라 접속선을 못 이었음",
+    "evidence": "카카오 로드뷰 pano 1212805207, 1212805211"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952012,
+     37.457439
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "21",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4332551622)",
+    "floor": "1층",
+    "note": "남쪽 끝 벽. 로드뷰(246)에서 차·나무에 가려 문이 안 보임"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9523493,
+     37.4582981
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "21",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "note": "북쪽 20–21동 연결동 서쪽 면: 필로티 아래 출입구(경사로·난간). 수치지형도 이름 없는 246 m² 건물",
+    "evidence": "카카오 로드뷰 pano 1212805270"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952234,
+     37.4575782
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "21",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "동쪽 현관(흰 틀 유리 양문, 앞마당·횡단보도). 화소→방위 270.6° 와 동벽의 교점. 수치지형도 무벽건물(캐노피)",
+    "evidence": "카카오 로드뷰 pano 1212805229"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.95032,
+     37.457782
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "28",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 1790388389)",
+    "floor": "1층",
+    "note": "북쪽 테라스 쪽. 로드뷰 없음"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9502616,
+     37.4575638
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "28",
+    "replace": true,
+    "no": "3",
+    "status": "moved",
+    "source": "building_entrances.csv #3 (osm-entrance 4562088383)",
+    "floor": "1층",
+    "note": "남쪽 필로티 아래 주출입구(\"28동\" 유리 방풍실). 로드뷰 세 장(1213022584 방위 31.3°, 1213022585 방위 2°, 1213022587 방위 312°)의 시선 교점. 수치지형도 지붕선에서 6.5 m 안쪽",
+    "evidence": "카카오 로드뷰 pano 1213022585",
+    "clear": 9
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9535779,
+     37.4560888
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "29",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "note": "서쪽 현관(캐노피, 유리문). 서쪽 도로보다 높은 단(옹벽 위)에 있어 북서쪽 계단으로 올라간다. 수치지형도 무벽건물(캐노피)",
+    "evidence": "카카오 로드뷰 pano 1213022461, 1213022462"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.950777,
+     37.456574
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "30",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4564998563)",
+    "floor": "2층",
+    "note": "남서쪽. 로드뷰 없음(보행 구역)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.950916,
+     37.456524
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "30",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4564998562)",
+    "floor": "2층",
+    "note": "남쪽 끝. 로드뷰 없음"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.95094,
+     37.456364
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "30",
+    "replace": true,
+    "no": "3",
+    "status": "unverified",
+    "source": "building_entrances.csv #3 (osm-entrance 4564998570)",
+    "floor": "2층",
+    "note": "남쪽 끝(33동 쪽). 로드뷰 없음"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9505747,
+     37.4571097
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "30",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "note": "북쪽 큰 계단 위 \"<30 ENGINEERING 31>\" 유리 현관(30·31동 연결통로). 마법 지도 노드 2781 바로 남쪽",
+    "evidence": "카카오 로드뷰 pano 1213022588"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.950305,
+     37.457164
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "31",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4564998559)",
+    "floor": "1층",
+    "note": "북쪽. 로드뷰(309)에서 둔덕·나무에 가림",
+    "evidence": "카카오 로드뷰 pano 1213022585"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.950018,
+     37.456916
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "31",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4564998557)",
+    "floor": "2층",
+    "note": "남쪽 면(2층). 바로 남쪽이 31~32동 공사 가림벽"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.950237,
+     37.456934
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "31",
+    "replace": true,
+    "no": "3",
+    "status": "unverified",
+    "source": "building_entrances.csv #3 (osm-entrance 4564998558)",
+    "floor": "2층",
+    "note": "남쪽 면(2층)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9505747,
+     37.4571097
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "31",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "note": "30동과 같이 쓰는 \"<30 ENGINEERING 31>\" 유리 현관",
+    "evidence": "카카오 로드뷰 pano 1213022588"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9502074,
+     37.456133
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "32",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "32·33동이 같이 쓰는 남쪽 유리 로비(\"<32 ENGINEERING 33>\"). 32동 서·북쪽은 2026-08 현재 공사 가림벽이라 이 로비로 드나든다고 봄",
+    "evidence": "카카오 로드뷰 pano 1213022572",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9502763,
+     37.4562789
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "32",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "32·33동 공용 로비의 안뜰(북쪽) 문: 받은 그래프의 길 4518–4519(32동 동쪽 벽을 따라 내려오는 안뜰 길, OSM 에는 없는 선)가 33동 북쪽 벽 3 m 앞 (-152.9,-298.9)에서 끝난다 = 문 앞. 남쪽 유리 로비(\"<32 ENGINEERING 33>\")의 맞은편. 로드뷰 없음(보행 구역) → 확인 필요. 이 문이 없으면 북쪽에서 오는 98쌍이 큰길로 평균 156 m 돈다(31→32 가 299 m)",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.950242,
+     37.456137
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "33",
+    "replace": true,
+    "no": "1",
+    "status": "confirmed",
+    "source": "building_entrances.csv #1 (osm-entrance 4564998568)",
+    "floor": "1층",
+    "note": "서쪽 끝 유리 로비(\"<32 ENGINEERING 33>\"). 문은 표시에서 서쪽으로 4~5 m",
+    "evidence": "카카오 로드뷰 pano 1213022572"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.950693,
+     37.456165
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "33",
+    "replace": true,
+    "no": "2",
+    "status": "confirmed",
+    "source": "building_entrances.csv #2 (osm-entrance 4564998569)",
+    "floor": "1층",
+    "note": "남쪽 큰 계단 위 테라스(\"<33  37>\" 연결다리 아래)",
+    "evidence": "카카오 로드뷰 pano 1213022569, 1213022571"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9502763,
+     37.4562789
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "33",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "32·33동 공용 로비의 안뜰(북쪽) 문(32동 것과 같은 문). 받은 그래프의 길 4518–4519 끝",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951337,
+     37.456167
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "34",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 13617883882)",
+    "floor": "지하1층",
+    "note": "2011 로드뷰뿐. 표시 자리는 창살 있는 창(문 안 보임). 그대로 둠",
+    "evidence": "카카오 로드뷰 pano 1017104874, 1017104878"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951668,
+     37.455869
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "34",
+    "replace": true,
+    "no": "2",
+    "status": "confirmed",
+    "source": "building_entrances.csv #2 (osm-entrance 13617883883)",
+    "floor": "2층",
+    "note": "남동쪽 필로티 아래 유리 현관. 동쪽 도로에서 계단 광장을 올라 들어간다(193·211). 앞서 '2층 바깥 계단'으로 본 것은 틀림",
+    "evidence": "카카오 로드뷰 pano 1213022535",
+    "clear": 9
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.950704,
+     37.456048
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "37",
+    "replace": true,
+    "no": "1",
+    "status": "confirmed",
+    "source": "building_entrances.csv #1 (osm-entrance 4564998583)",
+    "floor": "지하1층",
+    "note": "북쪽 끝, 큰 계단 위 테라스 높이(\"37>\" 표지). 표시는 옹벽 면에 찍힘",
+    "evidence": "카카오 로드뷰 pano 1213022571"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.950869,
+     37.455911
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "37",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4564998584)",
+    "floor": "1층",
+    "note": "동쪽(안뜰 쪽). 로드뷰 없음"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.950944,
+     37.455404
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "37",
+    "replace": true,
+    "no": "3",
+    "status": "confirmed",
+    "source": "building_entrances.csv #3 (osm-entrance 4564998585)",
+    "floor": "2층",
+    "note": "남쪽 \"<37 ENGINEERING 36>\" 유리 로비의 37동 쪽(둘러보기 216)",
+    "evidence": "카카오 로드뷰 pano 1213022416"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9506177,
+     37.4559501
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "37",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "서쪽 주차장 쪽 출입구: 유리문·작은 캐노피·경사로(로드뷰 1213022570, 화소→방위 95.3°와 서벽의 교점)",
+    "evidence": "카카오 로드뷰 pano 1213022570"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951823,
+     37.454583
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "39",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-path-end 460919053)",
+    "floor": "1층",
+    "note": "동쪽 보행로(로드뷰 없음). OSM 길 끝, 그 안쪽 17 m 에 OSM 문(-33,-494)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951498,
+     37.454361
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "39",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4564999901)",
+    "floor": "1층",
+    "note": "남쪽 벽(40동 사이). 로드뷰 없음. 수치지형도 옹벽 선 때문에 접속선 못 이음"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9512145,
+     37.4550986
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "39",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "북서 주출입구: 북쪽 도로에서 큰 계단을 올라 필로티 아래 유리 현관(현수막 아래). 로드뷰 두 장(1213022417 방위 119°, 1213022420 방위 198°)의 시선 교점. 수치지형도 지붕선에서 10 m 안쪽(필로티)",
+    "evidence": "카카오 로드뷰 pano 1213022417, 1213022418, 1213022420",
+    "clear": 12
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.95174,
+     37.4552157
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "39",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "북동 출입구: 북쪽 면 동쪽 끝, 계단 위 오목한 현관. 로드뷰 두 장(1213022424 방위 174°, 1213022425 방위 216°)의 시선 교점",
+    "evidence": "카카오 로드뷰 pano 1213022424, 1213022425"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951567,
+     37.457311
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "43",
+    "replace": true,
+    "no": "1",
+    "status": "confirmed",
+    "source": "building_entrances.csv #1 (osm-entrance 4564998573)",
+    "floor": "1층",
+    "note": "서쪽 유리벽의 출입구(북서 모서리 쪽, 둘러보기 239)",
+    "evidence": "카카오 로드뷰 pano 1213022550, 1213022551"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9518384,
+     37.4572998
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "43",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "동쪽 출입구(유리문, 파란 안내판, 점자블록). 화소→방위 266.7° 와 동벽의 교점",
+    "evidence": "카카오 로드뷰 pano 1212805247"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951247,
+     37.45668
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "43-1",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4564998571)",
+    "floor": "1층",
+    "note": "서쪽. 로드뷰 없음"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951458,
+     37.456788
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "43-1",
+    "replace": true,
+    "no": "2",
+    "status": "confirmed",
+    "source": "building_entrances.csv #2 (osm-entrance 4564998572)",
+    "floor": "1층",
+    "note": "북쪽 유리 자동문(255)",
+    "evidence": "카카오 로드뷰 pano 1213022545"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951352,
+     37.457043
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "43-2",
+    "replace": true,
+    "no": "1",
+    "status": "confirmed",
+    "source": "building_entrances.csv #1 (osm-path-end 457001553)",
+    "floor": "2층",
+    "note": "남쪽 광장에서 선큰 입구로 내려가는 계단 앞(259·260)",
+    "evidence": "카카오 로드뷰 pano 1213022547, 1213022548"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9510833,
+     37.4572592
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "43-2",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "북서 모서리 출입구(나무 마감 벽 옆 유리 방풍실, \"43-2\" 글자 아래). 화소→방위 118° 와 서벽의 교점",
+    "evidence": "카카오 로드뷰 pano 1213022590"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954192,
+     37.463557
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "49",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 3902467478)",
+    "floor": "지하1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)",
+    "evidence": "카카오 로드뷰 pano 1213022772"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954166,
+     37.463336
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "49",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 3902467472)",
+    "floor": "지하1층",
+    "note": "서쪽 큰 계단 위. 문은 안 보임",
+    "evidence": "카카오 로드뷰 pano 1213022775"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953837,
+     37.462984
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "49",
+    "replace": true,
+    "no": "3",
+    "status": "unverified",
+    "source": "building_entrances.csv #3 (osm-entrance 4564623360)",
+    "floor": "지하1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)",
+    "max_links": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954367,
+     37.463552
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "49",
+    "replace": true,
+    "no": "4",
+    "status": "unverified",
+    "source": "building_entrances.csv #4 (osm-entrance 4752485021)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)",
+    "evidence": "카카오 로드뷰 pano 1213023807"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952522,
+     37.463452
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "51",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4373702873)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9524363,
+     37.4635204
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "51",
+    "replace": true,
+    "no": "2",
+    "status": "moved",
+    "source": "building_entrances.csv #2 (osm-entrance 4564623342)",
+    "floor": "1층",
+    "note": "서쪽 벽의 아치형 유리문. 화소→벽 (38.6, 501.7)",
+    "evidence": "카카오 로드뷰 pano 1213022724"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952727,
+     37.463453
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "51",
+    "replace": true,
+    "no": "3",
+    "status": "unverified",
+    "source": "building_entrances.csv #3 (osm-entrance 4527864818)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)",
+    "evidence": "카카오 로드뷰 pano 1213022793"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952745,
+     37.463674
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "51",
+    "replace": true,
+    "no": "4",
+    "status": "unverified",
+    "source": "building_entrances.csv #4 (osm-entrance 4527864819)",
+    "floor": "1층",
+    "note": "북쪽 캐노피(목재·자재가 쌓인 작업 마당) 밑. 문은 물건에 가려 안 보임",
+    "evidence": "카카오 로드뷰 pano 1213022745"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953047,
+     37.463636
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "52",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4564623346)",
+    "floor": "지하1층",
+    "note": "볼라드가 선 샛길만 보이고 문은 안 보임",
+    "evidence": "카카오 로드뷰 pano 1213022747"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.95316,
+     37.463427
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "52",
+    "replace": true,
+    "no": "2",
+    "status": "confirmed",
+    "source": "building_entrances.csv #2 (osm-entrance 4564623348)",
+    "floor": "1층",
+    "note": "남쪽 정면 현관(붉은 벽돌 마당 + 넓은 계단 + 유리문). 화소→벽 (102.5~103.8, 492.6)",
+    "evidence": "카카오 로드뷰 pano 1213022783, 1213022787",
+    "max_links": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953525,
+     37.463864
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "52",
+    "replace": true,
+    "no": "3",
+    "status": "unverified",
+    "source": "building_entrances.csv #3 (osm-path-end 455018306)",
+    "floor": "1층",
+    "note": "건물 동쪽 모서리 옆 낮은 마당과 난간만 보이고 문은 안 보임",
+    "evidence": "카카오 로드뷰 pano 1213022766"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953403,
+     37.463617
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "52",
+    "replace": true,
+    "no": "4",
+    "status": "unverified",
+    "source": "building_entrances.csv #4 (osm-entrance 4564623347)",
+    "floor": "2층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9530399,
+     37.4639826
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "52-2",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "note": "야외조각실습장: 지붕만 있는 작업장(무벽건물)이 길 쪽으로 열려 있다. 마당이 길과 만나는 자리",
+    "evidence": "카카오 로드뷰 pano 1213022754"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953126,
+     37.465316
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "57",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4563745369)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953243,
+     37.465382
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "57",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4373702817)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953165,
+     37.4658393
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "57",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "note": "57동 북쪽 정면 현관: 넓은 계단 위 문, 行政大學院 세로 현판. 두 파노라마(1213023946·1213023934)의 시선이 만나는 자리 (101.5, 759.2), 화소→벽 (102.3, 756.5)·(103.9, 760.9). 출입구 자료에는 남쪽 끝 문 둘(57-1동과 붙은 쪽)뿐이라 북쪽 큰길에서 오는 경로가 건물을 돌아 114 m 더 걸었다",
+    "evidence": "카카오 로드뷰 pano 1213023934, 1213023946; 수치지형도: 57동 윤곽 북쪽 끝 (y 760.9)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9517366,
+     37.4652503
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "58",
+    "replace": true,
+    "no": "1",
+    "status": "moved",
+    "source": "building_entrances.csv #1 (osm-entrance 4563745360)",
+    "floor": "1층",
+    "note": "서쪽 벽 남쪽의 캐노피 달린 유리문. 화소→벽 (-23.3, 693.7). OSM 점은 8 m 남쪽 건물 모서리(경사로 시작)였다",
+    "evidence": "카카오 로드뷰 pano 1213022680"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951757,
+     37.465622
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "58",
+    "replace": true,
+    "no": "2",
+    "status": "confirmed",
+    "source": "building_entrances.csv #2 (osm-entrance 4563745354)",
+    "floor": "1층",
+    "note": "서쪽 광장(벽돌 + 잔디 블록)에서 들어가는 정면 현관. 화소→벽 (-20.2, 734.7)",
+    "evidence": "카카오 로드뷰 pano 1213022675"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951977,
+     37.465382
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "58",
+    "replace": true,
+    "no": "3",
+    "status": "unverified",
+    "source": "building_entrances.csv #3 (osm-entrance 4563745356)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952024,
+     37.465595
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "58",
+    "replace": true,
+    "no": "4",
+    "status": "unverified",
+    "source": "building_entrances.csv #4 (osm-entrance 4563745355)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952679,
+     37.465551
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "58",
+    "replace": true,
+    "no": "5",
+    "status": "unverified",
+    "source": "building_entrances.csv #5 (osm-entrance 4563745358)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952843,
+     37.465156
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "59",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-path-end 456922939)",
+    "floor": "지하1층",
+    "note": "로드뷰 없음",
+    "evidence": "카카오 로드뷰 pano 1016836411"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952929,
+     37.465123
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "59",
+    "replace": true,
+    "no": "3",
+    "status": "unverified",
+    "source": "building_entrances.csv #3 (osm-path-end 456922941)",
+    "floor": "지하1층",
+    "note": "로드뷰 없음",
+    "evidence": "카카오 로드뷰 pano 1016836409"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953195,
+     37.464837
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "59",
+    "replace": true,
+    "no": "4",
+    "status": "unverified",
+    "source": "building_entrances.csv #4 (osm-path-end 456922959)",
+    "floor": "2층",
+    "note": "로드뷰 없음"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952746,
+     37.4649935
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "59",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "LG경영관(동쪽 덩어리) 광장 쪽 현관: 검은 유리 덩어리 아래 2층 높이 필로티의 유리문(985). 남쪽을 보는 벽 (62.3~69.7, 665.2). 2014-04 로드뷰(그 뒤 로드뷰 없음)",
+    "evidence": "카카오 로드뷰 pano 1033213902"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952331,
+     37.465025
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "59-1",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4563745366)",
+    "floor": "1층",
+    "note": "로드뷰 없음"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9541362,
+     37.4566339
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "66",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "서쪽 건물(제101학생군사교육단) 현관: 안뜰 쪽 오목한 모서리의 포치(위에 발코니)",
+    "evidence": "카카오 로드뷰 pano 1212892163, 1212892166"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9545024,
+     37.4566826
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "66",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "동쪽 건물 서벽 문(두 건물을 잇는 2층 연결통로 아래)",
+    "evidence": "카카오 로드뷰 pano 1212892167"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9545443,
+     37.4564546
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "66",
+    "replace": true,
+    "no": "a3",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "동쪽 건물 남쪽 현관(흰 포치, 유리 양문). 수치지형도 무벽건물(캐노피)",
+    "evidence": "카카오 로드뷰 pano 1212892161"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952705,
+     37.466977
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "71",
+    "replace": true,
+    "no": "1",
+    "status": "confirmed",
+    "source": "building_entrances.csv #1 (osm-path-end 1544364811)",
+    "floor": "1층",
+    "note": "동쪽 벽 남쪽의 타일 기둥 포치 + 유리문",
+    "evidence": "카카오 로드뷰 pano 1212902605, 1212902607"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9519933,
+     37.4672686
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "71",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "note": "71동(체육관) 서쪽 정면 출입구: 큰 유리문 두 칸(화소→벽 (-1.6, 920.1)·(0.5, 915.0))과 그 앞 경사로·장애인 주차 칸. 출입구 자료에는 동쪽 남쪽 끝 문 하나뿐이었다",
+    "evidence": "카카오 로드뷰 pano 1213022829"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9524317,
+     37.4680013
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "71",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "71동 북쪽 끝 유리 현관(1층 유리벽 + 문). 화소→벽 (37.6, 998.8)·(38.7, 999.2). 문이 열려 쓰이는지는 사진으로 알 수 없다",
+    "evidence": "카카오 로드뷰 pano 1212902637"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9529494,
+     37.4664766
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "71-1",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "동쪽(도로 쪽) 현관: 캐노피에 \"…문화연구동\" 글자, 유리문. 화소→방위(231°)와 동벽의 교점",
+    "evidence": "카카오 로드뷰 pano 1212902588, 1212902595"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9525403,
+     37.4662351
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "71-1",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남쪽 블록 서벽의 필로티 유리 현관(서쪽 광장 쪽)",
+    "evidence": "카카오 로드뷰 pano 1213023965"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9524612,
+     37.4664892
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "71-1",
+    "replace": true,
+    "no": "a3",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "북쪽 블록(체육관) 남벽 서쪽 끝의 캐노피(수치지형도 무벽건물 13 m², 서쪽 광장 쪽). 로드뷰에서는 52 m 밖이라 문이 또렷하지 않음",
+    "evidence": "카카오 로드뷰 pano 1213023965"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952727,
+     37.461948
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "74",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4564623362)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952753,
+     37.461755
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "74",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4564623365)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952806,
+     37.462015
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "74",
+    "replace": true,
+    "no": "3",
+    "status": "unverified",
+    "source": "building_entrances.csv #3 (osm-entrance 4564623363)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)",
+    "max_links": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952964,
+     37.461803
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "74",
+    "replace": true,
+    "no": "4",
+    "status": "unverified",
+    "source": "building_entrances.csv #4 (osm-path-end 168003059)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953089,
+     37.461855
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "74",
+    "replace": true,
+    "no": "5",
+    "status": "unverified",
+    "source": "building_entrances.csv #5 (osm-entrance 4564623366)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953245,
+     37.462035
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "74",
+    "replace": true,
+    "no": "6",
+    "status": "unverified",
+    "source": "building_entrances.csv #6 (osm-entrance 4564623364)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9526759,
+     37.4683471
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "80",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "동물병원 정문(유리문 여러 짝, \"서울대학교 동물병원\" 표지, 주차장 쪽 북동벽). 수치지형도 무벽건물(캐노피)",
+    "evidence": "카카오 로드뷰 pano 1212892203"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9530206,
+     37.4681345
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "80",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "유리 연결홀 출입구(\"응급의료센터 | 건강검진센터\" 표지). 마법 지도 막다른 끝 9148(88.4,1012.9) 자리",
+    "evidence": "카카오 로드뷰 pano 1212892206, 1212892207"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9544301,
+     37.4668798
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "81",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "남동쪽 오목한 곳의 캐노피(수치지형도 무벽건물 9 m², 주차장 쪽). 81동 둘레는 2014 년(공사 중) 뒤로 로드뷰가 없다",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9541051,
+     37.4672063
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "81",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "low",
+    "note": "북쪽 모서리 연결 캐노피(85동과 같이 씀)",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954004,
+     37.462225
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "82",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4566528829)",
+    "floor": "1층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)",
+    "max_links": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954357,
+     37.462016
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "82",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4566528831)",
+    "floor": "2층",
+    "note": "로드뷰에서 안 보임(나무·건물에 가림)",
+    "evidence": "카카오 로드뷰 pano 1213023762"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954281,
+     37.46229
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "82",
+    "replace": true,
+    "no": "3",
+    "status": "confirmed",
+    "source": "building_entrances.csv #3 (osm-entrance 4566528830)",
+    "floor": "2층",
+    "note": "길에서 들어가는 앞마당과 캐노피 현관이 보인다(문 자체는 멀다)",
+    "evidence": "카카오 로드뷰 pano 1213023772"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9531145,
+     37.4673217
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "85",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "서쪽 큰 계단 위 출입구(수치지형도 무벽건물 6 m², 계단 꼭대기의 작은 지붕). 서쪽 도로에서 계단으로 올라간다",
+    "evidence": "카카오 로드뷰 pano 1212902611"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9536909,
+     37.4673461
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "85",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "남쪽 광장(큰 계단 위, 수의대 문양 바닥) 북쪽 유리벽 가운데 = 로비 쪽. 2010-12 로드뷰(그 뒤 로드뷰 없음)에서 큰 계단과 유리벽 확인, 문 자리는 추정. 마법 지도 막다른 끝 2337(145.3,906.9)이 계단 아래",
+    "evidence": "카카오 로드뷰 pano 1016836283",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9540575,
+     37.4672577
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "85",
+    "replace": true,
+    "no": "a3",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "low",
+    "note": "85동 동쪽 끝과 81동 북쪽 모서리 사이 무벽건물(37 m², 연결 캐노피). 로드뷰 없음",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9536705,
+     37.4679819
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "85-1",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "low",
+    "note": "캠퍼스맵 좌표가 놓인 1층 54 m² 건물(시약보관창고)의 서쪽 벽(주차 공간 쪽). 문 자리는 추정"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.952486,
+     37.4689544
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "86",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "주출입구: 서쪽 모서리 큰 계단·경사로 위, 캐노피 아래 유리 현관(남서벽, 모서리에서 7 m)",
+    "evidence": "카카오 로드뷰 pano 1212892208"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9528308,
+     37.4687616
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "86",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "남서벽 가운데 문: 마법 지도 엣지 8923–8924(막다른 끝)가 건물로 들어가는 자리 + 수치지형도 계단. 로드뷰에서는 재활치료 산책로 나무에 가려 안 보임",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9503882,
+     37.4625022
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "103",
+    "replace": true,
+    "no": "1",
+    "status": "moved",
+    "source": "building_entrances.csv #1 (osm-entrance 2467461780)",
+    "floor": "지하1층",
+    "note": "북동쪽 앞마당의 유리 현관(긴 유리 홀, 유리문). 세 파노라마에서 화소→벽: 유리 홀이 (-134.9, 380.5)~(-146.3, 392.7) 에 걸쳐 있고 문은 그 가운데쯤. OSM 점은 홀 북서쪽 끝 바깥(수풀 뒤)이었다",
+    "evidence": "카카오 로드뷰 pano 1213022652, 1213022654"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.953533,
+     37.4539983
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "105-2",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "동쪽 큰 계단 위 유리 현관(캐노피 48 m²). 수치지형도 무벽건물",
+    "evidence": "카카오 로드뷰 pano 1213023539"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9494953,
+     37.4575701
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "129",
+    "replace": true,
+    "no": "2",
+    "status": "moved",
+    "source": "building_entrances.csv #2 (osm-entrance 4562091889)",
+    "floor": "1층",
+    "note": "129동 현관(\"129동\" 유리문, 앞에 계단과 경사로): 둥근 탑과 부채꼴 강의동 사이의 남쪽 벽. pano 578 에서 문 가운데 방위 10.1° → 수치지형도 벽 (-221.6,-158.7). 목록 자리 (-225.2,-154.8)는 탑 안쪽(7 m 북서)이었다",
+    "evidence": "카카오 로드뷰 pano 1213022577, 1213022578"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9543,
+     37.464021
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "140-2",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-path-join 456356702)",
+    "floor": "지하2층",
+    "note": "140동 서쪽 문(140-2동 건물에서 71 m). 실내로 이어지는지 모름"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954579,
+     37.464183
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "140-2",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4563745388)",
+    "floor": "지하1층",
+    "note": "140동 문(140-2동 건물에서 42 m)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954853,
+     37.4641
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "140-2",
+    "replace": true,
+    "no": "3",
+    "status": "confirmed",
+    "source": "building_entrances.csv #3 (osm-entrance 4563745387)",
+    "floor": "2층",
+    "note": "140동 동쪽 캐노피 밑 현관(140-2동 건물에서 39 m. 140동과 140-2동은 남쪽 끝이 붙어 있다)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.954758,
+     37.463947
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "140-2",
+    "replace": true,
+    "no": "4",
+    "status": "confirmed",
+    "source": "building_entrances.csv #4 (osm-entrance 4563745989)",
+    "floor": "2층",
+    "note": "140동 남쪽 현관(140-2동 건물에서 58 m)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9549952,
+     37.4645232
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "140-2",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "140-2동(국제회의동)은 큰길 서쪽의 유리 건물(수치지형도에는 104-1동으로 적혀 있다). 출입구 자료에는 140동의 문 넷만 들어 있었다(이 건물에서 39–71 m). 건물 북동쪽 모서리에 140-2 Entrance 표지가 있고 그 옆으로 필로티 밑(주차장)으로 들어간다. 문은 필로티 안 OSM 노드 자리",
+    "evidence": "카카오 로드뷰 pano 1213023838, 1213023841, 1213023844, 1213023847; OSM 출입구 노드 4563745386 (entrance=yes) © OpenStreetMap contributors; 건물 벽의 140-2 글자와 140-2 Entrance 표지(로드뷰 2026-08)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9535892,
+     37.4565763
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "142",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "주출입구: \"142동\" 글자 아래 유리문·캐노피. 서쪽 날개 북벽과 북쪽 블록 서벽이 만나는 안쪽 모서리",
+    "evidence": "카카오 로드뷰 pano 1213022487, 1213022489"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9537225,
+     37.4567979
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "142",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "북쪽 출입문(계단·경사로, 캐노피). 북벽이 3 m 튀어나온 서향 벽",
+    "evidence": "카카오 로드뷰 pano 1213022488"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.951462,
+     37.4665009
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "152-1",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "동쪽으로 튀어나온 2층 유리 로비(2010-12 로드뷰). 스카이뷰에서 남동쪽 대각선 보행로가 로비 남쪽 오목한 곳으로 이어져 그쪽 벽에 둠. 1층은 대부분 필로티 주차장(남·북·서쪽에서 보임)",
+    "evidence": "카카오 로드뷰 pano 1016836362, 1016836391",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9521616,
+     37.4661477
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "153",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남쪽 필로티 현관(\"宇庭園\" 글자 아래 유리문, 붉은 벽돌 진입로)",
+    "evidence": "카카오 로드뷰 pano 1213023961, 1213023969"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.948116,
+     37.458193
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "203",
+    "replace": true,
+    "no": "1",
+    "status": "unverified",
+    "source": "building_entrances.csv #1 (osm-entrance 4566528833)",
+    "floor": "1층",
+    "note": "남서쪽. 경로에 안 쓰임"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.948047,
+     37.458444
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "203",
+    "replace": true,
+    "no": "2",
+    "status": "unverified",
+    "source": "building_entrances.csv #2 (osm-entrance 4566528832)",
+    "floor": "1층",
+    "note": "북서쪽(벽에서 6 m). 경로에 안 쓰임"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.948686,
+     37.4583396
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "203",
+    "replace": true,
+    "no": "3",
+    "status": "moved",
+    "source": "building_entrances.csv #3 (osm-entrance 4566528834)",
+    "floor": "2층",
+    "note": "동쪽 끝 \"203동\" 유리 로비. 로드뷰 두 장(1213023083 방위 244.7°, 1213023087 방위 286.6°)의 시선이 동벽에서 만나는 자리. OSM 노드는 7 m 북쪽(화단·안내판 자리)",
+    "evidence": "카카오 로드뷰 pano 1213023078, 1213023083"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9530399,
+     37.4639826
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "207",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "note": "야외조각실습장1(2021-2 까지): 52-2 와 같은 마당(목록 좌표가 6 m 떨어짐)",
+    "evidence": "카카오 로드뷰 pano 1213022754"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9555197,
+     37.4655053
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "223",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "note": "우석경제관 주출입구: 북서쪽 큰 계단 위, 두 덩어리 사이 오목한 곳의 현관(\"우석경제관 223\" 글자 아래). 화소→방위(120°)와 수치지형도 벽의 교점. 나무에 가려 문짝 자체는 안 보여 ±2 m",
+    "evidence": "카카오 로드뷰 pano 1213023875, 1213023878, 1213023881"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9526556,
+     37.4510666
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "300",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "북서쪽 버스정류장에서 서쪽 벽을 따라 올라가는 큰 계단 위(서쪽 벽). 계단은 로드뷰로 확인, 문은 루버·나무에 가려 안 보임. 마법 지도 막다른 끝 2440(48,-886)이 그 앞. 1층 북서쪽 유리문(57.0,-855.9)은 음식점(나인온스버거)이라 넣지 않음",
+    "evidence": "카카오 로드뷰 pano 1213023469, 1213023475, 1213023477",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9525968,
+     37.4510125
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "300",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "low",
+    "note": "버스정류장 계단을 다 오른 테라스(주차장 입구 위 1단)에서 건물로 들어가는 문이 있다고 보고 넣음. 1단에는 유리창 줄이 있는 층이 있다(938·939). 문 자체는 길에서 안 보인다 → 사용자 확인 필요. 없으면 북쪽에서 오는 129쌍이 150~200 m 돌아간다(찻길 보도 → 남쪽 고가 보행로 → 301동 쪽 광장 → 2단 서쪽 문)",
+    "evidence": "카카오 로드뷰 pano 1213023463, 1213023465, 1213023469",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.94844,
+     37.459115
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "500",
+    "replace": true,
+    "no": "1",
+    "status": "unchecked",
+    "source": "building_entrances.csv #1 (osm-entrance 4562091905)",
+    "floor": "2층"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9485323,
+     37.4594721
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "500",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "note": "자연대 500동군 주출입구: 큰길 쪽 유리 캐노피 현관(\"SCIENCE\" 표지석, 벽돌 광장). OSM 출입구 node 4562091904(휠체어 가능) = 2층 연결동(수치지형도 이름 없는 1,910 m² 건물)의 동쪽 벽 위",
+    "evidence": "카카오 로드뷰 pano 1213023058, 1213023062"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9487041,
+     37.458772
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "500",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "note": "남쪽 현관(504동 이음부): 기둥 포티코·현수막. 화소→방위 259.4° 와 연결동 동벽의 교점. OSM 출입구 node 4562091906 은 20 m 안쪽에 찍혀 있다",
+    "evidence": "카카오 로드뷰 pano 1213023074"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9580922,
+     37.4616165
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "900",
+    "replace": true,
+    "no": "p1",
+    "status": "moved",
+    "source": "추정(수치지형도·위성 사진) + 수치지형도 계단",
+    "note": "북쪽 면 가운데, 파란 간판 \"관악학생생활관 행정관\" 밑 유리문(샷 661·663, 두 자리에서 1 m 안). 바로 위 2층 테라스(흰 기둥 포티코 밑)에도 문이 있고 왼쪽 큰 계단이 거기로 올라간다. 오른쪽 계단은 아래층으로 내려간다. 전의 추정 자리는 그 내려가는 계단 머리(4.9 m 서쪽)",
+    "evidence": "카카오 로드뷰 pano 1212805399, 1212805401, 1212805403"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9582072,
+     37.4615055
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "900",
+    "replace": true,
+    "no": "p2",
+    "status": "unverified",
+    "source": "추정(수치지형도·위성 사진) + 마법 지도 그래프 막다른 끝(3308 계단 끝)",
+    "note": "북동쪽 벽은 로드뷰에서 안 보인다(큰 계단 뒤). 문이 있는지 모른다",
+    "evidence": "카카오 로드뷰 pano 1212805403, 1212805409"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9579102,
+     37.461913
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "901",
+    "replace": true,
+    "no": "p1",
+    "status": "moved",
+    "source": "추정(수치지형도·위성 사진)",
+    "note": "남쪽 면 가운데의 문: 문 위 흰 띠에 901, 옆에 Dormitory Check-in Office 배너(샷 674·675). 건물 양 끝 모서리로 파노라마 자리를 맞춘 뒤 잰 값(샷 659·660, 두 자리에서 0.3 m 안). 전의 추정(북쪽 부속 건물 앞)은 사용자가 아니라고 함. 서쪽 1층 유리 건물은 SNU cafeteria(문 (498.1, 337.8), 샷 676·677)",
+    "evidence": "카카오 로드뷰 pano 1212805065, 1212805399, 1212805401",
+    "max_links": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9574559,
+     37.4615382
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "902",
+    "replace": true,
+    "no": "p1",
+    "status": "moved",
+    "source": "추정(수치지형도·위성 사진)",
+    "note": "동쪽 면, 오목한 모서리에서 9.6 m: 문 위 흰 띠에 902, 유리문 둘(안내문 붙음)(샷 686·685). 자전거보관대·모서리로 파노라마 자리를 맞춘 뒤 잼(372 는 2.2 m, 370 은 0.45 m 고침; 두 자리에서 0.6 m 안). 전의 추정 자리인 오목한 모서리 면에도 유리문이 하나 있다(간판 없음, 샷 645)",
+    "evidence": "카카오 로드뷰 pano 1212805370, 1212805372",
+    "max_links": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9573526,
+     37.4607016
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "904",
+    "replace": true,
+    "no": "p1",
+    "status": "unverified",
+    "source": "OSM 출입구(node 4750650869) = 마법 지도 1611",
+    "note": "서쪽 끝(OSM 출입구 노드). 숲 쪽이라 로드뷰가 닿지 않는다",
+    "evidence": "카카오 로드뷰 pano 1213023694"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9576582,
+     37.4604668
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "904",
+    "replace": true,
+    "no": "p2",
+    "status": "moved",
+    "source": "OSM 길 끝 = 마법 지도 3312",
+    "note": "안뜰 쪽 면(서쪽 날개 안쪽 면), 안쪽 모서리에서 3.4 m: 문 위 흰 띠에 904, 유리문(샷 632·667). 전의 자리(OSM 길 끝)에서 5.3 m 남쪽",
+    "evidence": "카카오 로드뷰 pano 1212805392, 1212805394"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9582154,
+     37.4609624
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "905",
+    "replace": true,
+    "no": "p1",
+    "status": "moved",
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "서쪽 면, 북서 모서리에서 10.4 m: 문 위 흰 띠에 905, 유리문(샷 633·683, 북서 모서리로 맞춤). 전의 자리는 그 왼쪽 경사로 지붕(수치지형도 무벽건물) 가운데",
+    "evidence": "카카오 로드뷰 pano 1212805384, 1212805388"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9580063,
+     37.4625454
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "906",
+    "replace": true,
+    "no": "p1",
+    "status": "unverified",
+    "source": "OSM 출입구(node 4752760188)",
+    "note": "북쪽 날개 서쪽 끝 면의 1층은 주차장 입구 옹벽·울타리에 가려 안 보인다",
+    "evidence": "카카오 로드뷰 pano 1212805065, 1212805067, 1212805073"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9581279,
+     37.4625107
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "906",
+    "replace": true,
+    "no": "p2",
+    "status": "unverified",
+    "source": "OSM 출입구(node 4752760187)",
+    "note": "북쪽 날개 남쪽 벽(광장 쪽)은 로드뷰에서 안 보인다",
+    "evidence": "카카오 로드뷰 pano 1212805067, 1212805073"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9584053,
+     37.4620833
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "906",
+    "replace": true,
+    "no": "p3",
+    "status": "moved",
+    "source": "OSM 출입구(node 4752760186) = 마법 지도 3263",
+    "note": "남쪽 끝 면, 남서 모서리에서 7.4 m: 발코니 줄 밑 유리문, 도로에서 벽돌 경사로(샷 650). 꼭대기 양 모서리로 파노라마 409 자리를 맞춤(0.4 m). OSM 출입구 노드에서 2.9 m 동쪽",
+    "evidence": "카카오 로드뷰 pano 1212805409",
+    "max_links": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9590147,
+     37.4634645
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "921",
+    "replace": true,
+    "no": "p2",
+    "status": "confirmed",
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "동쪽 면 가운데 현관: 초록 둥근 지붕 캐노피·계단·흰 포치, 옆에 자전거보관소. 수치지형도 캐노피 자리와 맞다",
+    "evidence": "카카오 로드뷰 pano 1212805438, 1212805440"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9592282,
+     37.463106
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "922",
+    "replace": true,
+    "no": "p1",
+    "status": "confirmed",
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "서쪽 면 현관: 초록 캐노피·유리문, 주차장에서 계단과 경사로. 수치지형도 캐노피 자리와 맞다",
+    "evidence": "카카오 로드뷰 pano 1212805464, 1212805468"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9594912,
+     37.4634451
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "923",
+    "replace": true,
+    "no": "p2",
+    "status": "confirmed",
+    "source": "수치지형도 1:1,000 계단(북쪽 벽 앞)",
+    "note": "북쪽 면(923–924 사이 골목): 흰 난간벽 계단 위 현관, 평지붕 캐노피(샷 718·719). 수치지형도 계단 자리와 맞다",
+    "evidence": "카카오 로드뷰 pano 1212805438, 1212805440"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9595322,
+     37.4635222
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "924",
+    "replace": true,
+    "no": "p1",
+    "status": "moved",
+    "source": "수치지형도 1:1,000 무벽건물(출입구 캐노피)",
+    "note": "골목 끝의 유리 현관(초록 지붕 캐노피 밑, 서쪽을 본다). 문은 현관 서쪽 앞면(캐노피 서쪽 끝)이라 벽 위 추정 자리에서 3.5 m 서쪽으로. 동쪽 날개 남서 모서리가 예상 화소와 4화소 안에서 맞아 파노라마 440 자리는 그대로 씀",
+    "evidence": "카카오 로드뷰 pano 1212805440"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9586935,
+     37.4641538
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "925",
+    "replace": true,
+    "no": "p1",
+    "status": "moved",
+    "source": "마법 지도 그래프 막다른 끝(노드 8999, 동쪽 벽)",
+    "note": "동쪽 면 가운데 현관: 초록 띠에 925, 계단 위 문(샷 733). 현관은 남쪽 반과 북쪽 반 사이 오목한 자리(수치지형도 윤곽의 턱). 턱의 두 모서리로 파노라마 450 자리를 맞춘 뒤(북쪽으로 1.7 m) 잰 값. 전의 자리(마법 지도 길 끝 8999 앞 벽)에서 6.8 m 북쪽",
+    "evidence": "카카오 로드뷰 pano 1212805444, 1212805448, 1212805450"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9590507,
+     37.4642133
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "926",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "남쪽 면 현관: 초록 캐노피, 골목에서 흰 난간 경사로·계단(샷 726·734·735). 캐노피 가운데를 남서 모서리로 맞춰 잰 값 (623.5, 578.6)과 923동을 돌려 놓은 자리 (624.1, 578.7)의 가운데. 나무에 가려 문 자체는 안 보인다(±2 m)",
+    "evidence": "카카오 로드뷰 pano 1212805448, 1212805450; 수치지형도 1:1,000: 926동 북쪽 면의 돌출부(617.4–624.3) 맞은편. 같은 형의 923동은 돌출부 맞은편 면에 현관 계단이 있다(돌출부 가운데에서 3.3 m 옆)",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9584618,
+     37.467056
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "931",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남쪽 면 계단실 현관(1·2). 동쪽 끝 캐노피에 \"7 931 8\", 서쪽 끝 캐노피에 \"931\"(샷 792·794)",
+    "evidence": "카카오 로드뷰 pano 1212805620, 1212805624, 1212805628; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9585827,
+     37.4670469
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "931",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남쪽 면 계단실 현관(3·4). 동쪽 끝 캐노피에 \"7 931 8\", 서쪽 끝 캐노피에 \"931\"(샷 792·794)",
+    "evidence": "카카오 로드뷰 pano 1212805620, 1212805624, 1212805628; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9587014,
+     37.4670109
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "931",
+    "replace": true,
+    "no": "a3",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남쪽 면 계단실 현관(5·6). 동쪽 끝 캐노피에 \"7 931 8\", 서쪽 끝 캐노피에 \"931\"(샷 792·794)",
+    "evidence": "카카오 로드뷰 pano 1212805620, 1212805624, 1212805628; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9588224,
+     37.467001
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "931",
+    "replace": true,
+    "no": "a4",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남쪽 면 계단실 현관(7·8). 동쪽 끝 캐노피에 \"7 931 8\", 서쪽 끝 캐노피에 \"931\"(샷 792·794)",
+    "evidence": "카카오 로드뷰 pano 1212805620, 1212805624, 1212805628; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9584279,
+     37.4667721
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "932",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남쪽 면 계단실 현관(1·2). 남쪽 면은 나무·화단에 가려 캐노피 글자는 못 읽음(샷 787). 931동과 같은 형",
+    "evidence": "카카오 로드뷰 pano 1212805614, 1212805626, 1212805628; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9585488,
+     37.4667631
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "932",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남쪽 면 계단실 현관(3·4). 남쪽 면은 나무·화단에 가려 캐노피 글자는 못 읽음(샷 787). 931동과 같은 형",
+    "evidence": "카카오 로드뷰 pano 1212805614, 1212805626, 1212805628; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9586675,
+     37.4667271
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "932",
+    "replace": true,
+    "no": "a3",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남쪽 면 계단실 현관(5·6). 남쪽 면은 나무·화단에 가려 캐노피 글자는 못 읽음(샷 787). 931동과 같은 형",
+    "evidence": "카카오 로드뷰 pano 1212805614, 1212805626, 1212805628; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9587896,
+     37.4667172
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "932",
+    "replace": true,
+    "no": "a4",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남쪽 면 계단실 현관(7·8). 남쪽 면은 나무·화단에 가려 캐노피 글자는 못 읽음(샷 787). 931동과 같은 형",
+    "evidence": "카카오 로드뷰 pano 1212805614, 1212805626, 1212805628; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점",
+    "max_links": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9590778,
+     37.4669199
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "933",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "서쪽 면 계단실 현관(북쪽 끝). 서쪽 면은 소나무에 가려 캐노피를 직접 보지 못함(샷 790·799). 934동과 같은 형",
+    "evidence": "카카오 로드뷰 pano 1212805628, 1212805636, 1212805644; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9590654,
+     37.4668262
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "933",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "서쪽 면 계단실 현관(둘째). 서쪽 면은 소나무에 가려 캐노피를 직접 보지 못함(샷 790·799). 934동과 같은 형",
+    "evidence": "카카오 로드뷰 pano 1212805628, 1212805636, 1212805644; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.959019,
+     37.4667361
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "933",
+    "replace": true,
+    "no": "a3",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "서쪽 면 계단실 현관(셋째). 서쪽 면은 소나무에 가려 캐노피를 직접 보지 못함(샷 790·799). 934동과 같은 형",
+    "evidence": "카카오 로드뷰 pano 1212805628, 1212805636, 1212805644; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9590077,
+     37.4666433
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "933",
+    "replace": true,
+    "no": "a4",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "서쪽 면 계단실 현관(남쪽 끝). 서쪽 면은 소나무에 가려 캐노피를 직접 보지 못함(샷 790·799). 934동과 같은 형",
+    "evidence": "카카오 로드뷰 pano 1212805628, 1212805636, 1212805644; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9593819,
+     37.4668938
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "934",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "서쪽 면 계단실 현관(1·2). 북쪽 끝 캐노피에 \"1 934 2\"(샷 791·802)",
+    "evidence": "카카오 로드뷰 pano 1212805654, 1212805656; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9593705,
+     37.466801
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "934",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "서쪽 면 계단실 현관(3·4). 북쪽 끝 캐노피에 \"1 934 2\"(샷 791·802)",
+    "evidence": "카카오 로드뷰 pano 1212805654, 1212805656; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9593253,
+     37.4667109
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "934",
+    "replace": true,
+    "no": "a3",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "서쪽 면 계단실 현관(5·6). 북쪽 끝 캐노피에 \"1 934 2\"(샷 791·802)",
+    "evidence": "카카오 로드뷰 pano 1212805654, 1212805656; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.959314,
+     37.4666163
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "934",
+    "replace": true,
+    "no": "a4",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "서쪽 면 계단실 현관(7·8). 북쪽 끝 캐노피에 \"1 934 2\"(샷 791·802)",
+    "evidence": "카카오 로드뷰 pano 1212805654, 1212805656; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9595084,
+     37.4672344
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "935",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남서쪽 면 계단실 현관(1·2). 캐노피에 \"3 935 4\", \"5 935 6\"(샷 805)",
+    "evidence": "카카오 로드뷰 pano 1212805658, 1212805664, 1212805697; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9596215,
+     37.4672713
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "935",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남서쪽 면 계단실 현관(3·4). 캐노피에 \"3 935 4\", \"5 935 6\"(샷 805)",
+    "evidence": "카카오 로드뷰 pano 1212805658, 1212805664, 1212805697; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9597458,
+     37.4672821
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "935",
+    "replace": true,
+    "no": "a3",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남서쪽 면 계단실 현관(5·6). 캐노피에 \"3 935 4\", \"5 935 6\"(샷 805)",
+    "evidence": "카카오 로드뷰 pano 1212805658, 1212805664, 1212805697; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.95986,
+     37.467319
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "935",
+    "replace": true,
+    "no": "a4",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "floor": "1층",
+    "note": "남서쪽 면 계단실 현관(7·8). 캐노피에 \"3 935 4\", \"5 935 6\"(샷 805)",
+    "evidence": "카카오 로드뷰 pano 1212805658, 1212805664, 1212805697; 수치지형도 1:1,000 무벽건물: 벽에 붙은 계단실 현관 캐노피(동마다 넷, 10.6 m 간격). 캐노피 가운데를 벽에 내린 점"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9607676,
+     37.4661311
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "942",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "북쪽 캐노피(수치지형도 무벽건물 19 m²) + 마법 지도 막다른 끝 9018(779.2,800.5). 로드뷰 없음",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9609767,
+     37.4658269
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "942",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "남동쪽 오목한 곳: 마법 지도 막다른 끝 2967(793,754) + 수치지형도 계단. 로드뷰 없음",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9606161,
+     37.4658035
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "942",
+    "replace": true,
+    "no": "a3",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "high",
+    "note": "942동(LG전자연구동) 서쪽 모서리의 차 대는 현관: 기둥 둘 위 캐노피 + 어두운 유리 현관, 주차 차단기를 지난 진입로가 그 앞에서 돈다. pano 544 에서 기둥 방위 88°~95.4° → 북서쪽 벽 (759.5,752.5)~(765.4,758.0)의 가운데. 지금까지는 북쪽 캐노피(a1)·남동쪽(a2)만 있어 서쪽에서 오는 125쌍이 건물 북서면을 따라 58 m 더 갔다",
+    "evidence": "카카오 로드뷰 pano 1212805526, 1212805544",
+    "max_links": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9582911,
+     37.4654918
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "946",
+    "replace": true,
+    "no": "a1",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "floor": "1층",
+    "note": "B동 현관: 안뜰 북동 안쪽 모서리 옆, 동쪽 날개 서쪽 면. 흰 띠에 \"B동\" 글자, 그 밑 유리문(샷 782). 큰길 보도(BK국제관 정류장)에서 벽돌 안뜰로 들어간다. 방위 66–68° 와 서쪽 면의 교점(파노라마 자리 오차 때문에 ±2 m)",
+    "evidence": "카카오 로드뷰 pano 1212805008",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9580854,
+     37.4649188
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "946",
+    "replace": true,
+    "no": "a2",
+    "status": "added",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "conf": "mid",
+    "note": "남쪽 날개 서쪽 부분의 필로티 어귀(남쪽 면): 남서쪽 길모퉁이에서 넓은 벽돌 계단으로 올라온다. 기둥 사이로 건너편(안뜰 쪽)이 보이는 통로이고 자전거가 서 있다(샷 780·784). 현관문 자체는 안 보인다 — A동 현관이 필로티 안인지 확인 필요",
+    "evidence": "카카오 로드뷰 pano 1212805476, 1212805479",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     126.9483153,
+     37.4663523
+    ]
+   },
+   "properties": {
+    "type": "entrance",
+    "building": "GATE",
+    "replace": true,
+    "no": "1",
+    "status": "moved",
+    "source": "점검(10/2)",
+    "conf": "high",
+    "note": "정문 구조물(샤) 발치. 지금 좌표(-265,799)는 60 m 동쪽 숲속(목록에 근사값이라 적혀 있음). 그래프 노드 2544(-322,811) 옆 보행 광장",
+    "evidence": "카카오 로드뷰 pano 1213022899, 1213022908"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       126.95104618372382,
+       37.45495535481418
+      ],
+      [
+       126.9514214,
+       37.4549926
+      ]
+     ],
+     [
+      [
+       126.9514214,
+       37.4549926
+      ],
+      [
+       126.95188677277432,
+       37.45503805663806
+      ]
+     ],
+     [
+      [
+       126.95109822674868,
+       37.45458118924474
+      ],
+      [
+       126.9514043,
+       37.454618
+      ]
+     ],
+     [
+      [
+       126.9514043,
+       37.454618
+      ],
+      [
+       126.95193051115949,
+       37.454683690968075
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "type": "block",
+    "id": "39-straight",
+    "edges": [
+     [
+      8938,
+      2851
+     ],
+     [
+      2851,
+      8939
+     ],
+     [
+      8940,
+      2854
+     ],
+     [
+      2854,
+      8941
+     ]
+    ],
+    "note": "39동을 동서로 가로지르는 직선 둘. OSM 에는 안뜰 계단 조각(way: osm43·osm44)만 있고 양쪽 도로까지는 받은 그래프에서 직선으로 이은 것. 스카이뷰로는 건물 지붕 위를 지난다",
+    "source": "점검(10/2): 카카오 스카이뷰·로드뷰·수치지형도"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       126.9592071,
+       37.4627965
+      ],
+      [
+       126.9598831,
+       37.4635885
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "type": "block",
+    "id": "922-923-straight",
+    "edges": [
+     [
+      5675,
+      5676
+     ]
+    ],
+    "note": "922·923동을 관통하는 106 m 직선(kind road). 스카이뷰·수치지형도로 건물 둘을 뚫고 지난다",
+    "source": "점검(10/2): 카카오 스카이뷰·로드뷰·수치지형도"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       126.9605954,
+       37.4649142
+      ],
+      [
+       126.9609312,
+       37.4653872
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "type": "block",
+    "id": "945-through",
+    "edges": [
+     [
+      5681,
+      5682
+     ]
+    ],
+    "note": "945동을 관통하는 엣지",
+    "source": "점검(10/2): 카카오 스카이뷰·로드뷰·수치지형도"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       126.95537342560796,
+       37.46552177430674
+      ],
+      [
+       126.9558008,
+       37.4654766
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "type": "block",
+    "id": "223-through",
+    "edges": [
+     [
+      9159,
+      4828
+     ]
+    ],
+    "note": "새 건물 223동(우석경제관)을 지나는 2432–4828 의 건물 쪽 조각. 2432–9159 는 진입로로 남긴다(9159 는 엣지 위에 찍힌 갈림목)",
+    "source": "점검(10/2): 카카오 스카이뷰·로드뷰·수치지형도"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9518169,
+      37.4557834
+     ],
+     [
+      126.9517287,
+      37.4557834
+     ],
+     [
+      126.9516496,
+      37.4557699
+     ],
+     [
+      126.9516236,
+      37.45576
+     ],
+     [
+      126.9515479,
+      37.4557564
+     ],
+     [
+      126.9515196,
+      37.4557356
+     ],
+     [
+      126.9514394,
+      37.4557275
+     ],
+     [
+      126.9513953,
+      37.4557609
+     ],
+     [
+      126.9513603,
+      37.4557834
+     ],
+     [
+      126.9513264,
+      37.4557834
+     ],
+     [
+      126.9512879,
+      37.4558194
+     ],
+     [
+      126.9512314,
+      37.4559366
+     ],
+     [
+      126.9512314,
+      37.4560447
+     ],
+     [
+      126.9512258,
+      37.4561078
+     ],
+     [
+      126.9512111,
+      37.4561582
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "quad-east",
+    "note": "공대 33·34·36·37동 안뜰 동쪽 통로: 34동 남쪽 계단 광장(동쪽 도로에서 올라감) → 34–36동 사이 테라스 → 수치지형도 계단 셋(연결다리 아래)으로 안뜰 반원 광장 → 북쪽 계단 → 33동 남쪽 길(노드 2535). 계단 광장·테라스는 로드뷰로 확인, 안뜰 안쪽은 수치지형도 계단·스카이뷰로 그림(로드뷰 없음)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "ask": true,
+    "evidence": "카카오 로드뷰 pano 1213022533"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.949286,
+      37.455955
+     ],
+     [
+      126.9494591,
+      37.4559789
+     ],
+     [
+      126.9495439,
+      37.455996
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "75",
+    "entrances": [
+     "75#2"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 23.3,
+    "curated": true,
+    "note": "고가통로(수치지형도 무벽건물 29 m²)를 건너 큰길(엣지 1869–1706)로. 아래 보행로(2775–2773)와는 높이가 달라 잇지 않는다(옹벽 2.5 m)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       126.9498075,
+       37.4568188
+      ],
+      [
+       126.9498401,
+       37.456612
+      ]
+     ],
+     [
+      [
+       126.9498401,
+       37.456612
+      ],
+      [
+       126.949904,
+       37.4562056
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "type": "block",
+    "id": "32-construction",
+    "edges": [
+     [
+      1870,
+      1871
+     ],
+     [
+      1871,
+      2776
+     ]
+    ],
+    "note": "31·32동 사이 터(32동 서쪽)가 공사 가림벽 안(2026-08-03 로드뷰: 큰길 쪽·32-1동 필로티 북쪽 모두 흰 가림벽, 타워크레인, 공사장 출입문). 그 안을 남북으로 지나는 서비스 도로 1870–1871–2776 은 지금 다닐 수 없다. 공사가 끝나면 다시 확인할 것",
+    "source": "점검(10/2): 카카오 스카이뷰·로드뷰·수치지형도"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9512427,
+      37.4627843
+     ],
+     [
+      126.9513444,
+      37.4628185
+     ],
+     [
+      126.9513851,
+      37.4628482
+     ],
+     [
+      126.9514179,
+      37.4628924
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "law-plaza-steps",
+    "note": "법대 15-1·16-1동 사이 길 끝(노드 2641)과 16·17동 앞 광장(노드 5688)을 잇는 계단. OSM 에 있고(way 875251697, 두 끝이 받은 그래프 노드와 같은 점) 수치지형도에도 계단(57,424 둘레)과 옹벽(높이 2 m)이 있는데 받은 그래프에서 빠졌다. 스카이뷰에서 벽돌 광장 서쪽 끝",
+    "source": "OSM way 875251697 (steps) + 국토지리정보원 1:1,000 수치지형도 계단",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": ""
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9494071,
+      37.4570088
+     ],
+     [
+      126.9493246,
+      37.457371
+     ],
+     [
+      126.949345,
+      37.4573908
+     ],
+     [
+      126.9493913,
+      37.4574034
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "osm-389628251",
+    "note": "큰길(31동 서쪽) 동쪽 보도와 28·129동 길 모퉁이. 로드뷰 1213023115·1213023113(2026-08)로 확인 · OSM 에 있는데 받은 그래프에서 빠진 조각 48 m. 더하면 166쌍이 평균 15 m(최대 21 m) 짧아진다",
+    "source": "OSM way 389628251 (footway) © OpenStreetMap contributors",
+    "snap": 3,
+    "link": 12,
+    "conf": "high"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9492353,
+      37.4573575
+     ],
+     [
+      126.9493246,
+      37.457371
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "osm-1544714437",
+    "note": "200동 남동쪽 큰길 횡단보도. 로드뷰 1213023109·1213023105(2026-08)로 확인 · OSM 에 있는데 받은 그래프에서 빠진 조각 8 m. 더하면 247쌍이 평균 5 m(최대 5 m) 짧아진다",
+    "source": "OSM way 1544714437 (footway) © OpenStreetMap contributors",
+    "snap": 3,
+    "link": 12,
+    "conf": "high"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9515072,
+      37.4657044
+     ],
+     [
+      126.9515117,
+      37.4657504
+     ],
+     [
+      126.9515332,
+      37.4658008
+     ],
+     [
+      126.9515637,
+      37.4658378
+     ],
+     [
+      126.9516112,
+      37.4658738
+     ],
+     [
+      126.9516553,
+      37.46589
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "osm-1544364821-1",
+    "note": "경영대(58동) 앞 모퉁이 벽돌 보도. 로드뷰 1213023986·1213022673(2026-08)로 확인 · OSM 에 있는데 받은 그래프에서 빠진 조각 26 m. 더하면 332쌍이 평균 10 m(최대 10 m) 짧아진다",
+    "source": "OSM way 1544364821 (footway) © OpenStreetMap contributors",
+    "snap": 3,
+    "link": 12,
+    "conf": "high"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9540311,
+      37.4662748
+     ],
+     [
+      126.9541374,
+      37.4662721
+     ],
+     [
+      126.9543668,
+      37.4662288
+     ],
+     [
+      126.9543939,
+      37.4662333
+     ],
+     [
+      126.9544075,
+      37.4662604
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "osm-1544364809-0",
+    "note": "71-1동 남쪽 길 굽이 안쪽 벽돌 보도. 로드뷰 1213023909(2026-08)로 확인 · OSM 에 있는데 받은 그래프에서 빠진 조각 36 m. 더하면 60쌍이 평균 9 m(최대 10 m) 짧아진다",
+    "source": "OSM way 1544364809 (footway) © OpenStreetMap contributors",
+    "snap": 3,
+    "link": 12,
+    "conf": "high"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9539723,
+      37.4668848
+     ],
+     [
+      126.9539543,
+      37.4668974
+     ],
+     [
+      126.9539057,
+      37.4669893
+     ],
+     [
+      126.9538774,
+      37.4670722
+     ],
+     [
+      126.9539011,
+      37.4671154
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "service",
+    "costFactor": 1.05,
+    "id": "osm-424949430",
+    "note": "81동 서쪽(85동 사이) 진입로. 스카이뷰에서 아스팔트 진입로와 횡단보도가 보인다(로드뷰 없음) · OSM 에 있는데 받은 그래프에서 빠진 조각 28 m. 더하면 219쌍이 평균 17 m(최대 17 m) 짧아진다",
+    "source": "OSM way 424949430 (service) © OpenStreetMap contributors",
+    "snap": 3,
+    "link": 12,
+    "conf": "mid"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9581035,
+      37.464598
+     ],
+     [
+      126.9580854,
+      37.4645881
+     ],
+     [
+      126.9580673,
+      37.4645692
+     ],
+     [
+      126.9580594,
+      37.4645493
+     ],
+     [
+      126.9580606,
+      37.4645097
+     ],
+     [
+      126.9581272,
+      37.4641556
+     ],
+     [
+      126.9581465,
+      37.4640376
+     ],
+     [
+      126.9581487,
+      37.4639907
+     ],
+     [
+      126.9581272,
+      37.4638267
+     ],
+     [
+      126.9580967,
+      37.4637024
+     ],
+     [
+      126.958099,
+      37.4636853
+     ],
+     [
+      126.9581069,
+      37.4636754
+     ],
+     [
+      126.9581318,
+      37.4636699
+     ],
+     [
+      126.9582606,
+      37.4636817
+     ],
+     [
+      126.9585534,
+      37.4637168
+     ],
+     [
+      126.9586517,
+      37.4637366
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "osm-1544574905",
+    "note": "관악사 925동 서쪽 잔디밭 가의 보행로(큰길 동쪽 → 잔디밭 남쪽 → 921동 앞). 스카이뷰에서 잔디밭 남쪽 가의 포장된 길이 보인다. 같은 때 올라온 OSM 길(1544364821·1544364809·1544714437)은 로드뷰로 확인됨 · OSM 에 있는데 받은 그래프에서 빠진 조각 154 m. 더하면 66쌍이 평균 28 m(최대 43 m) 짧아진다",
+    "source": "OSM way 1544574905 (footway) © OpenStreetMap contributors",
+    "snap": 3,
+    "link": 12,
+    "conf": "mid"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9513218,
+      37.4643286
+     ],
+     [
+      126.9513772,
+      37.4643808
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "loop-apron-a",
+    "note": "16동 북동쪽 출입구 앞: 보도(1649)와 차도(1509)가 턱 없이 같은 아스팔트 면으로 이어져 있다. 받은 그래프에는 보도와 차도가 250 m 동안 나란히만 가고 이어지지 않아 16동→58동이 220 m 돌아갔다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022691, 1213022693; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9513851,
+      37.4642889
+     ],
+     [
+      126.9514609,
+      37.4643223
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "loop-apron-b",
+    "note": "16동 북동쪽 출입구 앞 아스팔트 면의 남동쪽 끝: 보도(1648)에서 차도(1508)로. 같은 면이라 비스듬히 건넌다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022693; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9512744,
+      37.4651431
+     ],
+     [
+      126.951375,
+      37.4651431
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "loop-cross-681",
+    "note": "113동 북서쪽 모서리 앞 횡단보도(흰 줄무늬). 서쪽 벽돌 보도(1632–1654)와 차도(1515)를 잇는다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022681, 1213022682; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.951313,
+      37.4658171
+     ],
+     [
+      126.9514315,
+      37.4658351
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "loop-cross-757-w",
+    "note": "58동 북서쪽 삼거리 바로 남쪽 횡단보도(흰 줄무늬)의 서쪽 반: 서쪽 보도(1658–1659) ↔ 차도(8548)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022674; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9514315,
+      37.4658351
+     ],
+     [
+      126.9515618,
+      37.4658355
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "loop-cross-757-e",
+    "note": "같은 횡단보도의 동쪽 반: 차도(8548) ↔ 58동 앞 붉은 벽돌 보도(9221–9222)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022674, 1213022675; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9512693,
+      37.4658602
+     ],
+     [
+      126.9512664,
+      37.4659333
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "north-road-cross-s",
+    "note": "58동 북서쪽 삼거리 서쪽, 북쪽 큰길을 건너는 고원식 횡단보도의 남쪽 반: 남쪽 보도 모서리(1660–1661) ↔ 차도(5649)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213023992, 1213023995; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9512664,
+      37.4659333
+     ],
+     [
+      126.9512698,
+      37.4660113
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "north-road-cross-n",
+    "note": "같은 횡단보도의 북쪽 반: 차도(5649) ↔ 북쪽 벽돌 보도(2229–2551)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213023992, 1213023995; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.951215,
+      37.4645791
+     ],
+     [
+      126.9513331,
+      37.4645746
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "loop-park-620",
+    "note": "16동 북쪽 샛길(1631–1632)이 보도에 닿는 자리에서 차도(1512)로: 보도와 차도 사이에 직각 주차 칸(장애인 주차 칸 둘)이 있고 횡단보도 표시는 없다. 주차 칸 사이로 건너는 자리로 본다(70동 광장 ↔ 운동장 쪽 샛길). 2026-08 에는 바로 남쪽 보도(y 603–616)가 자재 야적장 울타리로 막혀 있었다(임시)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1213022687, 1213022689; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9515049,
+      37.4619013
+     ],
+     [
+      126.9514699,
+      37.4618364
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "lane-15-se",
+    "note": "15동 남서쪽 찻길: 받은 그래프의 차도 선(2636–2637–296)은 나무 띠 안쪽으로 4–7 m 어긋나 그려져 있고, 15동 쪽 보행로 선(2632–2633–2638)이 실제 찻길 위에 있다. 둘은 같은 길인데 서로 이어져 있지 않아 15동·15-1동에서 남동쪽으로 가는 경로가 60–120 m 돌았다. 남동쪽 끝(72동 서쪽 모서리)을 잇는다. 로드뷰 없음",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 스카이뷰; 수치지형도 도로경계선(A0010000): 나무 띠의 북동쪽 가장자리가 15동 앞에서 72동 남서쪽 벽까지 이어져 있고, 그 북동쪽이 한 줄 차로"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9510585,
+      37.4622572
+     ],
+     [
+      126.9510528,
+      37.4621887
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "lane-15-nw",
+    "note": "같은 찻길의 북서쪽 끝(15-1동 남서쪽): 보행로 선(2632)과 차도 선(2636)을 잇는다. 로드뷰 없음",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 스카이뷰; 수치지형도 도로경계선(A0010000): 나무 띠의 북서쪽 끝이 2636 자리"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9543917,
+      37.4550581
+     ],
+     [
+      126.9543668,
+      37.4550157
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "132-sidewalk-ne",
+    "note": "132동 북동쪽: 큰길 서쪽 보도가 139-1동·132동 사이 샛길 어귀를 횡단보도(흰 줄무늬)로 건너 이어진다. 받은 그래프에는 보도가 여기서 5 m 끊겨 있어(9182 ↔ 4638) 132동으로 가는 경로가 최대 124 m 돌았다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022477, 1213023565; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9540062,
+      37.4545048
+     ],
+     [
+      126.9540142,
+      37.4545157
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "132-sidewalk-sw",
+    "note": "132동 남쪽: 큰길 서쪽 보도가 105동·132동 사이 길 어귀를 횡단보도로 건넌다. 보도 선(4638–4639)이 그 길(2243–2360)을 노드 없이 가로질러 있어 서로 이어지지 않았다 → 만나는 자리를 잇는다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213023553; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9539576,
+      37.4634231
+     ],
+     [
+      126.9539701,
+      37.4635141
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "49-plaza-west",
+    "note": "49동 앞 둥근 광장의 서쪽 가장자리: 서쪽 큰 계단 위(2680)와 광장 북서쪽 모서리(2538)를 잇는다. 받은 그래프에서는 계단을 올라와도 광장으로 못 나가고 남쪽 낮은 통로로만 이어져 있었다(464쌍이 평균 16 m 돌아감)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 스카이뷰: 49동 앞 둥근 광장은 한 면으로 포장돼 있고 서쪽 큰 계단의 위 끝(2680)과 진입로 끝(2538)이 모두 광장 가장자리에 있다; 수치지형도: 둘 사이에 경계선 없음"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9505261,
+      37.4627212
+     ],
+     [
+      126.9505092,
+      37.4626518
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "103-junction-nw",
+    "note": "103동 북쪽 삼거리: 북쪽 보도 모서리(2626)와 삼거리 차도 노드(2629) 사이. 받은 그래프의 보도 선(2626–2627–2611)은 삼거리 한가운데(노란 원 표시)를 지나 북쪽 길로만 이어져 있어 서쪽 길·남동쪽 길로 가려면 돌아야 했다. 턱 하나뿐인 같은 교차로 면",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022653; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9503724,
+      37.4626926
+     ],
+     [
+      126.9503724,
+      37.462658
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "103-cross-w",
+    "note": "103동 앞 서쪽 길의 고원식 횡단보도(노란 줄무늬): 북쪽 보도(2608–2609) ↔ 차도·103동 앞마당 쪽",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022652; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9506866,
+      37.4625076
+     ],
+     [
+      126.9506242,
+      37.4624809
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "103-cross-se",
+    "note": "103동 북동쪽, 15-1동 쪽으로 내려가는 길의 고원식 횡단보도(노란 줄무늬): 차도(9893) ↔ 103동 쪽 보도(186–2629 선. 볼라드가 선 보도)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022654, 1213022655; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9546708,
+      37.4636717
+     ],
+     [
+      126.9546855,
+      37.463615
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "49-east-fork",
+    "note": "49동 동쪽 숲: 큰길에서 내려오는 계단길(9111–9107, 49동 뒤로 감)과 140동 주차장으로 올라가는 샛길(9113–9114–9115)이 계단 서쪽 끝에서 6 m 떨어진 채 이어져 있지 않다. 계단 끝에서 갈라지는 것으로 보고 잇는다. 나무에 가려 스카이뷰·로드뷰로는 갈림목이 안 보인다 → 실제로 이어져 있는지 확인 필요(8동 쪽 ↔ 140동 132쌍이 20–27 m 달라진다)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "ask": true,
+    "evidence": "카카오 로드뷰 pano 1213023807, 1213023810; 수치지형도: 큰길에서 서쪽으로 내려오는 계단(C0390000, 폭 2 m)이 (237, 515)에서 끝나고 길이 남서쪽으로 꺾인다. 석축은 그 길의 남동쪽에만 있다"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9523296,
+      37.4618799
+     ],
+     [
+      126.9523503,
+      37.4618766
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "72-east-corner",
+    "note": "72동 동쪽 모서리: 72동 둘레 길(9163–9164–9165)의 꼭짓점이 남북 보행로(338–339)에서 1.8 m 떨어진 채 이어져 있지 않다(받은 그래프에 나중에 더해진 길이 기존 길에 닿기 직전에서 끝난 경우). 같은 포장면이라 잇는다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       126.9517545,
+       37.4580177
+      ],
+      [
+       126.9514326,
+       37.4581211
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "type": "block",
+    "id": "56n-old-steps",
+    "edges": [
+     [
+      63,
+      1315
+     ]
+    ],
+    "note": "56동 북쪽 계단(63–1315, 30.7 m): 그 자리에 자연과학대학 새 건물이 들어섰다(2026-08 로드뷰. 수치지형도 2025·OSM·카카오 스카이뷰에는 아직 공사 중이거나 없음). 계단 선이 새 건물을 지나므로 막는다. 대신 새 건물과 56동 사이에 보도 + 계단이 생겼다(56n-walk)",
+    "source": "점검(10/2): 카카오 스카이뷰·로드뷰·수치지형도"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9517299,
+      37.4579674
+     ],
+     [
+      126.9516293,
+      37.4580134
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "56n-walk",
+    "note": "56동과 그 북쪽 새 건물(자연과학대학) 사이 보도: 동쪽 찻길에서 서쪽으로 10 m 들어가 점자블록 뒤로 계단이 내려간다(56동 북쪽 벽을 따라 서쪽 보행로 쪽으로). 받은 그래프의 1314–1317 선과 잇는다. 계단 아래쪽 끝은 로드뷰에서 안 보인다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022557, 1213022558"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       126.9507008,
+       37.4632983
+      ],
+      [
+       126.9504973,
+       37.4635583
+      ]
+     ],
+     [
+      [
+       126.9504973,
+       37.4635583
+      ],
+      [
+       126.9505255,
+       37.4637103
+      ]
+     ],
+     [
+      [
+       126.9506238,
+       37.4637874
+      ],
+      [
+       126.9505255,
+       37.4637103
+      ]
+     ],
+     [
+      [
+       126.9504973,
+       37.4635583
+      ],
+      [
+       126.95010343602301,
+       37.46382709553932
+      ]
+     ],
+     [
+      [
+       126.9504973,
+       37.4635583
+      ],
+      [
+       126.95052445224397,
+       37.46332147691367
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "type": "block",
+    "id": "kei-building",
+    "edges": [
+     [
+      2614,
+      2615
+     ],
+     [
+      2615,
+      2643
+     ],
+     [
+      2167,
+      2643
+     ],
+     [
+      2615,
+      9061
+     ],
+     [
+      2615,
+      9055
+     ]
+    ],
+    "note": "101동(아시아연구소)과 16동 사이 새 건물 한국경제혁신센터: 받은 그래프의 갈림목 2615 와 거기서 나가는 길 넷(2614·2643·9061·9055 쪽)이 새 건물 자리 안에 있다(옛 OSM 기준). 지금 OSM 은 건물을 넣고 길을 건물 남서쪽으로 돌려 놓았다. 건물을 지나는 엣지를 막는다(2615–4520 은 9055 북쪽 조각만)",
+    "source": "점검(10/2): 카카오 스카이뷰·로드뷰·수치지형도"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950525,
+      37.4633213
+     ],
+     [
+      126.9504854,
+      37.4634294
+     ],
+     [
+      126.9502854,
+      37.4635825
+     ],
+     [
+      126.9501328,
+      37.463833
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "kei-west-a",
+    "note": "한국경제혁신센터 남서쪽(101동 북동쪽 벽과 새 건물 사이) 길: 지금 OSM 의 선. 계단 위(2166)·101동 동쪽 문 앞(9055)에서 북서쪽으로 운동장 남쪽 보행로(1620–1621)까지. 사람만 다니는 곳이라 로드뷰가 없고 스카이뷰는 공사 중 모습이라 사진으로 확인 못 함 → 확인 필요",
+    "source": "OSM way 671412293 (footway) © OpenStreetMap contributors",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "ask": true,
+    "evidence": "OSM 건물 way 1537839925 한국경제혁신센터"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9504854,
+      37.4634294
+     ],
+     [
+      126.9507013,
+      37.4632987
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "kei-west-b",
+    "note": "한국경제혁신센터 남서쪽 길에서 16동 서쪽 문 앞(2614)으로: 지금 OSM 의 선(옛 선 2614–2615 는 새 건물 안). 확인 필요",
+    "source": "OSM way 456356735 (footway) © OpenStreetMap contributors",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.951884,
+      37.4635149
+     ],
+     [
+      126.9519629,
+      37.463515
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "83-front-ring",
+    "note": "83동 정면 문 앞 보도·광장과 회전교차로 차도 사이: 턱 하나뿐이고 바로 붙어 있다. 받은 그래프에는 보도(1634–1640)와 회전교차로 고리가 남쪽 끝(1634–1533)에서만 이어져 있었다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022716; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9518897,
+      37.4636014
+     ],
+     [
+      126.9519997,
+      37.4636126
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "83-front-north",
+    "note": "83동 앞 광장 북쪽 끝(1638)에서 회전교차로 북서쪽 갈림(1502)으로: 돌 포장 고원식 건널목(점자블록·볼라드)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022714; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9532614,
+      37.460411
+     ],
+     [
+      126.9532782,
+      37.4604233
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "3sw-stub",
+    "note": "2동·3동 연결통로로 들어가는 길 조각(280–281–282)이 본길(176–275 계단길)에서 2 m 떨어진 채 끊겨 있다 → 잇는다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       126.9526975,
+       37.4626966
+      ],
+      [
+       126.9527676,
+       37.462732
+      ]
+     ],
+     [
+      [
+       126.9527676,
+       37.462732
+      ],
+      [
+       126.9528824,
+       37.4629053
+      ]
+     ],
+     [
+      [
+       126.9529738,
+       37.4630522
+      ],
+      [
+       126.9528824,
+       37.4629053
+      ]
+     ],
+     [
+      [
+       126.9530148,
+       37.4629418
+      ],
+      [
+       126.9528824,
+       37.4629053
+      ]
+     ],
+     [
+      [
+       126.9529738,
+       37.4630522
+      ],
+      [
+       126.9530148,
+       37.4629418
+      ]
+     ],
+     [
+      [
+       126.9530006,
+       37.4628094
+      ],
+      [
+       126.9530148,
+       37.4629418
+      ]
+     ],
+     [
+      [
+       126.9530006,
+       37.4628094
+      ],
+      [
+       126.9531454,
+       37.4627413
+      ]
+     ],
+     [
+      [
+       126.9531454,
+       37.4627413
+      ],
+      [
+       126.9531857,
+       37.462654
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "type": "block",
+    "id": "54-construction",
+    "edges": [
+     [
+      2651,
+      2652
+     ],
+     [
+      2652,
+      2671
+     ],
+     [
+      2653,
+      2671
+     ],
+     [
+      2654,
+      2671
+     ],
+     [
+      2653,
+      2654
+     ],
+     [
+      331,
+      2654
+     ],
+     [
+      331,
+      332
+     ],
+     [
+      332,
+      333
+     ]
+    ],
+    "note": "54동(음대) 공사 구역: 54동 북서쪽 주차 마당이 흰 가림막으로 둘러싸여 있고 북쪽 길에는 공사장 문(관계자 외 출입금지)이 있다(2026-08 로드뷰). 마당을 지나는 길(2652–2671–2653, 655개 경로가 지나던 지름길)과 마당에서 54·55동 사이로 가는 길을 막는다. 54동·55동은 2023-1 뒤로 수업이 없다",
+    "source": "점검(10/2): 카카오 스카이뷰·로드뷰·수치지형도"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9530546,
+      37.4630978
+     ],
+     [
+      126.9531981,
+      37.4629636
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "53-west-drive",
+    "note": "54동 가림막 바깥(북동쪽)을 따라 남동쪽으로 내려가는 포장길: 북쪽 찻길(2686)에서 53동 서쪽 계단 아래(2838, 받은 그래프에서는 막다른 끝)까지. 계단 쪽 끝은 나무에 가려 안 보인다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1213022785, 1213022787, 1213022789"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.953718,
+      37.464903
+     ],
+     [
+      126.9537203,
+      37.4648728
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "57-1",
+    "entrances": [
+     "57-1#3"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 3.4,
+    "curated": true,
+    "note": "57-1동 남쪽 끝 2층 문 → 220동 사이 데크의 계단 끝(받은 그래프 노드 2513, 3.4 m). OSM 에서는 계단(2505–2513)이 이 문 앞에서 끝난다. 수치지형도에는 그 계단 자리에 옹벽 선(상단, 2.5 m)이 건물 모서리까지 그려져 있어 자동 접속선이 못 넘었다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9549952,
+      37.4645232
+     ],
+     [
+      126.9551207,
+      37.4646331
+     ],
+     [
+      126.9551847,
+      37.464634
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "140-2",
+    "entrances": [
+     "140-2#a1"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 22.2,
+    "curated": true,
+    "note": "140-2동 필로티 안 문 → 동쪽 면의 필로티 어귀(차단기 있는 진입로, 화소→벽 (276.1, 625.2)) → 큰길 서쪽 가장자리 길",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9580459,
+      37.4616003
+     ],
+     [
+      126.9580289,
+      37.4617175
+     ]
+    ]
+   },
+   "properties": {
+    "type": "barrier",
+    "id": "900-sunken-east",
+    "note": "900동 북쪽: 행정관 문 앞 벽돌 광장(도로 높이)과 그 서쪽의 내려가는 계단·아래층 마당 사이 난간(샷 661·663). 문 접속선이 계단 아래(아래층)로 바로 이어지지 않게 한다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       126.9506685,
+       37.4610965
+      ],
+      [
+       126.950515,
+       37.46123
+      ]
+     ],
+     [
+      [
+       126.9506931,
+       37.4610751
+      ],
+      [
+       126.9506685,
+       37.4610965
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "type": "block",
+    "id": "73-ramp",
+    "edges": [
+     [
+      115,
+      116
+     ],
+     [
+      114,
+      115
+     ]
+    ],
+    "note": "문화관 남서쪽: 받은 그래프의 service 선 116–115–114 는 잔디광장 지하주차장 진입로(차가 내려가는 경사로) 위를 지나 3 m 옹벽 위 잔디광장으로 바로 올라간다. 걸어서는 못 가는 선이라 막고, 옆의 계단(73sw-steps)을 넣었다. 106쌍이 이 선을 지났다",
+    "source": "점검(10/2): 카카오 스카이뷰·로드뷰·수치지형도"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9506452,
+      37.4613394
+     ],
+     [
+      126.950733,
+      37.4612381
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "73sw-sidewalk",
+    "note": "문화관 남서쪽 큰길 보도: 횡단보도 모서리(188)에서 계단 아래까지. 2026-08 에는 공사 가림벽 밑의 지붕 덮인 \"안전보행통로\"",
+    "source": "OSM way 456356730 (footway) © OpenStreetMap contributors",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022627, 1213022628"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9503197,
+      37.4609193
+     ],
+     [
+      126.9506448,
+      37.4611705
+     ],
+     [
+      126.9507002,
+      37.4612129
+     ],
+     [
+      126.950733,
+      37.4612381
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "73sw-busbay",
+    "note": "잔디광장 북서쪽(버스 서는 쪽) 보도와 지하주차장 어귀의 횡단보도: 계단 1376–1377 아래에서 문화관 남서쪽 계단 아래까지. 받은 그래프에는 길 건너편 차도 선만 있었다",
+    "source": "OSM way 1544364825·1544364831·1544364830 (footway) © OpenStreetMap contributors",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022627, 1213022628"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950733,
+      37.4612381
+     ],
+     [
+      126.9507556,
+      37.4612201
+     ],
+     [
+      126.9508516,
+      37.4611408
+     ],
+     [
+      126.9509364,
+      37.4610723
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "73sw-steps",
+    "note": "문화관 남서쪽 계단: 큰길 보도에서 잔디광장 높이로 올라간다(지하주차장 경사로 바로 옆). 2026-08 로드뷰에서 열려 있다(양옆 난간, 왼쪽은 공사 가림벽)",
+    "source": "OSM way 1544364827·1544364829 (footway)·1544364828 (steps) © OpenStreetMap contributors",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022627, 1213022628; 수치지형도 1:1,000 계단 면 둘(폭 4.7·3.1 m, 길이 6.8·6.6 m)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9509364,
+      37.4610723
+     ],
+     [
+      126.9511469,
+      37.4608487
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "73sw-walk",
+    "note": "계단 위에서 잔디광장 북동쪽 가장자리의 포장된 길(285–286)로. 받은 그래프에는 이 31 m 가 빠져 있고 285 는 잔디 위 113 으로만 이어져 있었다. 로드뷰가 닿지 않아(계단 위) 공사 중에도 열려 있는지는 사진으로 못 봄",
+    "source": "OSM way 167983988 (footway) © OpenStreetMap contributors",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       126.9506972,
+       37.4620218
+      ],
+      [
+       126.950842,
+       37.462158
+      ]
+     ],
+     [
+      [
+       126.950842,
+       37.462158
+      ],
+      [
+       126.9513642,
+       37.4617171
+      ]
+     ],
+     [
+      [
+       126.9506972,
+       37.4620218
+      ],
+      [
+       126.9502895,
+       37.4617109
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "type": "block",
+    "id": "73-carpark",
+    "edges": [
+     [
+      185,
+      186
+     ],
+     [
+      186,
+      298
+     ],
+     [
+      185,
+      187
+     ]
+    ],
+    "note": "문화관 북쪽 주차장은 리모델링·증개축 공사장이다(2026-08-03 로드뷰): 북쪽 찻길 어귀에 GATE1 가림문(관계자 외 출입금지), 103동 울타리 옆 보도는 접이식 차단막, 서쪽 큰길 쪽은 비탈 위로 가림벽이 이어진다. 주차장을 지나던 길(186–185–187, 186–298)을 막는다. 141쌍이 북쪽 찻길 ↔ 서쪽 큰길을 이 주차장으로 지났다",
+    "source": "점검(10/2): 카카오 스카이뷰·로드뷰·수치지형도"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9579582,
+      37.4608772
+     ],
+     [
+      126.9580104,
+      37.4608938
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "905-lane-merge",
+    "note": "905동 앞 찻길: 받은 그래프의 두 선(서쪽 2468–2469–2470, 동쪽 2442–8988)은 가운데 잔디 섬 남쪽 끝(약 (528,211)) 아래에서 한 포장면으로 합쳐진다. 2469 와 동쪽 선을 잇는다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805388, 1212805390"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9580104,
+      37.4608938
+     ],
+     [
+      126.9582183,
+      37.4609604
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "905-plaza",
+    "note": "905동 앞 벽돌 광장: 찻길에서 광장으로 턱 없이 이어지고(낮은 생울타리 띠가 끊긴 자리, pano 388 에서 방위 61°~88°) 905 현관 캐노피까지 벽돌 포장이다. 받은 그래프는 남쪽 8988–8989 로 16 m 돌아갔다",
+    "source": "OSM way 432377532 (pedestrian 면) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805384, 1212805388"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9581069,
+      37.4636754
+     ],
+     [
+      126.9580976,
+      37.4636013
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "919n-cross-w",
+    "note": "919동 북쪽 길 서쪽 끝의 고원식 횡단보도: 북쪽 보도(9252)에서 찻길 선(525–3252)으로. 북쪽 보도는 동쪽 끝(9240)에서만 찻길과 이어져 있었다",
+    "source": "OSM way 1544574889 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805415, 1212805418"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9585534,
+      37.4637168
+     ],
+     [
+      126.958559,
+      37.4636672
+     ],
+     [
+      126.958561,
+      37.463648
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "919n-cross-e",
+    "note": "919동 북쪽 길 동쪽의 횡단보도(흰 줄, x≈580): 북쪽 보도(9255)에서 찻길 선으로",
+    "source": "OSM way 1544574888 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805422, 1212805426"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9580854,
+      37.4645881
+     ],
+     [
+      126.9580789,
+      37.4646529
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "946sw-cross-a",
+    "note": "946동 남서쪽 횡단보도(흰 줄, 찻길은 동서로 y≈627): 남쪽 보도(9242)에서 찻길 선(530–1323)까지",
+    "source": "OSM way 1544574892 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805476"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9580789,
+      37.4646529
+     ],
+     [
+      126.9580708,
+      37.4647368
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "946sw-cross-b",
+    "note": "946동 남서쪽 횡단보도: 찻길 선에서 북쪽 보도(9334, 946동 남쪽 필로티 어귀 앞 벽돌 보도·볼라드)까지. 북쪽 보도는 찻길과 10 m 동쪽(9312)에서만 이어져 있었다",
+    "source": "OSM way 1544574892 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805476"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9577209,
+      37.4652209
+     ],
+     [
+      126.9578273,
+      37.4652323
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "915-lane-mouth",
+    "note": "915동 진입로 어귀(9002)는 기숙사 큰길 서쪽 턱에 있고 큰길 선(9295–9006)과는 남쪽 48 m(9001)에서만 이어져 있었다. 어귀는 큰길과 바로 붙은 T 자 갈림목이다(로드뷰 pano 008: 찻길에서 어귀까지 아스팔트). 큰길은 y≈683 부터 북쪽으로 가운데 나무 띠가 있어 큰길 선은 서쪽 차로 가장자리쯤이다. 915→931~935 가 33 m 짧아진다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805008, 1212805012"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9577822,
+      37.4655013
+     ],
+     [
+      126.9579198,
+      37.4655069
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "dormroad-cross-721",
+    "note": "기숙사 큰길(낙성대로)의 고원식 횡단보도(노랑·흰 줄, y≈721): 큰길 선에서 동쪽 보도(9294–9878)로. 이 북쪽부터 가운데 나무 띠(중앙분리대)가 시작한다",
+    "source": "OSM way 1544574877 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805006"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9492394,
+      37.4610873
+     ],
+     [
+      126.9493574,
+      37.461066
+     ],
+     [
+      126.9494829,
+      37.4607218
+     ],
+     [
+      126.9497123,
+      37.4605885
+     ],
+     [
+      126.9497384,
+      37.4605677
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "grove-1544364842",
+    "note": "서쪽 큰길 동쪽 보도에서 솔숲을 지나 남동쪽 모서리(횡단보도 옆 블록 포장)로 나오는 포장 산책길. 남동쪽 어귀는 사람이 걷고 있고(pano 617), 서쪽 어귀는 생울타리가 끊긴 자리로 포장이 들어간다(pano 023, 방위 109°: OSM 점보다 약 4 m 남쪽으로 보이나 파노라마 자리 오차 범위). 53쌍이 14 m 짧아진다",
+    "source": "OSM way 1544364842 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022616, 1213022617, 1213023023"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9493297,
+      37.4619909
+     ],
+     [
+      126.9493981,
+      37.4619616
+     ],
+     [
+      126.9494399,
+      37.4619364
+     ],
+     [
+      126.9494795,
+      37.4619157
+     ],
+     [
+      126.9498604,
+      37.4617967
+     ],
+     [
+      126.9499711,
+      37.4617616
+     ],
+     [
+      126.9500729,
+      37.4617193
+     ],
+     [
+      126.950152,
+      37.4616787
+     ],
+     [
+      126.9502209,
+      37.4616337
+     ],
+     [
+      126.9504142,
+      37.461467
+     ],
+     [
+      126.9504979,
+      37.4614003
+     ],
+     [
+      126.9505352,
+      37.4613967
+     ],
+     [
+      126.9505826,
+      37.4613589
+     ],
+     [
+      126.9506452,
+      37.4613394
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "73w-sidewalk",
+    "note": "문화관 서쪽 큰길의 북동쪽 보도(버스 정류장 있는 블록 포장 보도): 서쪽 큰길 보도(2606–2607)에서 모퉁이 안쪽을 돌아 횡단보도 모서리(188)까지. 받은 그래프는 찻길 선(2486–2485–2484–2483–116)만 있어 모퉁이를 바깥으로 돌았다. 2026-08 로드뷰에서 열려 있다(공사 가림벽은 보도 뒤 비탈 위)",
+    "source": "OSM way 456356730 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022632, 1213022633, 1213022634"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9584089,
+      37.4719085
+     ],
+     [
+      126.9584222,
+      37.4718809
+     ],
+     [
+      126.9584302,
+      37.4718647
+     ],
+     [
+      126.9584324,
+      37.4718466
+     ],
+     [
+      126.9584245,
+      37.4718214
+     ],
+     [
+      126.958325,
+      37.4715538
+     ],
+     [
+      126.9583137,
+      37.4715042
+     ],
+     [
+      126.9583115,
+      37.4713853
+     ],
+     [
+      126.9583092,
+      37.4713231
+     ],
+     [
+      126.9583745,
+      37.471312
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "nroad-w-sidewalk",
+    "note": "기숙사 북쪽 큰길(낙성대로) 서쪽 보도(난간 뒤): 샛길(2990–504)이 큰길 노드 504 까지 나갔다가 되돌아오지 않게 보도를 따라 남쪽으로 잇는다. 10쌍이 16 m 짧아진다",
+    "source": "OSM way 1544574879 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212804859, 1212804865"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9580155,
+      37.4666593
+     ],
+     [
+      126.9581035,
+      37.4666307
+     ],
+     [
+      126.9581295,
+      37.4666235
+     ],
+     [
+      126.9581521,
+      37.4666262
+     ],
+     [
+      126.9581917,
+      37.4666397
+     ],
+     [
+      126.9582374,
+      37.4666635
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "931-corner-sidewalk",
+    "note": "가족생활관(931·932) 들머리 모퉁이의 보도(블록 포장, 뒤에 난간): 앞서 넣은 보도(9282)에서 2472 까지",
+    "source": "OSM way 1544574885 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805567"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9520651,
+      37.4535294
+     ],
+     [
+      126.9520971,
+      37.4535703
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "curve-sidewalk-w",
+    "note": "남쪽 굽은 찻길(52–46) 북쪽 보도(4631–4637)의 서쪽 끝: 보도 모퉁이(4631)와 갈림목(52)이 5 m 떨어진 채 이어져 있지 않아, 서쪽에서 온 경로가 보도를 쓰지 못하고 찻길 선으로 돌았다(동쪽 끝에서 14 m 손해). 갈림목 모서리에서 보도로 바로 올라선다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 스카이뷰: 갈림목 북동쪽 모서리의 보도"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9578273,
+      37.4652323
+     ],
+     [
+      126.9579383,
+      37.4652328
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "dormroad-cross-690",
+    "note": "기숙사 큰길 동쪽 차로의 고원식 횡단보도(노랑·흰 줄): 915동 어귀 맞은편(가운데 나무 띠 남쪽 끝 바로 위)에서 동쪽 보도(946동 서쪽 광장)로. 자리는 pano 012 에서 방위 약 45°·12 m 로 어림((523,690) ± 3 m)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1212805012"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9490913,
+      37.4583424
+     ],
+     [
+      126.9490952,
+      37.4582819
+     ],
+     [
+      126.949189,
+      37.4579503
+     ],
+     [
+      126.9492387,
+      37.457726
+     ],
+     [
+      126.9492783,
+      37.4575476
+     ],
+     [
+      126.9492757,
+      37.4574576
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "129w-sidewalk",
+    "note": "129동 서쪽 찻길의 동쪽 보도(벽돌 포장, 주차 줄 뒤): 북쪽 동서 찻길(308–309)에서 남쪽 동서 찻길(158–159)까지. 받은 그래프는 찻길 선이 서쪽 보도 쪽으로 치우쳐 있어(동쪽 보도에서 12 m) 25·25-1동 ↔ 30·31동 경로가 찻길 선까지 나갔다 돌아왔다(19~24 m)",
+    "source": "OSM way 1544714438·1544714439·1544714435 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213023089, 1213023095, 1213023101"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9492387,
+      37.457726
+     ],
+     [
+      126.9491438,
+      37.4577125
+     ],
+     [
+      126.9490902,
+      37.4577046
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "129w-crossing",
+    "note": "129동 서쪽 찻길의 횡단보도(흰 줄, y≈-143): 동쪽 보도에서 찻길 선(서쪽 보도 쪽)으로",
+    "source": "OSM way 1544714434 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213023101"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9550562,
+      37.4602834
+     ],
+     [
+      126.9550359,
+      37.460293
+     ],
+     [
+      126.9547353,
+      37.4599001
+     ],
+     [
+      126.9547748,
+      37.4598815
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "courtyard-9-10-11",
+    "note": "9·10·11동 사이 안뜰(OSM 보행 광장): 북쪽 모서리(2713, 10동 문 앞)와 남서쪽 모서리(1684, 11·12동 쪽)가 그래프에서 이어져 있지 않아 10동 ↔ 남서쪽 경로 176쌍이 평균 14 m(최대 46 m) 돌았다. 9동 동쪽 벽을 따라가는 광장 가장자리 선으로 잇는다. 로드뷰가 닿지 않아 사진 확인은 못 함 → 안뜰을 가로질러 다닐 수 있는지 확인 필요",
+    "source": "OSM way 300586780 (pedestrian 면의 서쪽 변) © OpenStreetMap contributors + 스카이뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "ask": true,
+    "evidence": "카카오 스카이뷰: 9·10·11·12동으로 둘러싸인 밝은 포장 안뜰(나무·화단, 북동쪽에 차 몇 대)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       126.9550477,
+       37.4610339
+      ],
+      [
+       126.9551658,
+       37.461217
+      ]
+     ],
+     [
+      [
+       126.9551658,
+       37.461217
+      ],
+      [
+       126.9554268,
+       37.4614259
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "type": "block",
+    "id": "14-back-stairs-old",
+    "edges": [
+     [
+      167,
+      168
+     ],
+     [
+      168,
+      169
+     ]
+    ],
+    "note": "14동 북쪽 모서리에서 큰길로 올라가는 계단 선(167–168–169, 55.6 m)은 자리가 틀리다: 주차건물 진입로(다리) 서쪽 굽이를 따라 큰길 정문 앞(303,269)으로 그려져 있는데, 진입로 서쪽에는 난간이 이어져 있다. 실제 계단은 수치지형도의 폭 1.3 m 계단(큰길 남쪽 보도 (314,261) → 진입로 다리 밑 → (307,230))이다. 이 선을 막고 14-back-top·14-back-stairs·14-ne-lot 으로 바꾼다",
+    "source": "점검(10/2): 카카오 스카이뷰·로드뷰·수치지형도"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9555611,
+      37.4614028
+     ],
+     [
+      126.9555479,
+      37.4613543
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "14-back-top",
+    "note": "큰길 선에서 남쪽 보도의 계단 어귀까지. 어귀에 아래쪽 화살표가 그려진 파란 표지판이 서 있다(글씨는 못 읽음)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1213023737, 1213023739"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9555479,
+      37.4613543
+     ],
+     [
+      126.9555219,
+      37.4612823
+     ],
+     [
+      126.9555061,
+      37.4612534
+     ],
+     [
+      126.9554705,
+      37.4611949
+     ],
+     [
+      126.9554259,
+      37.4611183
+     ],
+     [
+      126.9554541,
+      37.4610867
+     ],
+     [
+      126.9554728,
+      37.4610692
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "14-back-stairs",
+    "note": "14동 뒤 계단(큰길 보도 → 14동 북동쪽 마당). 숲 속이라 스카이뷰·로드뷰로는 계단 자체가 안 보이고, 어귀의 표지판과 수치지형도로 넣었다. 높이 125 → 118.5 m",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1213023739, 1213023741; 국토지리정보원 1:1,000 수치지형도(2025): 계단 면(폭 1.3 m, 길이 35 m). 주차건물 진입로 다리(도로교, 폭 6 m) 밑을 지난다"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9554728,
+      37.4610692
+     ],
+     [
+      126.9554745,
+      37.4610183
+     ],
+     [
+      126.9552778,
+      37.4610093
+     ],
+     [
+      126.9551478,
+      37.4609957
+     ],
+     [
+      126.9550477,
+      37.4610339
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "14-ne-lot",
+    "note": "계단 아래에서 14동 북동쪽 벽을 따라 북쪽 모서리(167)까지. 나무에 가려 사진으로는 확인 못 함 → 14동 뒤 계단이 실제로 이렇게 이어지는지 확인 필요(이 길을 901개 경로가 지난다. 바꾸기 전보다 약 25 m 길어진다)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "ask": true,
+    "evidence": "국토지리정보원 1:1,000 수치지형도(2025): 14동 북동쪽 벽을 따라 포장 면(도로경계선)이 계단 아래 (308,223)까지 이어진다; 카카오 스카이뷰: 14동 북동쪽 모서리에 포장된 작은 마당(차 한 대)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9499395,
+      37.4574403
+     ],
+     [
+      126.9499452,
+      37.4574818
+     ],
+     [
+      126.9500039,
+      37.4575989
+     ],
+     [
+      126.9500514,
+      37.457689
+     ],
+     [
+      126.9500808,
+      37.4577656
+     ],
+     [
+      126.9501181,
+      37.4578557
+     ],
+     [
+      126.9501483,
+      37.4578854
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "27-28-passage",
+    "note": "27동과 28동 사이 길: 남쪽 찻길(160–161)에서 경사로(볼라드, 옆에 계단)로 올라가 두 건물 사이를 지나 북쪽 길(2531)로 나온다. 받은 그래프에는 없어서 27동 문(27#4) 접속선으로만 이어져 있었다(48개 경로가 71 m 돌았다). 통로 안의 1.5 m 옹벽(27동 쪽 낮은 마당)의 동쪽으로 지난다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1017104817, 1017104818, 1213022582, 1213022583, 1213022584; 국토지리정보원 1:1,000 수치지형도(2025): 27동과 28동(대형강의동) 사이 폭 10 m 포장 면, 남쪽 끝은 경사로 + 폭 2 m 계단"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9538424,
+      37.4595416
+     ],
+     [
+      126.9538424,
+      37.4595818
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "61-s-merge",
+    "note": "61동 남쪽: 계단 위 보행로(9043–137)와 61동 앞 찻길(2528–137)이 분리 띠 동쪽 끝에서 합쳐진다. 그래프에서는 137 까지 가야 이어져 13동→61동이 21 m 돌았다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "국토지리정보원 1:1,000 수치지형도(2025): 보행로(136–137)와 61동 남쪽 찻길 사이의 분리 띠가 (160.5,62.5)에서 끝나고 그 동쪽은 한 포장 면; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.95069,
+      37.4631206
+     ],
+     [
+      126.9505728,
+      37.4631321
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "101-wide-steps",
+    "note": "101동 동쪽의 넓은 계단은 아래 끝이 16-1동 서쪽 길(2611–2612)에 바로 닿아 있다. 그래프의 계단 선(2165–2166)은 길과 이어져 있지 않았다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1198670996, 1213022654; 국토지리정보원 1:1,000 수치지형도(2025): 계단 면(폭 14 m)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.948714,
+      37.456531
+     ],
+     [
+      126.9487177,
+      37.4565051
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "75-1",
+    "entrances": [
+     "75-1#1"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 2.9,
+    "curated": true,
+    "note": "75-1동 2층: 75동 쪽 데크에서 오는 육교(1403–1404)로 들어간다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선",
+    "evidence": "카카오 로드뷰 pano 1033210772"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.948714,
+      37.456531
+     ],
+     [
+      126.948794,
+      37.4565114
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "75-1",
+    "entrances": [
+     "75-1#1"
+    ],
+    "kind": "steps",
+    "costFactor": 1.2,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 7.4,
+    "curated": true,
+    "note": "75-1동 1층: 육교 밑에서 찻길(244–245)로 내려가는 넓은 계단(2014-04 로드뷰: 학생들이 오르내린다). OSM 에도 2026 편집으로 이 계단 길이 그려져 있다(way 1544714453·1544714451)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선",
+    "evidence": "카카오 로드뷰 pano 1033210772, 1033210781, 1033210786"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9487835,
+      37.4566673
+     ],
+     [
+      126.9488818,
+      37.4566674
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "75-deck-stairs-w",
+    "note": "75-1동 앞 찻길에서 75동 데크로 오르는 계단(2174–2175) 아래 끝까지. 받은 그래프의 이 계단은 양 끝이 어디에도 이어져 있지 않았다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1033210772"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9489888,
+      37.4566704
+     ],
+     [
+      126.9490699,
+      37.45667
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "75-deck-stairs-e",
+    "note": "그 계단 위 끝에서 데크 위 보행로(1401–2173)까지",
+    "source": "OSM way 377154956·1544714447 (steps·pedestrian) © OpenStreetMap contributors + 2014 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1033210772"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9523968,
+      37.4622837
+     ],
+     [
+      126.9523864,
+      37.4625604
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "84-lot-west",
+    "note": "84·50동 사이 마당의 서쪽 가장자리: 남쪽 길 끝(339)에서 마당 북서쪽(321)으로 곧장. 그래프는 마당 동쪽(320)을 거쳐야 해서 359개 경로가 9~14 m 돌았다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1213022801; 카카오 스카이뷰: 84동·50동 사이는 한 면으로 포장된 마당(차 몇 대)이고 서쪽 가장자리(84동 문 앞)까지 열려 있다"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9520233,
+      37.4660303
+     ],
+     [
+      126.9520396,
+      37.4660675
+     ],
+     [
+      126.9521616,
+      37.4660693
+     ],
+     [
+      126.9523572,
+      37.4660766
+     ],
+     [
+      126.952445,
+      37.4660818
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "153-front-sidewalk",
+    "note": "153동 앞 벽돌 보도(버스 정류장 뒤): 횡단보도 북쪽 끝(2645)에서 동쪽 진입로(9076–9740)까지. 153동 현관 앞 벽돌 마당이 이 보도에 닿는다",
+    "source": "OSM way 1544364811 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213023974, 1213023980"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9521616,
+      37.4661477
+     ],
+     [
+      126.9521616,
+      37.4660693
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "153",
+    "entrances": [
+     "153#a1"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 8.7,
+    "curated": true,
+    "note": "153동 현관에서 벽돌 마당을 지나 앞 보도로. 자동 접속선은 양옆 잔디밭을 가로질러 동쪽 진입로·서쪽 길로 이어져 있었다(86개 경로가 지름길로 쓰려던 선)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선",
+    "evidence": "카카오 로드뷰 pano 1213023974"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9537497,
+      37.4628924
+     ],
+     [
+      126.9537689,
+      37.4629554
+     ],
+     [
+      126.953813,
+      37.463032
+     ],
+     [
+      126.9538152,
+      37.4631176
+     ],
+     [
+      126.9538186,
+      37.4631879
+     ],
+     [
+      126.9537844,
+      37.4632152
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "49-west-walk",
+    "note": "49동(콘서트홀) 서쪽 벽을 따라가는 보행로: 계단 위(2841)에서 서쪽 문 캐노피를 지나 북쪽 보행로(2835–2836)까지. 로드뷰가 없고 스카이뷰는 나무에 가려 수치지형도로만 넣었다 → 확인 필요. 지금까지는 49#3 접속선(숲을 가로지르는 27 m·17 m 선)으로 이어져 있었다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "ask": true,
+    "evidence": "국토지리정보원 1:1,000 수치지형도(2025): 계단(폭 2 m) 위 끝 (153,436)에서 49동 서쪽 벽의 캐노피(무벽건물 5×5 m, (158~165, 445~452))까지 포장 면이 이어지고, 캐노피에서 벽을 따라 북쪽으로 폭 2~3 m 포장 면이 53동 앞 보행로까지 간다"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9526871,
+      37.4619783
+     ],
+     [
+      126.9527234,
+      37.4619842
+     ],
+     [
+      126.9527855,
+      37.4620499
+     ],
+     [
+      126.952876,
+      37.462113
+     ],
+     [
+      126.9529178,
+      37.4621382
+     ],
+     [
+      126.9529155,
+      37.4621753
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "74-nw-forecourt",
+    "note": "74동 북서쪽 앞마당: 북동쪽 찻길(2663–2664)에서 벽을 따라 남서쪽 끝(2541)까지. 높이가 같다(100 m). 로드뷰가 없어 앞마당 남서쪽 끝이 2541(남서쪽 경사로·보행로)과 실제로 이어지는지는 확인 필요. 54개 경로가 38 m 넘게 짧아진다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "ask": true,
+    "evidence": "국토지리정보원 1:1,000 수치지형도(2025): 74동 북서쪽 벽 앞에 폭 8~10 m 포장 면(도로경계선)이 북동쪽 찻길에서 남서쪽 (62,327)까지; 카카오 스카이뷰: 벽 앞 포장 마당(차 한 대), 남서쪽으로 좁아진다"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9511401,
+      37.4542777
+     ],
+     [
+      126.9510816,
+      37.4542093
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "130-ne-steps-low",
+    "note": "40동 쪽 길(2211)에서 130동 북동쪽 철계단 아래까지(주차 마당)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1033210981, 1033210986"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9510816,
+      37.4542093
+     ],
+     [
+      126.9510822,
+      37.4541553
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "130-ne-steps",
+    "note": "130동 북동쪽 모서리의 철계단: 아래 주차 마당에서 130동 앞마당 높이로 오른다. 2014-04 로드뷰와 2025 수치지형도에 있다(최근 로드뷰 없음) → 지금도 다닐 수 있는지 확인 필요",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "ask": true,
+    "evidence": "카카오 로드뷰 pano 1033210981, 1033210986; 국토지리정보원 1:1,000 수치지형도(2025): 계단 면(폭 1.5 m), 옆에 담장·옹벽 1.5 m"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9510822,
+      37.4541553
+     ],
+     [
+      126.9510506,
+      37.454121
+     ],
+     [
+      126.9509827,
+      37.4540895
+     ],
+     [
+      126.9509036,
+      37.4540597
+     ],
+     [
+      126.9508341,
+      37.4540399
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "130-front-lot",
+    "note": "철계단 위에서 130동 앞마당을 지나 남쪽 넓은 계단 위까지",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1212892045"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9508341,
+      37.4540399
+     ],
+     [
+      126.9508477,
+      37.4539787
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "130-front-steps",
+    "note": "130동 앞마당에서 남쪽 큰길 보도로 내려가는 넓은 계단",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212892044, 1212892045, 1212892046; 국토지리정보원 1:1,000 수치지형도(2025): 계단 면(폭 8.7 m)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9508477,
+      37.4539787
+     ],
+     [
+      126.9508528,
+      37.453864
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "130-front-walk",
+    "note": "계단 아래 벽돌 보도에서 남쪽 찻길 선(55–56)까지. 40동→300·301·302동 13쌍이 190 m 짧아진다(철계단이 이어져 있을 때)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212892045"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9515134,
+      37.4642923
+     ],
+     [
+      126.9514749,
+      37.4642498
+     ],
+     [
+      126.9514914,
+      37.4641988
+     ],
+     [
+      126.9515275,
+      37.4641493
+     ],
+     [
+      126.9515671,
+      37.4641114
+     ],
+     [
+      126.9515535,
+      37.4640682
+     ],
+     [
+      126.9514778,
+      37.4639105
+     ],
+     [
+      126.9514123,
+      37.4637303
+     ],
+     [
+      126.951349,
+      37.4635501
+     ],
+     [
+      126.9513275,
+      37.4634465
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "service",
+    "costFactor": 1.05,
+    "id": "16-83-lot",
+    "note": "16동과 83동 사이 주차장 길(83동 쪽 통로): 북쪽 찻길에서 들어가 83동 서쪽 문(83#1) 앞까지. 받은 그래프에 이 주차장이 없어 83#1·16#3·16#6 접속선이 숲을 가로질러 남쪽 길(60~77 m)로 이어져 있었다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022695, 1213022697; 국토지리정보원 1:1,000 수치지형도(2025): 16동과 83동 사이 주차장(가운데 긴 섬 둘), 어귀는 북쪽 찻길에서 세모꼴 화단 동쪽으로 돌아 들어간다; 카카오 스카이뷰"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9587632,
+      37.4666231
+     ],
+     [
+      126.958793,
+      37.4666964
+     ],
+     [
+      126.9588478,
+      37.4666888
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "932e-walk",
+    "note": "932동 앞 주차장 동쪽 끝(2473)에서 건물 동쪽 끝 벽돌 길을 지나 돌계단 아래까지",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805636"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9588478,
+      37.4666888
+     ],
+     [
+      126.9589043,
+      37.4666843
+     ],
+     [
+      126.9589178,
+      37.4666864
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "932e-steps",
+    "note": "932동 동쪽 끝의 돌계단: 주차장·건물 앞길에서 동쪽 길(933동 앞)로 오른다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805636; 국토지리정보원 1:1,000 수치지형도(2025): 계단 면(폭 1 m), 그 북쪽은 나무 울타리"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9585298,
+      37.4647831
+     ],
+     [
+      126.9586359,
+      37.4648115
+     ],
+     [
+      126.9587387,
+      37.4648449
+     ],
+     [
+      126.9588744,
+      37.4649025
+     ],
+     [
+      126.9590055,
+      37.4649665
+     ],
+     [
+      126.9590767,
+      37.4650107
+     ],
+     [
+      126.9591185,
+      37.4650494
+     ],
+     [
+      126.9591456,
+      37.4650999
+     ],
+     [
+      126.9591535,
+      37.4651386
+     ],
+     [
+      126.9591479,
+      37.4651584
+     ],
+     [
+      126.9591038,
+      37.4652116
+     ],
+     [
+      126.95913,
+      37.4652234
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "946e-curve-sidewalk",
+    "note": "946동 동쪽 굽은 찻길 안쪽(북서쪽)의 벽돌 보도: 비스듬히 세운 주차 줄 뒤로 이어지다 북쪽 횡단보도에서 끝난다. 찻길 선(1324–1325–1326–1328)은 굽이 바깥으로 돌아 360쌍이 5 m 길었다",
+    "source": "OSM way 1544574886 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805495, 1212805610"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9578402,
+      37.4627855
+     ],
+     [
+      126.9578481,
+      37.4628365
+     ],
+     [
+      126.9578786,
+      37.4629032
+     ],
+     [
+      126.9579091,
+      37.4629807
+     ],
+     [
+      126.9579238,
+      37.4630428
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "dormroad-e-sidewalk-a",
+    "note": "기숙사 큰길 동쪽의 벽돌 보도: 906동 쪽 계단(3261–3262) 중간에서 919동으로 들어가는 벽돌 길(523–3294)까지",
+    "source": "OSM way 1544574906 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805065, 1212805067"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9579238,
+      37.4630428
+     ],
+     [
+      126.9579419,
+      37.4630924
+     ],
+     [
+      126.9579498,
+      37.463114
+     ],
+     [
+      126.9580346,
+      37.4634582
+     ],
+     [
+      126.9580436,
+      37.4634933
+     ],
+     [
+      126.9580549,
+      37.4635159
+     ],
+     [
+      126.958073,
+      37.4635384
+     ],
+     [
+      126.9580832,
+      37.4635492
+     ],
+     [
+      126.9580976,
+      37.4636013
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "dormroad-e-sidewalk-b",
+    "note": "같은 보도의 북쪽: 919동 서쪽을 지나 919동 북쪽 길 어귀(고원식 횡단보도 남쪽 끝)까지. 906동 ↔ 919·921~926동이 14~17 m 짧아진다",
+    "source": "OSM way 1544574906 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805059, 1212805415"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950091,
+      37.459774
+     ],
+     [
+      126.9500164,
+      37.4598073
+     ],
+     [
+      126.9498378,
+      37.4598758
+     ],
+     [
+      126.9497863,
+      37.4598948
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "24",
+    "entrances": [
+     "24#1"
+    ],
+    "kind": "steps",
+    "costFactor": 1.2,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 30.1,
+    "curated": true,
+    "note": "24동 북서쪽 문에서 잔디 언덕의 돌계단(난간)으로 내려가 서쪽 찻길로. 자동 접속선은 같은 방향의 잔디 위 직선(footway)이었다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선",
+    "evidence": "카카오 로드뷰 pano 1213022606"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950091,
+      37.459774
+     ],
+     [
+      126.9501974,
+      37.4597303
+     ],
+     [
+      126.9502334,
+      37.4597101
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "24",
+    "entrances": [
+     "24#1"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 14.5,
+    "curated": true,
+    "note": "24동 북서쪽 문에서 건물 벽을 따라 동쪽 모서리의 길(314)로. 자동으로 만들어지던 접속선을 그대로 남긴 것(계단 접속선을 손으로 넣으면 자동 접속선이 모두 빠진다)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9523928,
+      37.462391
+     ],
+     [
+      126.952542,
+      37.462442
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "84-lot-cross",
+    "note": "84·50동 사이 마당을 가로지르는 선: 84동 문 앞(서쪽 가장자리 길)에서 마당 대각선 길(320–321)로. 한 면으로 포장된 마당이라 어디로든 건널 수 있다. 84동 ↔ 동쪽 31쌍이 10 m 짧아진다",
+    "source": "OSM way 456487346 (footway) © OpenStreetMap contributors + 스카이뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1213022801"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9579518,
+      37.4650303
+     ],
+     [
+      126.9579679,
+      37.4648764
+     ],
+     [
+      126.9579803,
+      37.4648295
+     ],
+     [
+      126.9579867,
+      37.4648166
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "dormroad-e-sidewalk-946w",
+    "note": "기숙사 큰길 동쪽 보도의 빠진 토막(946동 서쪽 광장 앞, y 646~669): 북쪽 토막의 남쪽 끝과 남쪽 토막의 북쪽 끝을 잇는다. 둘은 찻길 선을 거쳐서만 이어져 있었다",
+    "source": "OSM way 1544574886 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805012"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9506587,
+      37.46275
+     ],
+     [
+      126.9505872,
+      37.4627446
+     ],
+     [
+      126.9505263,
+      37.4627208
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "16-1-w-corner-sidewalk",
+    "note": "16-1동 서쪽 길(2611–2612) 어귀의 북서쪽 모퉁이 보도: 서쪽 길에서 갈림목(2626)으로 바로. 찻길 선은 갈림목 가운데(2627)를 돌아 9 m 길었다",
+    "source": "OSM way 456487332 (footway) © OpenStreetMap contributors + 로드뷰",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1198670996, 1213022654"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.957898,
+      37.4648073
+     ],
+     [
+      126.9579867,
+      37.4648166
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "946w-corner-link",
+    "note": "기숙사 큰길 선과 동쪽 보도 모퉁이(946동 남서쪽)를 잇는 선. 보도 남쪽 토막의 끝이 찻길 선에 붙어 있던 연결을 그대로 둔 것이다(빠진 보도 토막을 넣으면서 이 끝이 보도끼리 이어져 찻길 쪽 연결이 사라졌다 → 931·932동 쪽 238쌍이 3 m 길어짐)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.954357,
+      37.462016
+     ],
+     [
+      126.9544109,
+      37.4620004
+     ],
+     [
+      126.9544256,
+      37.4619463
+     ],
+     [
+      126.9544572,
+      37.4619486
+     ],
+     [
+      126.9544708,
+      37.4619391
+     ],
+     [
+      126.9545217,
+      37.4619247
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "82",
+    "entrances": [
+     "82#2"
+    ],
+    "kind": "steps",
+    "costFactor": 1.2,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 20.4,
+    "curated": true,
+    "note": "82동 남동쪽 문: 수치지형도의 계단(폭 2 m, 동쪽 벽을 따라 (211.8,344.8)~(214.7,323))으로 주차 줄 북쪽 끝(장애인 주차 칸 옆 빗금 자리)에 내려와 찻길로. 계단 발치와 주차 줄 사이 철책(5.6 m)은 북쪽 끝으로 돌아 나간다. 자동 접속선 가운데 곧장 동쪽 찻길로 가던 14.5 m 선은 나무 띠와 주차 줄을 가로지른다(로드뷰 922·926: 트인 곳 없음). 문 자체는 나무에 가려 못 봄",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선",
+    "evidence": "카카오 로드뷰 pano 1213023762, 1213023764, 1213023766"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9525082,
+      37.4513504
+     ],
+     [
+      126.9525945,
+      37.4512612
+     ],
+     [
+      126.9525911,
+      37.4511882
+     ],
+     [
+      126.9525651,
+      37.4511044
+     ],
+     [
+      126.9525595,
+      37.4510278
+     ],
+     [
+      126.9525708,
+      37.4510035
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "300-nw-stairs",
+    "note": "제1공학관 버스정류장에서 300동 서쪽을 따라 오르는 넓은 계단(점자블록이 보도에서 계단 발치로 이어지고 사람이 오르내린다). 수치지형도 계단 셋: 폭 5 m (50.4~55.5, -859~-867), 폭 5.5 m (45~51.6, -876.3~-879.8), 폭 6 m (44.7~51, -880.8~-884.6) → 주차장 입구 위 테라스(1단). 받은 그래프에는 이 계단이 없고 주차장 진입로(2439–2440)만 있었다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213023465, 1213023469, 1213023475, 1213023477"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9525968,
+      37.4510125
+     ],
+     [
+      126.9525708,
+      37.4510035
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "300",
+    "entrances": [
+     "300#a2"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 2.5,
+    "curated": true,
+    "note": "테라스의 문(추정)에서 계단 꼭대기로. 주차장 진입로 끝(2440)은 한 층 아래라 잇지 않는다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9494953,
+      37.4575701
+     ],
+     [
+      126.9494964,
+      37.4574525
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "129",
+    "entrances": [
+     "129#2"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 13.1,
+    "curated": true,
+    "note": "129동 현관 앞 벽돌 바닥에서 곧장 남쪽 찻길로(자동 접속선과 같은 선)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선",
+    "evidence": "카카오 로드뷰 pano 1213022577, 1213022578"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9494953,
+      37.4575701
+     ],
+     [
+      126.9494795,
+      37.4574998
+     ],
+     [
+      126.9493924,
+      37.4574554
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "129",
+    "entrances": [
+     "129#2"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 17.1,
+    "curated": true,
+    "note": "현관 앞 벽돌 바닥을 내려와 찻길 어귀를 비스듬히 건너 남서쪽 갈림목(9212)으로. 자동 접속선(15.6 m)은 잔디 화단 모서리를 가로질렀다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선",
+    "evidence": "카카오 로드뷰 pano 1213022578"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9494953,
+      37.4575701
+     ],
+     [
+      126.9494795,
+      37.4574998
+     ],
+     [
+      126.9493099,
+      37.4575088
+     ],
+     [
+      126.9492783,
+      37.4575476
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "129",
+    "entrances": [
+     "129#2"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 28.1,
+    "curated": true,
+    "note": "현관 앞 벽돌 바닥을 내려와 찻길 북쪽 가장자리(화단 연석 밖)를 따라 서쪽 보도 모퉁이로. 자동 접속선 둘(서쪽 19.6 m, 북서쪽 30.2 m)은 소나무가 선 잔디 화단과 둥근 탑 둘레를 가로질렀다(수치지형도 도로경계선: 화단은 x -240~-226, 연석 y -162~-165.5)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선",
+    "evidence": "카카오 로드뷰 pano 1213022577, 1213022578"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9531145,
+      37.4673217
+     ],
+     [
+      126.9530839,
+      37.4673091
+     ],
+     [
+      126.9530579,
+      37.4672992
+     ],
+     [
+      126.9529958,
+      37.467183
+     ],
+     [
+      126.9529289,
+      37.4671941
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "85",
+    "entrances": [
+     "85#a1"
+    ],
+    "kind": "steps",
+    "costFactor": 1.2,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 25.7,
+    "curated": true,
+    "note": "85동 서쪽 문에서 큰 콘크리트 계단(수치지형도 폭 3.5 m, (88,908)~(93.6,921))으로 서쪽 찻길(2194)로. 계단 양옆과 꼭대기의 옹벽 선(1~3 m) 때문에 자동 접속선을 못 만들던 출입구(못 이은 출입구 다섯 가운데 하나). 계단은 로드뷰로 확인",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선",
+    "evidence": "카카오 로드뷰 pano 1212902611, 1212902613"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9526432,
+      37.4647838
+     ],
+     [
+      126.9526465,
+      37.4648431
+     ],
+     [
+      126.9526499,
+      37.4650007
+     ],
+     [
+      126.9526637,
+      37.4650991
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "59-plaza",
+    "note": "59동 두 덩어리(서쪽 경영전문대학원, 동쪽 LG경영관) 사이 돌 광장: 남쪽 찻길에서 계단 네 단을 올라 북쪽 끝의 OSM 출입구 점(받은 그래프 노드 7865)까지. 받은 그래프는 7865 에서 북동쪽 길(2729)로 가는 선(OSM layer=1 보행로)만 있고 남쪽 찻길과는 이어져 있지 않았다(58→59 가 238 m 로 돌던 까닭 가운데 하나). 2014 로드뷰에 광장을 지나 북쪽으로 걷는 사람들이 보인다 (985·986: 광장이 동쪽 덩어리 필로티 밑으로 북쪽까지 이어지고 그 너머에 벤치와 사람들이 보인다)",
+    "source": "로드뷰(2014-04) + 스카이뷰 + OSM node 4531517997·way 1185328117 © OpenStreetMap contributors",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1033213898, 1033213902"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9526499,
+      37.4650007
+     ],
+     [
+      126.9526058,
+      37.4650034
+     ],
+     [
+      126.9525719,
+      37.4650134
+     ],
+     [
+      126.9525685,
+      37.465099
+     ],
+     [
+      126.9525086,
+      37.4651035
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "59-terrace",
+    "note": "59-1동 북쪽 옥상 마당(잔디 + 벤치, 수치지형도는 건물로 그림): 광장 북서쪽 모서리에서 마당 동쪽·북쪽 가장자리를 돌아 북동쪽 모서리의 넓은 계단 위까지. 마당과 광장이 같은 높이로 이어진다고 본 것(59-1동 문이 이 마당 쪽에만 있어 남쪽 찻길에서 오는 사람은 광장 → 마당으로 들어간다). 로드뷰 없음 → 사용자 확인 필요",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "ask": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9525086,
+      37.4651035
+     ],
+     [
+      126.9525115,
+      37.4651611
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "59-lawn-stairs",
+    "note": "옥상 마당 북동쪽 모서리에서 잔디마당(58·59동 사이)으로 내려가는 계단. 수치지형도 계단 폭 6 m (42.3~47.6, 677.7~683.9)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9525115,
+      37.4651611
+     ],
+     [
+      126.9524691,
+      37.4651773
+     ],
+     [
+      126.9524905,
+      37.4654197
+     ],
+     [
+      126.9525041,
+      37.4654909
+     ],
+     [
+      126.9527316,
+      37.465489
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "59-lawn-walk",
+    "note": "잔디마당 동쪽 가장자리 보행로(스탠드 앞, 폭 3 m)를 따라 북쪽으로 가서 58동 북쪽 날개 남쪽의 포장 띠로 진입로(2648–2649)까지. 스카이뷰의 밝은 포장 띠 + 수치지형도 도로경계선((42.6,683.7)~(46.1,719.8)~(63.0,718.5)). 받은 그래프에는 잔디마당 안 길이 하나도 없어 58동 안뜰 쪽 문(58#3·58#4)의 접속선이 잔디와 스탠드를 가로질러 50~67 m 직선으로 나 있었다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.952331,
+      37.465025
+     ],
+     [
+      126.9525719,
+      37.4650134
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "59-1",
+    "entrances": [
+     "59-1#2"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 21.4,
+    "curated": true,
+    "note": "59-1동 옥상 마당 쪽 문에서 건물 벽을 따라 마당 남동쪽 모서리(광장 쪽)로",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.952331,
+      37.465025
+     ],
+     [
+      126.9524012,
+      37.4650188
+     ],
+     [
+      126.9524012,
+      37.4650999
+     ],
+     [
+      126.9525086,
+      37.4651035
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "59-1",
+    "entrances": [
+     "59-1#2"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 24.8,
+    "curated": true,
+    "note": "59-1동 옥상 마당 쪽 문에서 잔디 사이 포장 띠와 북쪽 가장자리를 지나 북동쪽 계단 위로",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9517587,
+      37.4648523
+     ],
+     [
+      126.9517626,
+      37.46478
+     ],
+     [
+      126.9517152,
+      37.4647422
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "70-plaza-n",
+    "note": "70동(113동 남쪽 큰 건물) 앞마당의 북쪽 어귀: 북쪽 찻길에서 화단 돌담(수치지형도 옹벽 2 m) 동쪽 끝의 벽돌 포장 어귀로 들어온다(2014 로드뷰: 화분이 놓인 포장 어귀와 그 너머 현관)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1033213861"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9517152,
+      37.4647422
+     ],
+     [
+      126.9516847,
+      37.4647422
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "70-plaza-n-steps",
+    "note": "북쪽 어귀에서 마당으로 내려서는 계단(수치지형도 계단 폭 5 m, (-27.7~-25.2, 634.7~639.8)). 어귀와 마당 사이는 1 m 옹벽 선(y≈634.5)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9516847,
+      37.4647422
+     ],
+     [
+      126.9516553,
+      37.4647331
+     ],
+     [
+      126.9516101,
+      37.4647034
+     ],
+     [
+      126.9516101,
+      37.4645683
+     ],
+     [
+      126.9516948,
+      37.4645322
+     ],
+     [
+      126.9516948,
+      37.4644061
+     ],
+     [
+      126.9516892,
+      37.464334
+     ],
+     [
+      126.9516666,
+      37.4642754
+     ],
+     [
+      126.951653,
+      37.4642506
+     ],
+     [
+      126.9516296,
+      37.4642252
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "70-plaza-ns",
+    "note": "70동 앞마당(돌 포장, 화단 넷)을 남북으로 지나는 길: 북쪽 계단 아래 → 가운데 화단 서쪽 → 남서 화단(소나무) 동쪽 → 건물 둥근 끝 서쪽의 벽돌 길 → 남쪽 찻길의 고원식 횡단보도 북쪽 끝(받은 그래프 노드 1507). 화단 자리는 수치지형도 도로경계선으로 피했다. 남쪽 벽돌 길과 벤치는 2026-08 로드뷰로 확인. 받은 그래프에는 마당 안 길이 없어 70동 문의 접속선 넷이 마당을 대신 이었고, 출입구 지나가기를 막은 뒤로는 59·59-1·113동 ↔ 서쪽·남쪽 51개 경로가 평균 33 m 돌았다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1033213861, 1213022697, 1213022699"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9516101,
+      37.4645683
+     ],
+     [
+      126.9514857,
+      37.4645322
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "70-plaza-w",
+    "note": "앞마당 가운데에서 서쪽 넓은 계단 위까지",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022687, 1213022689"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9514857,
+      37.4645322
+     ],
+     [
+      126.9514405,
+      37.4645322
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "70-plaza-w-steps",
+    "note": "앞마당 서쪽의 넓은 돌계단(수치지형도 계단 폭 17 m, (-49.7~-44.6, 610~627)). 2026-08 로드뷰로 확인",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022687, 1213022689"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9514405,
+      37.4645322
+     ],
+     [
+      126.9513305,
+      37.4645322
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "70-plaza-w-deck",
+    "note": "계단 아래 나무 데크(경사로)를 지나 서쪽 찻길로. 데크 북쪽 반은 난간이 있고 남쪽 반이 길 쪽으로 열려 있다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022687, 1213022689"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9516296,
+      37.4642252
+     ],
+     [
+      126.951603,
+      37.4641845
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "70-plaza-s-cross",
+    "note": "70동 앞마당 남쪽 어귀의 고원식 횡단보도(노랑·흰 줄무늬): 찻길 선(1507)에서 남서쪽 보도(1644–1646 선의 1645)로. 2026-08 로드뷰 두 장으로 확인",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022697, 1213022699"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9600579,
+      37.4656702
+     ],
+     [
+      126.9601663,
+      37.4657486
+     ],
+     [
+      126.9603589,
+      37.4658253
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "service",
+    "costFactor": 1.05,
+    "id": "942-driveway",
+    "note": "942동 서쪽 현관으로 들어가는 진입로(주차 차단기가 있는 아스팔트 길): 회전교차로 북동쪽(1353)에서 현관 앞 길 끝(9017)까지. 받은 그래프에는 이 진입로가 없어 회전교차로에서 오는 경로가 북쪽 길(9016)로 갔다가 되돌아왔다(16 m 더 걸음)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1212805526, 1212805544"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9535691,
+      37.4557738
+     ],
+     [
+      126.9536502,
+      37.4557852
+     ],
+     [
+      126.9537056,
+      37.4557798
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "29-141-w",
+    "note": "29동·141동(약학관) 사이 통로의 서쪽 어귀: 서쪽 찻길에서 벽돌 포장 마당(개인형이동장치 주차 표시, 벤치)을 지나 두 건물 사이 계단 아래까지(2026-08 로드뷰: 마당 안쪽에 올라가는 계단이 보인다)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "high",
+    "evidence": "카카오 로드뷰 pano 1213022465, 1213022466"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9537056,
+      37.4557798
+     ],
+     [
+      126.9538197,
+      37.4557978
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "id": "29-141-steps",
+    "note": "29동·141동 사이 좁은 틈의 바깥 계단: 서쪽 찻길(해발 152 m)에서 동쪽 주차 마당(159 m)으로 올라간다. 서쪽 마당에서는 틈 안으로 올라가는 계단이 보이고(샷 34), 동쪽 주차 마당에서는 141동 앞 컨테이너 왼쪽으로 틈 너머 서쪽 찻길의 가드레일·초록 울타리까지 그대로 내다보인다(2025-07 로드뷰, 샷 996·997) = 틈이 끝까지 트여 있다. 수치지형도에도 틈 전체가 계단 면이다. 가운데에 잠긴 문 같은 것이 없는지만 확인하면 된다(29↔66동이 115 m, 66↔135·39동이 37~39 m 짧아진다)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "ask": true,
+    "evidence": "카카오 로드뷰 pano 1198671512, 1212892179, 1213022465; 국토지리정보원 1:1,000 수치지형도(2025): 두 건물 윤곽 사이 2 m 틈의 계단(C0390000, 폭 2 m, (150.8~161.2, -354.5~-358.2))"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9538197,
+      37.4557978
+     ],
+     [
+      126.9538604,
+      37.455814
+     ],
+     [
+      126.9539271,
+      37.4558014
+     ],
+     [
+      126.9539543,
+      37.4557039
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "kind": "footway",
+    "costFactor": 1,
+    "id": "29-141-e",
+    "note": "계단 위에서 두 건물 사이를 빠져나와(141동 북동 모서리의 폭 1.7 m 콘크리트 통로, 수치지형도) 141동 동쪽 현관 앞을 지나 동쪽 주차 마당의 찻길 선(8962–8963)까지. 141동 앞에 컨테이너 사무실이 놓여 있고 그 옆으로 지나간다(샷 996)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도",
+    "snap": 0.5,
+    "link": 1.0,
+    "conf": "mid",
+    "evidence": "카카오 로드뷰 pano 1198671510, 1198671512, 1212892179, 1212892180"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.95094,
+      37.456364
+     ],
+     [
+      126.9502628,
+      37.4563645
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "30",
+    "entrances": [
+     "30#3"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 59.9,
+    "curated": true,
+    "note": "자동 접속선 그대로(서쪽 안뜰 가 길). 손으로 그린 접속선이 하나라도 있으면 자동 접속선을 만들지 않으므로 다시 적는다",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.95094,
+      37.456364
+     ],
+     [
+      126.9508132,
+      37.4563826
+     ],
+     [
+      126.9506493,
+      37.4565141
+     ],
+     [
+      126.9505815,
+      37.4568925
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "30",
+    "entrances": [
+     "30#3"
+    ],
+    "kind": "steps",
+    "costFactor": 1.2,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 74.4,
+    "curated": true,
+    "note": "자동 접속선 그대로(안뜰을 지나 북서쪽 길)",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.95094,
+      37.456364
+     ],
+     [
+      126.9509647,
+      37.4563943
+     ],
+     [
+      126.9510393,
+      37.4564033
+     ],
+     [
+      126.9511071,
+      37.4564114
+     ],
+     [
+      126.9511704,
+      37.4564051
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "30",
+    "entrances": [
+     "30#3"
+    ],
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 22.4,
+    "curated": true,
+    "note": "30동 남쪽 연결동(33동과 잇는 통로)의 동쪽 면으로 나가는 접속선(제안): OSM 출입구 노드가 연결동 밑동 한가운데라 문이 서쪽·동쪽 어느 면인지 알 수 없는데, 자동 접속선은 0.3 m 가까운 서쪽으로만 났다. 동쪽에도 포장 띠가 벽까지 이어져 있어 같이 잇는다. 로드뷰 없음 → 확인 필요",
+    "source": "점검(10/2): 카카오 로드뷰·스카이뷰·수치지형도로 그린 접속선",
+    "ask": true,
+    "evidence": "국토지리정보원 1:1,000 수치지형도(2025): 도로경계선 두 줄 사이 폭 4.5 m 포장 띠가 동쪽 보행로에서 연결동 동쪽 벽까지; 카카오 스카이뷰: 둥근 화단 쉼터와 그 서쪽 포장"
+   }
+  }
+ ]
+}

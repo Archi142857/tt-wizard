@@ -240,6 +240,15 @@ data/topo/*/*
 !data/topo/*/N3A_E0010001.*
 !data/topo/*/N3A_E0032111.*
 !data/topo/*/N3A_E0052114.*
+# 출입구 접속선(scripts/entrance_links.py)용으로 1:1,000 도엽(N1*)의 담장 B0020000, 옹벽·석축 F0040000, 절토 F0030000,
+# 가드펜스 C0530000, 제방 C0050000, 기타구조물(벼랑바위) G0030000, 계단 C0390000 도
+!data/topo/*/N1L_B0020000.*
+!data/topo/*/N1L_F0040000.*
+!data/topo/*/N1L_F0030000.*
+!data/topo/*/N1L_C0530000.*
+!data/topo/*/N1L_C0050000.*
+!data/topo/*/N1L_G0030000.*
+!data/topo/*/N1A_C0390000.*
 # 실제 시간표(개인 자료)는 올리지 않는다. 결과 요약(results/experiments/README.md, fig7)만 올린다
 data/experiments/
 results/experiments/real.csv

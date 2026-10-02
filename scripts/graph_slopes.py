@@ -281,10 +281,10 @@ def main(argv: list[str] | None = None) -> int:
     graph = load_graph(Path(args.graph))
     received = (len(graph["nodes"]), len(graph["edges"]))
     patch = gp.read_patches(args.patch or [])
-    if patch:
-        gp.apply_patch(graph, patch)
-        print(f"패치: 노드 {len(graph['nodes']) - received[0]:,}개 · 엣지 {len(graph['edges']) - received[1]:,}개 더함"
-              f" ({', '.join(str(p) for p in args.patch)})")
+    gp.apply_patch(graph, patch)  # 패치가 없어도 받은 그래프의 끊긴 갈림목은 잇는다(heal_junctions)
+    junction = sum(1 for e in graph["edges"] if e.get("role") == "junction")
+    print(f"패치: 노드 {len(graph['nodes']) - received[0]:,}개 · 엣지 {len(graph['edges']) - received[1]:,}개 더함"
+          f" (그중 끊긴 갈림목을 이은 엣지 {junction:,}개; {', '.join(str(p) for p in args.patch or []) or '패치 없음'})")
     lon = [n["lng"] for n in graph["nodes"]]
     lat = [n["lat"] for n in graph["nodes"]]
     bbox = (min(lat) - 0.001, min(lon) - 0.001, max(lat) + 0.001, max(lon) + 0.001)

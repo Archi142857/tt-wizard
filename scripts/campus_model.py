@@ -7,7 +7,7 @@
       data/dem/                             dem_from_contours.py 결과 (git 에는 없음 → 이 스크립트는 DEM이 있는 PC에서 돌린다)
       건물 좌표·이름                          export_web.py 와 같은 규칙 (이동시간 행렬의 지점 = 강의 건물·정문·기숙사)
 표시  길 색 = 그 길 방향 30 m 구간의 지형 경사: 5 % 미만 / 5~10 / 10~20 / 20 % 이상. 터널·지하는 점선
-      지형 = DEM을 15 m 간격으로 읽은 격자. 고도가 없는 노드(DEM 범위 밖)와 그 엣지는 뺀다
+      지형 = DEM을 15 m 간격으로 읽은 격자. 고도가 없는 노드(DEM 범위 밖)와 그 엣지, 막은 엣지(blocked: 실제로 없는 길)는 뺀다
 조작  왼쪽 버튼 드래그 = 이동, 오른쪽 버튼 드래그 = 회전(3D), 휠 = 커서가 가리키는 곳으로 확대·축소(앞으로 굴리면 확대),
       가운데 버튼 드래그 = 이동(3D 에서 Shift 를 누르면 회전), 가운데 버튼 두 번 = 처음 시점
 출력  web/model/*.html 은 자료를 파일 안에 담고 있어 GitHub Pages 와 로컬(더블클릭) 모두에서 열린다.
@@ -62,7 +62,7 @@ def build(graph: dict, dem, proj: be.LocalProj, buildings: dict[str, tuple[str, 
     pairs: dict[tuple[int, int], str] = {}
     for e in graph["edges"]:
         a, b = index[e["from"]], index[e["to"]]
-        if a == b or not (keep[a] and keep[b]):
+        if a == b or not (keep[a] and keep[b]) or e.get("blocked"):  # blocked: 실제로 없는 길(graph_patch 의 type = block)
             continue
         k = (min(a, b), max(a, b))
         surf = e.get("surface") or ("tunnel" if e.get("isTunnel") else "ground")

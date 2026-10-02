@@ -402,33 +402,18 @@ class RouteModel:
         return self.cache[(a, b)]
 
     def _route(self, a: str, b: str) -> dict:
-        from scipy.sparse import bmat, csr_matrix
-        from scipy.sparse.csgraph import dijkstra
-
         R = self.router
         acc = {}
         for x in (a, b):
-            best: dict[int, tuple] = {}
-            for lon, lat in self.points.get(x, []):
-                for node, rec in R.attach(lon, lat).items():
-                    if rec[0] < best.get(node, (math.inf,))[0]:
-                        best[node] = rec
-            if not best:
+            acc[x], _ = R.access(self.points.get(x, []))  # slope_travel 과 같은 규칙(접속선이 있는 출입구만, 없으면 직선)
+            if not acc[x]:
                 raise ValueError(f"{x}: 길에 이을 수 없는 지점입니다")
-            acc[x] = best
-        starts = list(acc[a])
-        link = csr_matrix(([max(acc[a][n][0], 1e-6) for n in starts], ([0] * len(starts), starts)), shape=(1, R.n))
-        M = bmat([[R.csr, None], [link, csr_matrix((1, 1))]], format="csr")
-        dist, pred = dijkstra(M, directed=True, indices=[R.n], return_predecessors=True)
-        cand = [(dist[0, n] + rec[0], n) for n, rec in acc[b].items() if np.isfinite(dist[0, n])]
-        if not cand:
+        dist, pred = R.search([acc[a]])
+        got = R.arrive(dist[0], pred[0], acc[b])
+        if got is None:
             raise ValueError(f"{a} → {b}: 경로가 없습니다")
-        end = min(cand)[1]
-        path = [end]
-        while 0 <= pred[0, path[-1]] < R.n:
-            path.append(int(pred[0, path[-1]]))
-        path.reverse()
-        start, stop = acc[a][path[0]], acc[b][end]
+        _, path = got
+        start, stop = acc[a][path[0]], acc[b][path[-1]]
         s, z = R.profile(start, path, stop)
         xy = R.geometry(start, path, stop)
 

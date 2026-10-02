@@ -443,3 +443,68 @@ def test_build_skips_curated_area(tmp_path):
     A = box(lon - d, lat - d, lon + d, lat + d)
     runs = [f for f in fc["features"] if f["properties"]["type"] == "path" and f["properties"].get("role") != "entrance_link"]
     assert runs and not any(shape(f["geometry"]).intersects(A) for f in runs)
+
+
+def test_base_route_and_back(tmp_path):
+    """--base route: 표에 있는 쌍도 우리 경로의 경사 반영 시간을 그대로 쓰고, travel.csv 의 표 쌍(source = magicmap)을 우리 경로
+    평지 시간(source = route)으로 바꾼다(실측 행은 그대로). 다시 magicmap 기준으로 돌리면 표 값으로 돌아온다."""
+    pts = {1: (0, 0), 2: (0, 200)}
+    lon, lat = PROJ.inv([p[0] for p in pts.values()], [p[1] for p in pts.values()])
+    nodes = [{"id": i, "lng": float(a), "lat": float(b), "ele": 100 + 0.1 * pts[i][1]} for i, a, b in zip(pts, lon, lat)]
+    edges = [{"id": k + 1, "from": u, "to": v, "distance": 200.0, "kind": "footway", "walkable": True, "isTunnel": False,
+              "surface": "ground"} for k, (u, v) in enumerate(((1, 2), (2, 1)))]
+    graph = tmp_path / "graph.json"
+    graph.write_text(json.dumps({"nodes": nodes, "edges": edges}), encoding="utf-8")
+
+    def ll(x, y):
+        a, b = PROJ.inv(x, y)
+        return float(np.ravel(b)[0]), float(np.ravel(a)[0])
+
+    _write_csv(tmp_path / "ent.csv", ["building", "lat", "lon"], [("A", *ll(0, 0)), ("B", *ll(0, 200))])
+    # 표는 이 쌍을 400 m(끊긴 그래프로 돌아간 값)로 알고 있다: 400 ÷ 1.1 m/s
+    _write_csv(tmp_path / "pairs.csv", ["from", "to", "distance_m", "time_s"],
+               [("A", "B", 400, 400 / 1.1), ("B", "A", 400, 400 / 1.1)])
+    flat = tmp_path / "travel.csv"
+    flat.write_text("from,to,minutes,source\nA,B,6.06,magicmap\nB,A,7.00,measured\n", encoding="utf-8")
+    out, stats, paths = tmp_path / "travel_slope.csv", tmp_path / "stats.csv", tmp_path / "paths.json"
+    args = ["--graph", str(graph), "--pairs", str(tmp_path / "pairs.csv"), "--dem", str(tmp_path / "no_dem"),
+            "--entrances", str(tmp_path / "ent.csv"), "--elevation", str(tmp_path / "none.csv"),
+            "--points", str(tmp_path / "none.csv"), "-o", str(out), "--stats", str(stats), "--paths", str(paths),
+            "--extra", "", "--flat", str(flat), "--patch"]
+    read = lambda p, enc="utf-8": {(r["from"], r["to"]): r for r in csv.DictReader(open(p, encoding=enc))}  # noqa: E731
+    up = 200 / 1.1 / 60 * math.exp(0.35)  # 10 % 오르막 200 m 를 우리 경로로 걷는 시간(분)
+
+    assert st.main(args) == 0  # 기본: 표 시간 × 경사 계수
+    assert float(read(out)[("A", "B")]["minutes"]) == pytest.approx(2 * up, rel=1e-3)
+    assert read(flat)[("A", "B")] == {"from": "A", "to": "B", "minutes": "6.06", "source": "magicmap"}
+    assert read(stats, "utf-8-sig")[("A", "B")]["check"] == "경로 다름"  # 표 6.06분, 우리 경로 3.03분
+
+    assert st.main(args + ["--base", "route"]) == 0
+    assert float(read(out)[("A", "B")]["minutes"]) == pytest.approx(up, rel=1e-3)
+    assert float(read(out)[("B", "A")]["minutes"]) == pytest.approx(200 / 1.1 / 60, rel=1e-3)
+    f = read(flat)
+    assert f[("A", "B")]["source"] == "route" and float(f[("A", "B")]["minutes"]) == pytest.approx(200 / 1.1 / 60, abs=0.01)
+    assert f[("B", "A")] == {"from": "B", "to": "A", "minutes": "7.00", "source": "measured"}
+    row = read(stats, "utf-8-sig")[("A", "B")]
+    assert row["minutes"] == row["route_slope_min"] and float(row["magicmap_min"]) == pytest.approx(400 / 1.1 / 60, abs=0.01)
+
+    assert st.main(args) == 0  # 되돌리기: 표 쌍의 route 행이 표 값으로 돌아온다
+    assert float(read(out)[("A", "B")]["minutes"]) == pytest.approx(2 * up, rel=1e-3)
+    assert read(flat)[("A", "B")] == {"from": "A", "to": "B", "minutes": "6.06", "source": "magicmap"}
+    assert read(flat)[("B", "A")]["source"] == "measured"
+
+
+def test_load_points_alias(tmp_path):
+    """제 출입구 → 제 좌표 → (둘 다 없을 때만) 대신 쓸 건물(ALIASES) 순. 71-1동은 이제 좌표·출입구가 있어 71동을 대신 쓰지 않는다."""
+    _write_csv(tmp_path / "ent.csv", ["building", "lat", "lon"], [("71", 37.4670, 126.9520)])
+    _write_csv(tmp_path / "list.csv", ["building", "lat", "lon"], [("71-1", 37.46649, 126.95268)])
+    none = tmp_path / "none.csv"
+    assert st.load_points(["71-1"], tmp_path / "ent.csv", none, none) == {"71-1": [(126.9520, 37.4670)]}       # 아무것도 없으면 71동
+    assert st.load_points(["71-1"], tmp_path / "ent.csv", none, tmp_path / "list.csv") == {"71-1": [(126.95268, 37.46649)]}
+    data = ROOT / "data"
+    listing = {r["building"]: r for r in st._rows(data / "buildings_for_magicmap.csv")}
+    gate = listing["GATE"]
+    assert (float(gate["lat"]), float(gate["lon"])) == pytest.approx((37.46635, 126.94832), abs=1e-6)  # 정문 구조물 자리(로드뷰로 확인)
+    assert listing["71-1"]["lat"] and listing["71-1"]["lon"]
+    pts = st.load_points(["71-1", "71", "GATE"], extra=data / "dorm_buildings.csv", patch=[data / "graph_patch"])
+    assert pts["71-1"] != pts["71"] and len(pts["GATE"]) >= 1

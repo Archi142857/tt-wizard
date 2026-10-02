@@ -1,24 +1,36 @@
-"""기숙사 쪽 도로 그래프 보강: 마법 지도 그래프에 없는 길과 기숙사 동 출입구 → data/graph_patch/dorm.geojson
+"""도로 그래프 보강: data/graph_patch/*.geojson 을 받은 그래프에 더하는 함수(apply_patch)와, 기숙사 둘레 OSM 길 → dorm.geojson
 
-  python scripts/graph_patch.py              # 다시 만들면 dorm.geojson 을 덮어쓴다(손으로 더할 것은 같은 폴더의 다른 파일에)
+  python scripts/graph_patch.py              # 다시 만들면 dorm.geojson 을 덮어쓴다(손으로 고칠 것은 같은 폴더의 다른 파일에)
 
-캠퍼스 마법 지도 도로 그래프(data/magicmap/roads_graph_updated.json)는 받은 자료라 고치지 않는다. 더할 것만 이 GeoJSON 에 두고,
-graph_slopes.py 가 data/graph_patch/*.geojson 의 길을 그래프에 더한 뒤 경사를 붙인다(더한 노드·엣지는 src = "ttwizard").
-slope_travel.py 는 출입구를 쓴다. 마법 지도 개발자는 그래프를 OSM·국토지리정보원 자료·사용자 제보·네이버 지도로 만들었다고 했다.
-여기서는 OSM 과 수치지형도(건물 번호)로 기숙사 동 둘레만 채운다.
+캠퍼스 마법 지도 도로 그래프(data/magicmap/roads_graph_updated.json)는 받은 자료라 고치지 않는다. 더할 것·막을 것만 data/graph_patch/ 의
+GeoJSON 에 두고, graph_slopes.py 가 apply_patch 로 그래프에 더한 뒤 경사를 붙인다(더한 노드·엣지는 src = "ttwizard").
+마법 지도 개발자는 그래프를 OSM·국토지리정보원 자료·사용자 제보·네이버 지도로 만들었다고 했다. 파일과 피처 형식은 data/graph_patch/README.md.
 
+패치 파일 (이름순으로 읽는다. 접속선은 어느 파일에 있든 길을 다 더한 뒤에 붙인다)
+  campus.geojson    관악캠 전체 점검(2026-10): 출입구(replace = true), 더한 길, 막은 엣지(type = block), 장애물 선(type = barrier)
+  dorm.geojson      이 스크립트가 만든다(아래 '길'·'출입구')
+  gwanaksa.geojson  관악학생생활관 둘레를 1:1,000 수치지형도·위성 사진으로 그린 길(type = area 안)
+  links.geojson     entrance_links.py 가 만드는 출입구 접속선
+
+apply_patch 가 하는 일
+  막기      type = block 의 [노드, 노드] 엣지에 blocked 를 단다(실제로 없는 길. 경로·잇기·접속선이 쓰지 않는다)
+  갈림목    받은 그래프에서 다른 엣지 위(JUNCTION_TOL m 안)에 찍혀 있는데 이어져 있지 않은 노드를 그 엣지를 따라 잇는다(heal_junctions)
+  길        꼭짓점마다 노드, 이웃 사이 양방향 엣지. 끝은 가까운 노드(snap m)나 엣지 위 수선의 발(link m)에 잇는다. 중간 꼭짓점이
+            이미 있는 노드와 VERTEX_TOL m 안이면 그 노드를 쓰고, 붙을 곳이 없던 끝은 길을 다 더한 뒤 다시 붙여 본다
+  접속선    role = entrance_link: 첫 점이 출입구 노드(building, entrance = true), 끝 점만 길에 붙인다
+  터널·다리(isTunnel) 엣지 가운데와 막은 엣지에는 아무것도 붙이지 않는다
+
+dorm.geojson 만들기 (build)
 길      기숙사 동(data/dorm_buildings.csv) 윤곽 둘레 ZONE m 안의 OSM 길(footway·path·steps·pedestrian·service) 중
         그래프에서 GAP m 넘게 떨어진 부분(MIN_RUN m 이상). 차도 옆 보도(GAP 안)는 차도 엣지로 친다. 캠퍼스 밖 동네 길(낙성대로 등)은 뺀다.
         광장 테두리(닫힌 pedestrian)·실내 길은 뺀다. 끝은 graph_slopes 가 가까운 노드(SNAP m)나 엣지(LINK m)에 잇는다
 출입구  이동시간을 내는 동(travel = Y)마다 building_entrances.csv → OSM 출입구 노드(벽 3 m 안) → 벽에 닿는 마법 지도 그래프의
         막다른 끝(6 m 안) → 벽에 닿는 위 길의 끝(3 m 안) → 없으면 가장 가까운 길 쪽 벽 한 점(추정).
-        출입구에서 가장 가까운 길까지 접속선(role = entrance_link)도 더해, 기숙사 동이 그래프 안에 들어간다(노드 building = 동 번호).
-        추정 출입구는 사용자 제보로 고친다: 같은 폴더의 다른 파일(예: manual.geojson)에 그 동의 출입구를 replace = true 로 넣으면
-        그 동은 자동 출입구·접속선을 만들지 않고 제보만 쓴다(data/graph_patch/README.md)
+        다른 파일에 replace = true 출입구가 있는 동(손으로 확인한 것)과 type = area 안의 동은 만들지 않는다.
+        출입구에서 길까지 접속선은 scripts/entrance_links.py 가 모든 출입구에 대해 links.geojson 에 만든다(건물·담장·옹벽을 피한 선)
 출처    properties.source 에 적는다. 동 윤곽은 OSM(이름 = 동 번호, 글로벌학생생활관(915), BK국제관)
-손으로 그린 패치  같은 폴더의 다른 파일(예: gwanaksa.geojson: 관악학생생활관을 1:1,000 수치지형도·위성 사진으로 그린 것)에
-        type = area 다각형이 있으면 그 안에서는 OSM 길·출입구를 자동으로 만들지 않는다(그 파일의 길·출입구가 대신한다).
-        길 properties 의 snap·link(m)는 그 길 끝을 그래프에 붙일 거리(없으면 SNAP·LINK). 손으로 그린 길은 작게(0.5·1 m) 둬서
+손으로 그린 패치  같은 폴더의 다른 파일에 type = area 다각형이 있으면 그 안에서는 OSM 길·출입구를 자동으로 만들지 않는다(그 파일의 길·출입구가
+        대신한다). 길 properties 의 snap·link(m)는 그 길 끝을 그래프에 붙일 거리(없으면 SNAP·LINK). 손으로 그린 길은 작게(0.5·1 m) 둬서
         정확히 노드 위·엣지 위에 둔 끝만 붙는다
 """
 
@@ -54,13 +66,18 @@ GAP = 8.0       # 그래프에서 이만큼 넘게 떨어진 OSM 길만 '없는 
 MIN_RUN = 15.0  # 없는 길 조각의 최소 길이(m)
 SNAP = 3.0      # 길 끝이 이 안의 그래프 노드면 그 노드에 잇는다
 LINK = 20.0     # 아니면 이 안의 그래프 엣지에 수선을 내려 잇는다
+JUNCTION_TOL = 0.3  # 받은 그래프의 노드가 다른 엣지에서 이 안이면 그 엣지 위에 찍힌 갈림목으로 보고 잇는다(m)
+JUNCTION_END = 0.5  # 엣지 끝에서 이 안이면 끝 노드 자리라 따로 잇지 않는다(m)
+VERTEX_TOL = 0.3    # 길의 중간 꼭짓점이 이미 있는 노드에서 이 안이면 그 노드를 쓴다(m): 먼저 더한 길의 끝과 같은 자리를 지나는 길을 잇는다
 # OSM highway → (그래프 kind, costFactor). 마법 지도 그래프의 kind 별 값과 같게. 캠퍼스 밖 동네 길(residential 등)은 더하지 않는다
 KIND = {"footway": ("footway", 1), "path": ("footway", 1), "pedestrian": ("footway", 1), "steps": ("steps", 1.2),
         "service": ("service", 1.05)}
 SOURCE = "OSM(© OpenStreetMap contributors, ODbL)·국토지리정보원 수치지형도 건물 번호로 tt-wizard 가 더함"
 PATCH_NOTE = ("src = ttwizard 인 노드·엣지: tt-wizard 가 data/graph_patch/*.geojson 을 더한 것(scripts/graph_patch.py). "
-              "기숙사 둘레 OSM 길·출입구(© OpenStreetMap contributors, ODbL)와, 관악학생생활관(900~906·918·921~926동 둘레)은 "
-              "국토지리정보원 1:1,000 수치지형도(2025)의 도로경계·건물·출입구 캐노피·계단을 보고 그린 길·출입구")
+              "role = junction 은 받은 그래프에서 엣지 위에 찍혀 있던 노드를 그 엣지와 이은 조각, role = entrance_link 는 건물 출입구에서 "
+              "길까지의 접속선(entrance = true 노드가 출입구). 길·출입구는 OSM(© OpenStreetMap contributors, ODbL), 국토지리정보원 "
+              "1:1,000 수치지형도(2025), 카카오맵 로드뷰·스카이뷰로 확인한 것(2026-10 관악캠 점검). 받은 엣지의 blocked 는 "
+              "실제로 없다고 본 길(건물을 지나는 선, 공사 구역)이고 그 밖의 값은 받은 그대로다")
 
 
 def _rows(path: Path) -> list[dict]:
@@ -116,15 +133,121 @@ def curated_areas(features) -> list:
 
 # ---------------------------------------------------------------- 그래프에 더하기 (graph_slopes.py 가 부른다, numpy 만)
 
+def _pair(e: dict) -> tuple[int, int]:
+    return (min(e["from"], e["to"]), max(e["from"], e["to"]))
+
+
 def _walk_segments(nodes_xy: dict, edges: list[dict]):
-    """걸을 수 있는 엣지 → 방향 없는 구간 {(u, v): 대표 엣지}."""
+    """걸을 수 있는 엣지 → 방향 없는 구간 {(u, v): 대표 엣지}. 막은 엣지와 터널·다리(isTunnel)는 뺀다
+    (땅 위의 길·접속선을 지하 통로 가운데에 붙이지 않는다. 터널 끝 노드에는 snap 으로 붙을 수 있다)."""
     seg = {}
     for e in edges:
-        if not e.get("walkable", True) or e["from"] == e["to"]:
+        if not e.get("walkable", True) or e["from"] == e["to"] or e.get("blocked") or e.get("isTunnel"):
             continue
-        k = (min(e["from"], e["to"]), max(e["from"], e["to"]))
-        seg.setdefault(k, e)
+        seg.setdefault(_pair(e), e)
     return seg
+
+
+def apply_blocks(graph: dict, features: list[dict]) -> int:
+    """type = block 피처: properties.edges 의 [노드, 노드] 쌍을 잇는 엣지(양방향)에 blocked = 이유 를 단다.
+    받은 값(walkable 등)은 그대로 두고, 경로 계산(slope_travel)·패치 잇기·출입구 접속선이 이 엣지를 쓰지 않는다.
+    현장·로드뷰·수치지형도로 실제로 없는 길(건물·담장을 뚫는 선 등)이라고 본 것만. 쌍은 받은 그래프의 노드 번호로 적는다.
+
+    끊긴 갈림목을 이은 조각(heal_junctions, role = junction)과 맞물리는 경우:
+    - 조각 [n1, n2] 를 막으면 그 조각이 나온 원래 엣지(split_of)도 막는다(원래 엣지가 남으면 그 구간을 그대로 지나간다).
+      같은 엣지의 다른 조각은 남는다(엣지의 한쪽만 막을 때 쓴다)
+    - 원래 엣지 [u, v] 를 막으면 그 엣지의 조각도 모두 막는다"""
+    listed = {}
+    for f in features:
+        p = f.get("properties") or {}
+        if p.get("type") != "block":
+            continue
+        why = p.get("note") or p.get("source") or "blocked"
+        for u, v in p.get("edges") or []:
+            listed[(min(int(u), int(v)), max(int(u), int(v)))] = why
+    if not listed:
+        return 0
+    edges = graph["edges"]
+    by_id = {e["id"]: e for e in edges}
+    origin = {}  # 조각 엣지 번호 → 원래 엣지 쌍
+    for e in edges:
+        if e.get("role") == "junction" and e.get("split_of") in by_id:
+            origin[e["id"]] = _pair(by_id[e["split_of"]])
+    pairs = dict(listed)
+    for e in edges:  # 막은 조각의 원래 엣지
+        if e["id"] in origin and _pair(e) in listed:
+            pairs.setdefault(origin[e["id"]], listed[_pair(e)])
+    n = 0
+    for e in edges:
+        k = _pair(e)
+        why = pairs.get(k) or (listed.get(origin[e["id"]]) if e["id"] in origin else None)
+        if why:
+            e["blocked"] = why
+            n += 1
+    return n
+
+
+def heal_junctions(graph: dict, proj: be.LocalProj | None = None, tol: float = JUNCTION_TOL) -> set[tuple[int, int]]:
+    """받은 그래프에서 노드가 다른 엣지 '위'에 찍혀 있는데(tol m 안) 그 엣지와 이어져 있지 않은 갈림목을 잇는다.
+
+    마법 지도 그래프에 나중에 더해진 길(노드 8,900번대 이후)은 끝이 기존 엣지 위에 놓여 있지만 그 엣지가 나뉘지 않아
+    본체와 끊겨 있다(끊긴 조각 51개·3.3 km 중 33개·2.6 km 가 이런 끝). 엣지 위 노드를 엣지를 따라 차례로 이어
+    u – n1 – n2 – … – v 조각 엣지를 더한다(src = "ttwizard", role = "junction", split_of = 원래 엣지 번호).
+    받은 노드·엣지는 그대로 둔다. 터널·다리(isTunnel)·막은(blocked) 엣지에는 잇지 않고(위아래로 엇갈릴 수 있다),
+    이미 이어진 이웃끼리는 더하지 않는다. 위에 노드가 놓인 원래 엣지 {(u, v)} 를 돌려준다(패치 길·접속선은 그 엣지 말고 조각에 붙인다.
+    받은 그래프에는 엣지 위에 노드를 찍고 양 끝과 따로 이어 둔 곳이 있어(노드 9182~9193), 원래 엣지에 붙이면 그 노드로 바로 못 간다)."""
+    proj = proj or be.LocalProj()
+    nodes, edges = graph["nodes"], graph["edges"]
+    X, Y = proj.fwd(np.array([n["lng"] for n in nodes], float), np.array([n["lat"] for n in nodes], float))
+    xy = {n["id"]: (float(x), float(y)) for n, x, y in zip(nodes, np.ravel(X), np.ravel(Y))}
+    seg, adj = {}, defaultdict(set)
+    for e in edges:
+        if not e.get("walkable", True) or e["from"] == e["to"] or e.get("blocked"):
+            continue
+        adj[e["from"]].add(e["to"])
+        adj[e["to"]].add(e["from"])
+        if not e.get("isTunnel"):
+            seg.setdefault(_pair(e), e)
+    cell = 25.0
+    grid = defaultdict(list)
+    for k in seg:
+        (ax, ay), (bx, by) = xy[k[0]], xy[k[1]]
+        for cx in range(int(math.floor((min(ax, bx) - tol) / cell)), int(math.floor((max(ax, bx) + tol) / cell)) + 1):
+            for cy in range(int(math.floor((min(ay, by) - tol) / cell)), int(math.floor((max(ay, by) + tol) / cell)) + 1):
+                grid[(cx, cy)].append(k)
+    on = defaultdict(list)  # 엣지 → [(엣지를 따라 잰 거리, 노드)]
+    for n in adj:
+        x, y = xy[n]
+        for k in grid.get((int(math.floor(x / cell)), int(math.floor(y / cell))), ()):
+            if n in k:
+                continue
+            (ax, ay), (bx, by) = xy[k[0]], xy[k[1]]
+            dx, dy = bx - ax, by - ay
+            L = math.hypot(dx, dy)
+            if L < 2 * JUNCTION_END:
+                continue
+            along = ((x - ax) * dx + (y - ay) * dy) / L
+            if along < JUNCTION_END or along > L - JUNCTION_END or abs((x - ax) * dy - (y - ay) * dx) / L > tol:
+                continue
+            on[k].append((along, n))
+    next_edge = max(e["id"] for e in edges) + 1
+    split = set()
+    for k in sorted(on):
+        e = seg[k]
+        chain = [k[0]] + [n for _, n in sorted(on[k])] + [k[1]]
+        for a, b in zip(chain[:-1], chain[1:]):
+            if a == b or b in adj[a]:
+                continue
+            d = float(math.hypot(xy[b][0] - xy[a][0], xy[b][1] - xy[a][1]))
+            for u, v in ((a, b), (b, a)):
+                edges.append({"id": next_edge, "from": u, "to": v, "distance": round(d, 3), "kind": e.get("kind", "footway"),
+                              "oneway": False, "walkable": True, "costFactor": e.get("costFactor", 1), "isTunnel": False,
+                              "src": "ttwizard", "role": "junction", "split_of": e["id"]})
+                next_edge += 1
+            adj[a].add(b)
+            adj[b].add(a)
+        split.add(k)  # 조각이 이미 다 있어도(받은 그래프가 엣지 위 노드를 양 끝과 따로 이어 둔 곳) 원래 엣지에는 붙이지 않는다
+    return split
 
 
 def apply_patch(graph: dict, features: list[dict], proj: be.LocalProj | None = None,
@@ -134,19 +257,38 @@ def apply_patch(graph: dict, features: list[dict], proj: be.LocalProj | None = N
     - 길의 꼭짓점마다 새 노드, 이웃 꼭짓점 사이 양방향 엣지(distance = 직선 거리, src = "ttwizard", osm = way 번호)
     - 길의 두 끝: snap m 안에 그래프 노드가 있으면 그 노드를 쓴다. 없고 link m 안에 걸을 수 있는 엣지가 있으면 그 위 수선의 발에
       새 노드를 두고 엣지 양 끝과 잇는다(split_of = 원래 엣지 번호, 원래 엣지는 그대로) + 길 끝과 수선의 발을 잇는다(kind 는 길과 같게)
-    - 길끼리도 먼저 더한 길에 이어진다. 길 끝은 같은 길의 다른 끝에는 붙지 않는다
+    - 길끼리도 먼저 더한 길에 이어진다. 길 끝은 같은 길의 다른 끝에는 붙지 않는다. 붙일 곳이 없던 끝은 길을 다 더한 뒤 한 번 더
+      붙여 본다(뒤에 읽은 패치 파일의 길에 닿는 끝. 접속선은 그 뒤에 붙인다)
+    - 길의 중간 꼭짓점: VERTEX_TOL m 안에 이미 노드(받은 노드, 먼저 더한 길의 끝·꼭짓점)가 있으면 그 노드를 쓴다. 출입구 노드는 빼고
+      (다른 파일의 길이 먼저 더한 길의 끝과 같은 자리를 지날 때 두 길이 이어지게)
     - 길 properties 에 snap·link(m)가 있으면 그 길은 그 값으로 붙인다(손으로 그린 길: 0.5·1 m)
     - 같은 엣지에 여러 번 붙으면 이미 나눈 조각을 다시 나눈다(조각끼리 이어진다)
+    - 그 전에 받은 그래프의 끊긴 갈림목을 잇는다(heal_junctions). features 가 비어 있어도 한다
     """
     proj = proj or be.LocalProj()
+    apply_blocks(graph, features)  # 막은 엣지에는 갈림목·길·접속선을 붙이지 않는다
+    split = heal_junctions(graph, proj)  # 엣지 위에 찍힌 갈림목을 먼저 잇는다(패치 길은 그 조각에 붙는다)
+    apply_blocks(graph, features)  # 조각을 가리킨 block(엣지의 한쪽만 막기)은 조각이 생긴 뒤에 걸린다
     nodes, edges = graph["nodes"], graph["edges"]
     xy = {}
     for n in nodes:
         x, y = proj.fwd(n["lng"], n["lat"])
         xy[n["id"]] = (float(x), float(y))
     seg = _walk_segments(xy, edges)
+    for k in split:  # 조각으로 나뉜 원래 엣지는 붙일 후보에서 뺀다(그래프에는 그대로 남는다)
+        seg.pop(k, None)
     next_node = max(n["id"] for n in nodes) + 1
     next_edge = max(e["id"] for e in edges) + 1
+    cells = defaultdict(list)  # 0.5 m 칸 → 노드(중간 꼭짓점이 이미 있는 노드와 같은 자리인지 볼 때)
+    door_nodes = set()         # 출입구 노드: 길의 꼭짓점을 여기에 합치지 않는다(출입구는 지나가는 길이 아니다)
+    ground = {n for e in edges if not e.get("isTunnel") for n in (e["from"], e["to"])}
+    under = {n for e in edges if e.get("isTunnel") for n in (e["from"], e["to"])} - ground  # 지하 통로 안쪽 노드에도 합치지 않는다
+
+    def _cell(x, y):
+        return int(math.floor(x / 0.5)), int(math.floor(y / 0.5))
+
+    for i, (x, y) in xy.items():
+        cells[_cell(x, y)].append(i)
 
     def new_node(x, y, **tags):
         nonlocal next_node
@@ -154,8 +296,25 @@ def apply_patch(graph: dict, features: list[dict], proj: be.LocalProj | None = N
         n = {"id": next_node, "lng": round(float(lon), 8), "lat": round(float(lat), 8), "src": "ttwizard", **tags}
         nodes.append(n)
         xy[next_node] = (float(x), float(y))
+        cells[_cell(x, y)].append(next_node)
+        if tags.get("entrance"):
+            door_nodes.add(next_node)
         next_node += 1
         return n["id"]
+
+    def vertex(x, y):
+        """길의 중간 꼭짓점 노드: VERTEX_TOL 안에 이미 있는 노드(출입구 노드 제외)가 있으면 그 노드, 없으면 새 노드."""
+        cx, cy = _cell(x, y)
+        best = None
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for i in cells.get((cx + dx, cy + dy), ()):
+                    if i in door_nodes or i in under:
+                        continue
+                    d = math.hypot(xy[i][0] - x, xy[i][1] - y)
+                    if d <= VERTEX_TOL and (best is None or d < best[0]):
+                        best = (d, i)
+        return best[1] if best else new_node(x, y)
 
     def new_edge(u, v, kind, cf, extra):
         nonlocal next_edge
@@ -166,14 +325,18 @@ def apply_patch(graph: dict, features: list[dict], proj: be.LocalProj | None = N
             next_edge += 1
         seg[(min(u, v), max(u, v))] = edges[-1]
 
-    def anchor(x, y, kind, cf, extra, snap=snap, link=link, exclude=()):
-        """(x, y) 를 그래프에 붙일 노드. 못 붙이면 None. exclude: 붙지 않을 노드(같은 길의 다른 끝)."""
+    def anchor(x, y, kind, cf, extra, snap=snap, link=link, exclude=(), here=None):
+        """(x, y) 를 그래프에 붙일 노드. 못 붙이면 None. exclude: 붙지 않을 노드(같은 길의 다른 끝).
+        here: 이미 만든 길 끝 노드를 다시 붙일 때 그 노드(붙은 곳과 엣지로 잇고 here 를 돌려준다. 못 붙이면 None)."""
         ids = np.fromiter((i for i in xy if i not in exclude), int)
         P = np.array([xy[i] for i in ids])
         d = np.hypot(P[:, 0] - x, P[:, 1] - y)
         k = int(np.argmin(d))
         if d[k] <= snap:
-            return int(ids[k])
+            if here is None:
+                return int(ids[k])
+            new_edge(here, int(ids[k]), kind, cf, {**extra, "connector": True})
+            return here
         best = None
         for (u, v), e in seg.items():
             if u in exclude or v in exclude:
@@ -194,21 +357,37 @@ def apply_patch(graph: dict, features: list[dict], proj: be.LocalProj | None = N
         if t * L < 0.5 or (1 - t) * L < 0.5:  # 엣지 끝에 붙어 있으면 그 끝 노드
             foot = u if t * L < 0.5 else v
         else:
-            foot = new_node(px, py)
+            foot = here if here is not None and g < 0.5 else new_node(px, py)  # 다시 붙이는 끝이 엣지 위면 그 노드가 수선의 발
             # 나눈 엣지는 찾기 목록에서 빼고 두 조각을 넣는다(같은 엣지에 또 붙을 때 조각을 나누도록). 원래 엣지는 그래프에 그대로
             seg.pop((min(u, v), max(u, v)), None)
+            piece = {"split_of": e.get("split_of", e["id"])}
+            if e.get("role") == "junction":  # 갈림목 조각을 또 나눈 것: block 이 원래 엣지와 같이 다루게
+                piece["role"] = "junction"
             for w in (u, v):
-                new_edge(foot, w, e.get("kind", "footway"), e.get("costFactor", 1), {"split_of": e.get("split_of", e["id"])})
+                new_edge(foot, w, e.get("kind", "footway"), e.get("costFactor", 1), piece)
+        if here is not None:
+            if foot != here:
+                new_edge(here, foot, kind, cf, {**extra, "connector": True})
+            return here
         if g < 0.5:  # 이미 엣지 위: 수선의 발이 그 점
             return foot
         here = new_node(x, y)
         new_edge(here, foot, kind, cf, {**extra, "connector": True})
         return here
 
+    free = []  # 붙일 곳이 없던 길 끝 (노드, 그 길의 노드들, kind, cf, extra, near)
+
+    def retry_free():
+        """붙일 곳을 못 찾았던 길 끝을 길을 다 더한 뒤 다시 붙인다(뒤에 더한 길, 곧 다른 패치 파일의 길에 닿는 끝)."""
+        for node, own, kind, cf, extra, near in free:
+            anchor(xy[node][0], xy[node][1], kind, cf, extra, **near, exclude=own, here=node)
+        free.clear()
+
     added = 0
     paths = [f for f in features if (f.get("properties") or {}).get("type") == "path"
              and (f.get("geometry") or {}).get("type") == "LineString" and len(f["geometry"].get("coordinates") or []) >= 2]
     paths.sort(key=lambda f: f["properties"].get("role") == "entrance_link")  # 길을 먼저, 출입구 접속선은 그 뒤에
+    doors = {}  # 출입구 노드: 같은 자리(5 cm 안)에서 나가는 접속선 여럿은 한 노드를 같이 쓴다
     for f in paths:
         g, p = f["geometry"], f["properties"]
         kind, cf = p.get("kind") or "footway", p.get("costFactor", 1)
@@ -217,21 +396,29 @@ def apply_patch(graph: dict, features: list[dict], proj: be.LocalProj | None = N
         c = np.asarray(g["coordinates"], float)[:, :2]
         X, Y = proj.fwd(c[:, 0], c[:, 1])
         if p.get("role") == "entrance_link":  # 출입구 쪽 끝은 그대로 두고(건물 노드), 길 쪽 끝만 잇는다
-            first = new_node(X[0], Y[0], building=str(p.get("building", "")), entrance=True)
+            if free:  # 접속선을 붙이기 전에(길을 다 더한 뒤) 못 붙었던 길 끝을 다시 본다
+                retry_free()
+            key = (round(float(X[0]) / 0.05), round(float(Y[0]) / 0.05))
+            first = doors.get(key)
+            if first is None:
+                first = doors[key] = new_node(X[0], Y[0], building=str(p.get("building", "")), entrance=True)
         else:
             first = anchor(float(X[0]), float(Y[0]), kind, cf, extra, **near)
         ends = [first, anchor(float(X[-1]), float(Y[-1]), kind, cf, extra, **near,
                               exclude={first} if first is not None else ())]  # 짧은 길이 제 시작 노드에 붙지 않게
         chain = [ends[0] if ends[0] is not None else new_node(X[0], Y[0])]
         for x, y in zip(X[1:-1], Y[1:-1]):
-            chain.append(new_node(x, y))
+            chain.append(vertex(float(x), float(y)))
         chain.append(ends[1] if ends[1] is not None else new_node(X[-1], Y[-1]))
         for a, b in zip(chain[:-1], chain[1:]):
             if a != b:
                 new_edge(a, b, kind, cf, extra)
+        if p.get("role") != "entrance_link":
+            free += [(chain[j], set(chain), kind, cf, extra, near) for j in (0, -1) if ends[j] is None]
         added += 1
+    retry_free()
     graph.setdefault("meta", {})
-    if added:
+    if added or split:
         graph["meta"]["patch"] = PATCH_NOTE
     return graph
 
@@ -383,20 +570,6 @@ def build(graph_path: Path = GRAPH, osm_paths: Path = OSM_PATHS, buildings: Path
             entrances_out.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [round(lon, 7), round(lat, 7)]},
                                   "properties": {"type": "entrance", "building": b, "source": src}})
 
-    links = []
-    for f in entrances_out:  # 출입구 → 가장 가까운 길(그래프 + 더한 길) 접속선
-        lon, lat = f["geometry"]["coordinates"]
-        q = Point(*proj.fwd(lon, lat))
-        near = all_lines[int(all_tree.nearest(q))]
-        w = near.interpolate(near.project(q))
-        d = q.distance(w)
-        if 1.0 < d <= 40.0:
-            a = tuple(map(float, proj.inv(w.x, w.y)))
-            links.append({"type": "Feature", "geometry": {"type": "LineString", "coordinates": [[lon, lat], [round(a[0], 7), round(a[1], 7)]]},
-                          "properties": {"type": "path", "role": "entrance_link", "kind": "footway", "costFactor": 1,
-                                         "building": f["properties"]["building"], "length_m": round(d, 1),
-                                         "source": "출입구 접속선(출입구에서 가장 가까운 길까지 직선)"}})
-
     feats = []
     for line, hw, oid, name in kept:
         kind, cf = KIND[hw]
@@ -408,7 +581,7 @@ def build(graph_path: Path = GRAPH, osm_paths: Path = OSM_PATHS, buildings: Path
     return {"type": "FeatureCollection",
             "meta": {"source": SOURCE, "zone_m": zone, "gap_m": gap, "min_run_m": min_run,
                      "note": "type = path 는 graph_slopes.py 가 그래프에 더하고, type = entrance 는 slope_travel.py 가 출입구로 쓴다"},
-            "features": feats + links + entrances_out}
+            "features": feats + entrances_out}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -426,7 +599,6 @@ def main(argv: list[str] | None = None) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(fc, ensure_ascii=False, indent=1), encoding="utf-8")
     paths = [f for f in fc["features"] if f["properties"]["type"] == "path" and f["properties"].get("role") != "entrance_link"]
-    links = [f for f in fc["features"] if f["properties"].get("role") == "entrance_link"]
     ents = [f for f in fc["features"] if f["properties"]["type"] == "entrance"]
     by = defaultdict(list)
     for f in ents:
@@ -434,7 +606,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"저장: {out}")
     print(f"  길 {len(paths)}개, {sum(f['properties']['length_m'] for f in paths):.0f} m (OSM, 그래프에서 {args.gap:g} m 넘게 떨어진 조각)")
     print(f"  출입구 {len(ents)}개: " + ", ".join(f"{k} {len(v)}" for k, v in by.items())
-          + f" · 접속선 {len(links)}개(중앙값 {np.median([f['properties']['length_m'] for f in links]) if links else 0:.1f} m)")
+          + " (접속선은 scripts/entrance_links.py 가 links.geojson 에 만든다)")
     return 0
 
 

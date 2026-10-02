@@ -4,7 +4,7 @@
 → data/buildings_for_magicmap.csv : building, name, lat, lon, first_seen, last_seen, note
 
 data/buildings.csv(좌표) + data/buildings_history.csv(있으면, 언제부터 강의가 열렸는지) 를 합치고,
-출발/도착 후보(정문 GATE, 기숙사 919)가 없으면 근사값으로 넣어 note 에 표시한다.
+출발/도착 후보(정문 GATE, 기숙사 919)가 없으면 넣는다. 캠퍼스맵에서 못 찾아 좌표가 빈 동은 EXTRA 의 좌표로 채운다.
 엑셀에서 한글이 안 깨지도록 UTF-8 BOM 으로 저장.
 """
 
@@ -20,7 +20,10 @@ OUT = ROOT / "data" / "buildings_for_magicmap.csv"
 
 EXTRA = {
     "919": {"name": "관악학생생활관 919동 (출발/도착 후보)", "lat": "37.45280", "lon": "126.95750", "note": "근사값 — 확인 필요"},
-    "GATE": {"name": "정문 (출발/도착 후보)", "lat": "37.46620", "lon": "126.94900", "note": "근사값"},
+    # 정문: 정문 구조물('샤') 발치의 보행 광장. 2026-10 관악캠 점검에서 카카오 로드뷰(2026-08)로 확인(예전 근사값은 60 m 동쪽 숲)
+    "GATE": {"name": "정문 (출발/도착 후보)", "lat": "37.46635", "lon": "126.94832", "note": "카카오 로드뷰(2026-08)로 확인한 정문 구조물 자리"},
+    # 71-1동: 캠퍼스맵에 없다. 국토지리정보원 1:1,000 수치지형도(2025) '71-1동체육문화연구동' 윤곽 안쪽 대표점
+    "71-1": {"name": "체육문화연구동(71-1동)", "lat": "37.46649", "lon": "126.95268", "note": "캠퍼스맵 미검색 — 수치지형도 1:1,000 건물 윤곽"},
 }
 
 
@@ -40,6 +43,8 @@ def main() -> int:
     for b, extra in EXTRA.items():
         if b not in rows:
             rows[b] = {"building": b, **extra}
+        elif not rows[b].get("lat"):  # 목록에는 있는데 좌표가 없는 동
+            rows[b] = {**rows[b], **extra, "name": rows[b].get("name") or extra["name"]}
     with open(OUT, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=["building", "name", "lat", "lon", "first_seen", "last_seen", "note"])
         w.writeheader()

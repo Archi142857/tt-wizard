@@ -6,6 +6,8 @@
 //   - 학과 줄임: 학과 이름 처음(낱말 머리)부터 건너뛰며 맞추고, '과'·'부' 로 끝나면 그 글자는 뺀다. '컴공과' → 컴퓨터공학부, '국문과' → 국어국문학과.
 //     '학' 으로 끝나는 낱말(수학·경제학)은 학과로 찾지 않는다(그 학과 과목이 다 딸려 나와서)
 //   - 특별 낱말: 전공(전선·전필) 교양·전선·전필·교직·일선·공통 학부·학사 대학원·석박 석사·박사 3학점 301동·43-1동 301-118(강의실)
+//     SNUTT 는 전공·학부·학사·대학원·석박·건물·강의실은 거르기만 하고, 교양·전선·전필·석사·박사 … 는 '구분이 그 말이거나 과목명에
+//     그 글자가 차례로 있거나'로 찾는다(줄 세우기는 없다). 여기서는 낱말이 여럿이면 거르기를 먼저 본다(matchPlan)
 // 여기에 더한 것(SNUTT 에는 없다):
 //   - 초성과 글자를 섞어도 된다: 'ㄷㅎ글쓰기', '대ㄱ쓰기', 'ㅋㄱㅅ'. 교수 이름도 초성으로('ㄴㅁㅇ' → 나민애)
 //   - 치는 중인 마지막 글자도 맞는다: '그' → 글, '글쓱' → 글쓰기(받침 ㄱ 이 다음 글자 첫소리). 덜 확실해서 조금 뒤로
@@ -14,6 +16,8 @@
 //   - 맞는 정도로 줄 세운다(점수가 작을수록 앞):
 //       과목명 처음 0 · 과목명 낱말 머리 1 · 교수 이름 전체(초성도) 1.5 · 과목명 안 2 · 낱말 머리글자 줄임 3 · 과목명 처음부터 건너뛴 줄임 3.2
 //       · 학과 3.4 · 건너뛴 글자 4 · 분반 번호 4.5 · 교과목번호 5 · 교수 이름 일부 7 · 특별 낱말 8
+//     특별 낱말이 과목명 낱말 머리에도 있으면('교양' → 교양연주): 그 낱말만 쳤을 때는 과목명 점수(0·1)로 앞에,
+//     다른 낱말과 함께 쳤을 때는 거르기가 먼저(8)이고 과목명에만 있는 과목은 맨 뒤(8.2)
 //     치는 중인 글자로 맞으면 +1.5(과목명 안이면 +2.5). 줄임은 건너뛴 횟수·글자 수만큼 뒤로.
 //     '과목명 안' 은 그 낱말이 어느 과목명에서도 낱말 머리로 맞지 않으면 줄임말로 보고 3.8 로(LATE)
 //     같으면 앞에서 맞은 것, 짧은 과목명, 가나다순. 낱말이 여럿이면 낱말 점수의 평균(띄어 쓴 검색어 전체가 과목명에 이어져 있으면 그 점수)
@@ -432,12 +436,23 @@ function pick(r, a, extra) {
   return { ...out, demo: d.score < r.demo.score ? d : r.demo, edge: r.edge || a.edge };
 }
 
-function matchPlan(e, p) {
+/**
+ * 낱말 하나(계획 p)를 과목 하나에 맞춰 본다. filter: 낱말이 여럿인 검색(특별 낱말은 거르는 말로 먼저 본다).
+ * 특별 낱말 가운데 과목명에도 나오는 말(교양·전공·대학원 …)은 과목명의 낱말 머리에 그 말이 있어도 맞는다('교양소설', '전공탐색').
+ * 과목명 안쪽에만 있는 것('유전공학' 의 전공)은 치지 않는다.
+ *  - 낱말 하나만 쳤으면 과목명에 그 말이 있는 과목이 앞(0·1점), 걸러진 과목(8점)이 뒤
+ *  - 낱말이 여럿이면 걸러진 과목이 먼저(8점): '교양 3학점' 은 교양이면서 3학점인 과목이지 '교양소설'(전선)이 아니다.
+ *    과목명에만 그 말이 있는 과목은 맨 뒤(8.2점)에 남긴다
+ */
+function matchPlan(e, p, filter = false) {
   if (p.sp) {
-    let r = p.sp.test(e.c) ? { score: S.special, kind: "special", mark: null } : null;
-    if (p.sp.title && fits(e.name, p.q)) {
+    const pass = p.sp.test(e.c);
+    let r = pass ? { score: S.special, kind: "special", mark: null } : null;
+    if (p.sp.title && !(filter && pass) && fits(e.name, p.q)) {
       const t = contiguous(p.q, e.name);
-      if (t) r = { score: t.score + t.at * 0.001 + e.name.n * 0.0001, kind: "name", mark: { f: "name", at: t.at, len: t.len } };
+      if (t && e.name.flag[t.at] & (HEAD | WORD)) {
+        r = { score: filter ? S.special + 0.2 : t.score + t.at * 0.001 + e.name.n * 0.0001, kind: "name", mark: { f: "name", at: t.at, len: t.len } };
+      }
     }
     return r && { ...r, demo: r, edge: true };
   }
@@ -476,7 +491,7 @@ export function searchCourses(index, raw, { limit = Infinity } = {}) {
     }
     const rs = [];
     for (const p of plans) {
-      const r = matchPlan(e, p);
+      const r = matchPlan(e, p, plans.length > 1);
       if (!r) break;
       rs.push(r);
     }

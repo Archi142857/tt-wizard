@@ -37,7 +37,7 @@ from ttwizard.models import Meeting, merge_duplicate_meetings  # noqa: E402
 DATA = ROOT / "data"
 OUT = ROOT / "web" / "data"
 HOMES = [("919", "기숙사"), ("GATE", "정문")]
-STAND_IN = {"71-1": "71"}  # 좌표가 없는 지점 → 지도에 대신 찍을 건물 (slope_travel.py 와 같게)
+STAND_IN = {"71-1": "71"}  # 좌표가 없는 지점 → 지도에 대신 찍을 건물(slope_travel.ALIASES 와 같게. 71-1동은 이제 좌표가 있어 쓰이지 않는다)
 SKIP_CLASSIFICATION = {"논문"}  # 논문연구 등: 수업 시간이 없어 시간표와 무관
 
 

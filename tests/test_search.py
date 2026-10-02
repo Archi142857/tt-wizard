@@ -57,6 +57,10 @@ COURSES = [
     course("881.003", "미분방정식", "수리과학부"),
     course("E43.101", "건강과 삶", "체육교육과", 1, "교양", secs=[("001", "최교수", [(4, 540, 630, "43-1", "101")])]),
     course("E43.102", "골프초급", "체육교육과", 1, "교양", secs=[("001", "최교수", [(4, 540, 630, "71", "101")])]),
+    # 특별 낱말이 과목명에 든 과목: '교양' 이 낱말 머리에 있는 전선 과목, '전공' 이 낱말 안쪽에만 있는 교양 과목
+    course("105.654", "현대독문학연습 (교양소설)", "독어독문학과", 3, "전선", "석박사통합"),
+    course("E12.104", "한국근대소설의 이해", "국어국문학과", 3, "교양"),
+    course("C30.105", "유전공학의 이해", "생명과학부", 2, "교양"),
 ]
 
 
@@ -75,7 +79,8 @@ def found(tmp_path_factory):
     queries = ["대글", "ㄷㅎ글쓰기", "대ㄱ쓰기", "글쓱", "그", "eogkr rmfTmrl", "컴공과", "글쓰기 나민애", "ㄴㅁㅇ", "컴개실",
                "자구", "선대", "수연", "구조", "교양", "전공", "대학원", "학부", "3학점", "301동", "301-118", "301-1", "43-1",
                "M1522.000900", "m1522000900", "1522", "M1522.000900 001", "일물", "공수1", "AI", "고급 한국어 2", "인지과", "미방",
-               "운체", "ㅇㅇㅊㅈ", "", "   ", "··", "대학 ", "대하", "글쓰기 나", "컴공 자"]
+               "운체", "ㅇㅇㅊㅈ", "", "   ", "··", "대학 ", "대하", "글쓰기 나", "컴공 자",
+               "교양 3학점", "3학점 교양", "교양 소설", "소설 교양", "전공 3학점", "·· 교양"]
     out = run(tmp_path_factory.mktemp("search"), COURSES, queries, top=40)
     return {r["q"]: r for r in out["results"]}, out
 
@@ -140,13 +145,34 @@ def test_qwerty_dept_prof(found):
 def test_special_words(found):
     by, _ = found
     cls = {c[0]: c[4] for c in COURSES}
-    assert set(ids(by["교양"])) == {k for k, v in cls.items() if v == "교양"}
+    # 과목명 낱말 머리에 그 말이 있는 과목도 맞는다('(교양소설)'). 안쪽에만 있는 것('유전공학' 의 전공)은 아니다
+    assert set(ids(by["교양"])) == {k for k, v in cls.items() if v == "교양"} | {"105.654"}
     assert set(ids(by["전공"])) == {k for k, v in cls.items() if v in ("전선", "전필")}
     grad = {c[0] for c in COURSES if c[5] in ("석사", "박사", "석박사통합")}
     assert set(ids(by["대학원"])) == grad and not set(ids(by["학부"])) & grad
     assert set(ids(by["3학점"])) == {c[0] for c in COURSES if c[3] == 3}
     assert set(ids(by["301동"])) == set(ids(by["301-118"])) == set(ids(by["301-1"])) == {"M1522.000900", "F31.202"}
     assert ids(by["43-1"]) == ["E43.101"]  # 43-1동. 교과목번호 E43.1xx 는 아니다
+
+
+def test_special_words_filter_first(found):
+    """특별 낱말을 다른 낱말과 함께 치면 거르는 말이 먼저다: '교양 3학점' 은 교양이면서 3학점인 과목이 앞이고,
+    과목명에만 '교양' 이 있는 전선 과목은 맨 뒤. 그 낱말만 쳤을 때는 과목명에 그 말이 있는 과목이 앞."""
+    by, _ = found
+    want = [c[0] for c in COURSES if c[4] == "교양" and c[3] == 3]
+    for q in ("교양 3학점", "3학점 교양"):
+        got = by[q]
+        assert set(ids(got)[:-1]) == set(want) and ids(got)[-1] == "105.654", q
+        assert all(h["kind"] == "special" and not h["marks"] for h in got["hits"][:-1])
+        assert got["scores"][-1] > got["scores"][0] == pytest.approx(8.01, abs=1e-6)
+    assert ids(by["교양"])[0] == "105.654" and by["교양"]["hits"][0]["marks"]["name"] == [[9, 11]]  # 한 낱말: 과목명에 있는 과목이 앞
+    assert by["교양"]["scores"][0] < 2 and by["교양"]["scores"][1] == 8
+    assert ids(by["·· 교양"]) == ids(by["교양"])  # 글자가 없는 낱말은 세지 않는다
+    assert ids(by["교양 소설"])[0] == "105.654"   # 띄어 쓴 말 전체가 과목명에 이어져 있으면 그것이 먼저(교양소설)
+    assert ids(by["소설 교양"]) == ["E12.104", "105.654"]
+    got = by["전공 3학점"]
+    assert set(ids(got)) == {c[0] for c in COURSES if c[4] in ("전선", "전필") and c[3] == 3}
+    assert len(set(got["scores"])) == 1  # 거른 과목끼리는 같은 점수(가나다순)
 
 
 def test_course_number_and_misc(found):
