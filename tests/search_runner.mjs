@@ -57,6 +57,7 @@ const bench = { indexMs, keys: keys.length, avgMs: times.length ? times.reduce((
 const extra = {
   splitMarks: splitMarks("대학 글쓰기", [[0, 1], [3, 4]]),
   normKey: normKey("(공유) AI·입문 Ⅱ"),
+  cluster: normKey("ㅋㄳ ㄺ"),
   qwerty: ["rmfTmrl", "dkfrhflwma", "Rk", "dho", "rkqt", "rkqtdl", "rkqtk", "123"].map(fromQwerty),
 };
 console.log(JSON.stringify({ results, bench, extra }));

@@ -10,6 +10,10 @@
 //     그 글자가 차례로 있거나'로 찾는다(줄 세우기는 없다). 여기서는 낱말이 여럿이면 거르기를 먼저 본다(matchPlan)
 // 여기에 더한 것(SNUTT 에는 없다):
 //   - 초성과 글자를 섞어도 된다: 'ㄷㅎ글쓰기', '대ㄱ쓰기', 'ㅋㄱㅅ'. 교수 이름도 초성으로('ㄴㅁㅇ' → 나민애)
+//   - 글자판(IME)이 합친 자음도 초성으로 읽는다. 자음만 이어 치면 겹받침 낱자가 된다: ㄱ ㅅ → 'ㄳ', ㅋ ㄱ ㅅ → 'ㅋㄳ' (언제나 둘로 푼다).
+//     글자 뒤에 초성을 치면 앞 글자의 받침이 된다: 자료 ㄱ ㅈ → '자룍ㅈ', 대 ㄱ 쓰기 → '댁쓰기', 일반 ㅎ ㅎ → '일밚ㅎ'.
+//     받침 있는 글자 바로 뒤에 홑자음이 오면('자룍ㅈ', '각ㅈ') 그대로 읽어 안 맞는 과목을 받침을 뗀 읽기(자료ㄱㅈ, 가ㄱㅈ)로도 맞춰 보고,
+//     그 밖의 자리('댁쓰기')는 결과가 하나도 없을 때만 떼어 다시 찾는다(looseReadings). 떼어 읽어 맞은 것은 +1.5
 //   - 치는 중인 마지막 글자도 맞는다: '그' → 글, '글쓱' → 글쓰기(받침 ㄱ 이 다음 글자 첫소리). 덜 확실해서 조금 뒤로
 //   - 한/영 전환을 잊고 친 영문 자판 글자: 'eogkr rmfTmrl' → 대학 글쓰기
 //   - 띄어쓰기·대소문자·가운뎃점·괄호·로마 숫자(Ⅱ = 2)는 무시한다. 교과목번호는 마침표 없이 쳐도 된다(여섯 글자 이상)
@@ -38,6 +42,8 @@ const JONG = ["", "ㄱ", "ㄲ", "ㄳ", "ㄴ", "ㄵ", "ㄶ", "ㄷ", "ㄹ", "ㄺ",
 // 겹받침·겹모음을 자판에서 치는 순서로 푼다(치는 중인 글자를 낱자 단위로 견주려고)
 const SPLIT = { "ㄳ": "ㄱㅅ", "ㄵ": "ㄴㅈ", "ㄶ": "ㄴㅎ", "ㄺ": "ㄹㄱ", "ㄻ": "ㄹㅁ", "ㄼ": "ㄹㅂ", "ㄽ": "ㄹㅅ", "ㄾ": "ㄹㅌ", "ㄿ": "ㄹㅍ", "ㅀ": "ㄹㅎ", "ㅄ": "ㅂㅅ",
   "ㅘ": "ㅗㅏ", "ㅙ": "ㅗㅐ", "ㅚ": "ㅗㅣ", "ㅝ": "ㅜㅓ", "ㅞ": "ㅜㅔ", "ㅟ": "ㅜㅣ", "ㅢ": "ㅡㅣ" };
+// 겹받침 낱자: 글자판이 자음 둘을 하나로 합친 것(ㄱ 다음 ㅅ → 'ㄳ'). 검색어에 홀로 있으면 초성 둘로 읽는다
+const CLUSTER = Object.fromEntries(Object.entries(SPLIT).filter(([k]) => JONG.includes(k)));
 const SEP = new Set(" \t\n\r\f\v\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u2028\u2029\u202f\u205f\u3000\ufeff" +
   "()[]{}<>《》『』「」〈〉【】\"'‘’“”,.:;/\\·ㆍ・‧-–—―_!?&~|*+#@^`=");
 const ROMAN = { "Ⅰ": "1", "Ⅱ": "2", "Ⅲ": "3", "Ⅳ": "4", "Ⅴ": "5", "Ⅵ": "6", "Ⅶ": "7", "Ⅷ": "8", "Ⅸ": "9", "Ⅹ": "10",
@@ -75,7 +81,8 @@ const LBIT = new Map([..."abcdefghijklmnopqrstuvwxyz"].map((c, k) => [c, 1 << k]
 const WORD = 1, HEAD = 2;
 
 /**
- * 비교용 칸 { key, cho, pos, flag, n, mask, lat }. 띄어쓰기·문장부호는 빼고 소문자로, 로마 숫자는 숫자로, 전각은 반각으로.
+ * 비교용 칸 { key, cho, pos, flag, n, mask, lat }. 띄어쓰기·문장부호는 빼고 소문자로, 로마 숫자는 숫자로, 전각은 반각으로,
+ * 홀로 있는 겹받침 낱자는 자음 둘로('ㄳ' → 'ㄱㅅ').
  * key 글자 열, cho 글자마다 초성(음절이 아니면 그 글자), pos 원래 글자 위치,
  * flag WORD(낱말 머리: 띄어쓰기·문장부호 뒤, 한글·숫자·영문이 바뀌는 곳) HEAD(칸의 처음, 과목명이면 꼬리표 '(공유)' 다음)
  */
@@ -89,7 +96,7 @@ function field(text, tag = false) {
     if (rc >= 0xff01 && rc <= 0xff5e) raw = String.fromCharCode((rc -= 0xfee0)); // 전각 영문·숫자·괄호 → 반각
     if (SEP.has(raw)) { sep = true; continue; }
     const conv = rc >= 0xac00 && rc <= 0xd7a3 || rc >= 97 && rc <= 122 || rc >= 48 && rc <= 57 ? raw
-      : rc >= 65 && rc <= 90 ? String.fromCharCode(rc + 32) : ROMAN[raw] || raw.toLowerCase();
+      : rc >= 65 && rc <= 90 ? String.fromCharCode(rc + 32) : CLUSTER[raw] || ROMAN[raw] || raw.toLowerCase();
     for (let k = 0; k < conv.length; k++) {
       const c = conv[k];
       const code = c.charCodeAt(0);
@@ -227,7 +234,7 @@ function fuzzy(q, t, anchored = false) {
 const KEYS = { q: "ㅂ", w: "ㅈ", e: "ㄷ", r: "ㄱ", t: "ㅅ", y: "ㅛ", u: "ㅕ", i: "ㅑ", o: "ㅐ", p: "ㅔ", a: "ㅁ", s: "ㄴ", d: "ㅇ", f: "ㄹ", g: "ㅎ",
   h: "ㅗ", j: "ㅓ", k: "ㅏ", l: "ㅣ", z: "ㅋ", x: "ㅌ", c: "ㅊ", v: "ㅍ", b: "ㅠ", n: "ㅜ", m: "ㅡ", Q: "ㅃ", W: "ㅉ", E: "ㄸ", R: "ㄲ", T: "ㅆ", O: "ㅒ", P: "ㅖ" };
 const JOIN_V = { "ㅗㅏ": "ㅘ", "ㅗㅐ": "ㅙ", "ㅗㅣ": "ㅚ", "ㅜㅓ": "ㅝ", "ㅜㅔ": "ㅞ", "ㅜㅣ": "ㅟ", "ㅡㅣ": "ㅢ" };
-const JOIN_C = Object.fromEntries(Object.entries(SPLIT).filter(([k]) => JONG.includes(k)).map(([k, v]) => [v, k]));
+const JOIN_C = Object.fromEntries(Object.entries(CLUSTER).map(([k, v]) => [v, k]));
 
 /** 두벌식 자판에서 친 영문 → 한글('rmfTmrl' → '글쓰기'). 한글 음절이 하나도 안 생기면 null */
 export function fromQwerty(text) {
@@ -416,14 +423,53 @@ function makePlan(w, typing, multi) {
   const sp = special(w, typing);
   const q = queryField(w, typing);
   if (!q.n && !sp) return null;
-  const p = { ...wordPlan(w, q, multi), sp };
+  const p = { ...wordPlan(w, q, multi), sp, typing };
   const alias = ALIAS[w];
   if (alias) p.alias = { ...wordPlan(alias, queryField(alias, false)), dept: false, deptQ: null };
   if (!hasHangul(w)) {
     const alt = fromQwerty(w);
     if (alt) p.alt = wordPlan(alt, queryField(alt, typing), multi);
+  } else if (!sp) { // 받침 있는 글자 바로 뒤에 홑자음: 글자판이 합친 받침을 뗀 읽기도 함께 본다('각ㅈ' → 가ㄱㅈ)
+    const loose = looseReadings(w, 4, true);
+    if (loose.length) p.loose = loose.map((x) => wordPlan(x, queryField(x, typing), multi));
   }
   return p;
+}
+
+// 글자판이 받침으로 합친 자음을 떼어 읽어 맞은 것은 이만큼 뒤로(치는 중인 글자로 맞은 것과 같게)
+const LOOSE = 1.5;
+/**
+ * 글자판(IME)이 앞 글자의 받침으로 붙인 자음을 다시 떼어 본 읽기들. 초성을 섞어 치면 생긴다:
+ * 자료 ㄱ ㅈ → '자룍ㅈ', 대 ㄱ 쓰기 → '댁쓰기', 일반 ㅎ ㅎ → '일밚ㅎ', 공학 ㅅ ㅎ → '공핛ㅎ'.
+ * 받침 있는 음절마다 받침을 다음 첫소리로 떼어 본다(겹받침은 뒤 낱자만 '밚' → 반ㅎ, 또는 둘 다 → 바ㄴㅎ).
+ * 바꾼 음절 수가 적은 것부터 cap 개까지. 원래 낱말은 넣지 않는다.
+ * strong 이면 바로 뒤에 홑자음(겹받침 낱자도)이 오는 음절만: 초성을 섞어 친 것이 뚜렷한 자리('자룍ㅈ' 의 룍)
+ */
+function looseReadings(w, cap = 12, strong = false) {
+  const chars = Array.from(w), spots = [];
+  chars.forEach((ch, i) => {
+    if (!isSyllable(ch)) return;
+    if (strong && !(i + 1 < chars.length && (isCons(chars[i + 1]) || CLUSTER[chars[i + 1]]))) return;
+    const { cho, jung, jong } = parts(ch);
+    if (!jong) return;
+    const sp = CLUSTER[jong];
+    if (sp) spots.push({ i, alts: [compose(cho, jung, sp[0]) + sp[1], compose(cho, jung) + sp] });
+    else if (CHO.includes(jong)) spots.push({ i, alts: [compose(cho, jung) + jong] });
+  });
+  const out = [];
+  const build = (from, left, cur) => { // spots[from..] 에서 left 곳을 더 바꾼다
+    if (out.length >= cap) return;
+    if (!left) { out.push(cur.join("")); return; }
+    for (let k = from; k <= spots.length - left; k++) {
+      for (const alt of spots[k].alts) {
+        const next = cur.slice();
+        next[spots[k].i] = alt;
+        build(k + 1, left - 1, next);
+      }
+    }
+  };
+  for (let n = 1; n <= spots.length && out.length < cap; n++) build(0, n, chars);
+  return out;
 }
 
 /** r 과 a(점수 + extra) 중 나은 것. 줄임말로 볼 때의 결과(demo)도 따로 고른다 */
@@ -459,6 +505,10 @@ function matchPlan(e, p, filter = false) {
   let r = matchWord(e, p);
   if (p.alias) r = pick(r, matchWord(e, p.alias), 0.2);
   if (p.alt && (!r || r.score > 2)) r = pick(r, matchWord(e, p.alt), 0.5);
+  if (!r && p.loose) {
+    for (const a of p.loose) r = pick(r, matchWord(e, a), LOOSE);
+    if (r) r.loose = true; // 받침을 떼어 읽어 맞은 것(줄임말 판정 edge 를 그대로 읽은 것과 따로 본다)
+  }
   return r;
 }
 
@@ -479,31 +529,47 @@ export function searchCourses(index, raw, { limit = Infinity } = {}) {
     const alt = words.map((w) => (hasHangul(w) ? w : fromQwerty(w) ?? w)).join("");
     if (alt !== words.join("")) wholeAlt = queryField(alt, typing);
   }
-  const found = [];
-  for (const e of index) {
-    if (whole) {
-      let r = fits(e.name, whole) ? contiguous(whole, e.name) : null, extra = 0;
-      if (!r && wholeAlt && fits(e.name, wholeAlt)) { r = contiguous(wholeAlt, e.name); extra = 0.5; }
-      if (r) {
-        found.push({ e, score: r.score + extra + r.at * 0.001 + e.name.n * 0.0001, kind: "name", parts: [{ f: "name", at: r.at, len: r.len }] });
-        continue;
+  const multi = plans.length > 1;
+  // loose: 낱말마다 받침을 떼어 읽은 계획들(looseReadings). 그대로 읽어 안 맞는 낱말만 이것으로 다시 본다
+  const collect = (loose) => {
+    const out = [];
+    for (const e of index) {
+      if (whole) {
+        let r = fits(e.name, whole) ? contiguous(whole, e.name) : null, extra = 0;
+        if (!r && wholeAlt && fits(e.name, wholeAlt)) { r = contiguous(wholeAlt, e.name); extra = 0.5; }
+        if (r) {
+          out.push({ e, score: r.score + extra + r.at * 0.001 + e.name.n * 0.0001, kind: "name", parts: [{ f: "name", at: r.at, len: r.len }] });
+          continue;
+        }
       }
+      const rs = [];
+      for (let w = 0; w < plans.length; w++) {
+        let r = matchPlan(e, plans[w], multi);
+        if (!r && loose) {
+          for (const alt of loose[w]) r = pick(r, matchPlan(e, alt, multi), LOOSE);
+          if (r) r.loose = true;
+        }
+        if (!r) break;
+        rs.push(r);
+      }
+      if (rs.length === plans.length) out.push({ e, rs });
     }
-    const rs = [];
-    for (const p of plans) {
-      const r = matchPlan(e, p, plans.length > 1);
-      if (!r) break;
-      rs.push(r);
-    }
-    if (rs.length === plans.length) found.push({ e, rs });
+    return out;
+  };
+  let found = collect(null);
+  if (!found.length) { // 하나도 없으면: 글자판이 받침으로 합친 자음을 떼어 다시 찾는다('자룍ㅈ' → 자료ㄱㅈ)
+    const loose = plans.map((p) => (p.sp ? [] : looseReadings(p.w).map((w) => makePlan(w, p.typing, multi)).filter(Boolean)));
+    if (loose.some((l) => l.length)) found = collect(loose);
   }
-  const edge = plans.map((_, w) => found.some((f) => f.rs && f.rs[w].edge));
+  // 낱말이 어느 과목명에서 낱말 머리로 맞았나(줄임말 판정). 받침을 떼어 읽은 것은 따로 센다: 그대로 읽은 결과의 점수를 바꾸지 않게
+  const edge = plans.map((_, w) => found.some((f) => f.rs && !f.rs[w].loose && f.rs[w].edge));
+  const edgeLoose = plans.map((_, w) => found.some((f) => f.rs && f.rs[w].loose && f.rs[w].edge));
   for (const f of found) {
     if (!f.rs) continue;
     let total = 0, top = null;
     f.parts = [];
     f.rs.forEach((r0, w) => {
-      const r = edge[w] ? r0 : r0.demo;
+      const r = (r0.loose ? edgeLoose[w] : edge[w]) ? r0 : r0.demo;
       total += r.score;
       if (!top || r.score < top.score) top = r;
       if (r.mark) f.parts.push(r.mark);

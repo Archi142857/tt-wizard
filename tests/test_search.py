@@ -61,7 +61,14 @@ COURSES = [
     course("105.654", "현대독문학연습 (교양소설)", "독어독문학과", 3, "전선", "석박사통합"),
     course("E12.104", "한국근대소설의 이해", "국어국문학과", 3, "교양"),
     course("C30.105", "유전공학의 이해", "생명과학부", 2, "교양"),
+    # 글자판이 합친 받침: '각ㅈ' 은 그대로 읽으면 시각적(각 + ㅈ), 받침을 떼면 가격정책(가 + ㄱ + ㅈ)
+    course("E55.101", "시각적 사고", "디자인학부", 2),
+    course("E55.102", "가격정책론", "농경제사회학부", 2),
 ]
+
+
+# 두벌식 글자판이 자음 둘을 합쳐 만드는 겹받침 낱자
+CLUSTERS = {"ㄳ": "ㄱㅅ", "ㄵ": "ㄴㅈ", "ㄶ": "ㄴㅎ", "ㄺ": "ㄹㄱ", "ㄻ": "ㄹㅁ", "ㄼ": "ㄹㅂ", "ㄽ": "ㄹㅅ", "ㄾ": "ㄹㅌ", "ㄿ": "ㄹㅍ", "ㅀ": "ㄹㅎ", "ㅄ": "ㅂㅅ"}
 
 
 def run(tmp_path, courses, queries=(), typing=(), top=10):
@@ -80,7 +87,9 @@ def found(tmp_path_factory):
                "자구", "선대", "수연", "구조", "교양", "전공", "대학원", "학부", "3학점", "301동", "301-118", "301-1", "43-1",
                "M1522.000900", "m1522000900", "1522", "M1522.000900 001", "일물", "공수1", "AI", "고급 한국어 2", "인지과", "미방",
                "운체", "ㅇㅇㅊㅈ", "", "   ", "··", "대학 ", "대하", "글쓰기 나", "컴공 자",
-               "교양 3학점", "3학점 교양", "교양 소설", "소설 교양", "전공 3학점", "·· 교양"]
+               "교양 3학점", "3학점 교양", "교양 소설", "소설 교양", "전공 3학점", "·· 교양",
+               *CLUSTERS, *CLUSTERS.values(), "ㅋㄳ", "ㅋㄱㅅ", "ㄳㅎ", "ㄱㅅㅎ", "자룍ㅈ", "자료ㄱㅈ", "공핛ㅎ", "공학ㅅㅎ", "댁쓰기", "각ㅈ", "가ㄱㅈ",
+               "각ㅈ ", "고대긄", "고대그ㄹㅅ", "구좇", "구조"]
     out = run(tmp_path_factory.mktemp("search"), COURSES, queries, top=40)
     return {r["q"]: r for r in out["results"]}, out
 
@@ -126,6 +135,34 @@ def test_chosung_and_typing(found):
     # 끝에 띄어쓰기면 다 친 낱말: '대학 ' 은 '대하' 처럼 학까지 맞추지 않는다
     assert "F11.101" in ids(by["대하"]) and "F11.101" in ids(by["대학 "])
     assert by["대하"]["hits"][0]["score"] > 1  # 치는 중으로 맞은 것은 뒤로(처음 1.5)
+
+
+def test_ime_composed_consonants(found):
+    """글자판(IME)이 합친 자음. 초성으로 ㄱ, ㅅ 을 치면 검색창에는 'ㄳ' 이 들어온다(2026-10-03 사용자 제보: 결과가 없었다).
+    홀로 있는 겹받침 낱자는 언제나 자음 둘로 풀고, 글자 뒤에 붙은 받침은 떼어 읽은 것도 본다(+1.5)."""
+    by, out = found
+    same = lambda a, b: (by[a]["ids"], by[a]["scores"]) == (by[b]["ids"], by[b]["scores"])  # noqa: E731
+    for joined, split in CLUSTERS.items():  # 'ㄳ' 은 'ㄱㅅ' 과 똑같이 찾는다
+        assert same(joined, split), joined
+    assert by["ㄳ"]["count"] > 3 and by["ㅄ"]["count"] > 0
+    assert same("ㅋㄳ", "ㅋㄱㅅ") and ids(by["ㅋㄳ"])[0] == "F37.202"  # 컴퓨터의 개념 및 실습
+    assert same("ㄳㅎ", "ㄱㅅㅎ") and "F31.201" in ids(by["ㄳㅎ"])    # 공학수학
+    assert out["extra"]["cluster"] == "ㅋㄱㅅㄹㄱ"                      # 최근 검색어에서도 같은 말
+    # 글자 뒤에 친 초성이 받침으로 붙은 것: 자료 + ㄱ + ㅈ → '자룍ㅈ'. 떼어 읽은 결과가 같은 순서로, 1.5 뒤에
+    # ('고대긄' = 고대그 + ㄹ + ㅅ: 마지막 글자의 겹받침을 둘 다 뗀다. 결과가 없을 때만)
+    for joined, split in (("자룍ㅈ", "자료ㄱㅈ"), ("공핛ㅎ", "공학ㅅㅎ"), ("댁쓰기", "대ㄱ쓰기"), ("고대긄", "고대그ㄹㅅ")):
+        assert by[split]["count"] and by[joined]["ids"] == by[split]["ids"], joined
+        assert by[joined]["scores"] == pytest.approx([x + 1.5 for x in by[split]["scores"]], abs=1e-9), joined
+    assert ids(by["자룍ㅈ"])[:2] == ["M1522.000900", "M3639.001700"] and by["자룍ㅈ"]["hits"][0]["marks"]["name"] == [[0, 4]]
+    assert ids(by["공핛ㅎ"])[:2] == ["F31.201", "F31.202"]
+    # 그대로 읽어도 맞는 과목이 있을 때('각ㅈ' → 시각적): 그 결과는 그대로 두고, 떼어 읽은 것(가 + ㄱ + ㅈ → 가격정책)을 보탠다
+    got = {h["id"]: h for h in by["각ㅈ"]["hits"]}
+    assert set(got) == {"E55.101", "E55.102"} and set(ids(by["가ㄱㅈ"])) == {"E55.102"}
+    assert got["E55.102"]["score"] == pytest.approx(by["가ㄱㅈ"]["scores"][0] + 1.5, abs=1e-9) and got["E55.102"]["marks"]["name"] == [[0, 3]]
+    assert got["E55.101"]["marks"]["name"] == [[1, 3]] and got["E55.101"]["score"] > 3  # 그대로 읽은 것의 점수는 뗀 읽기와 상관없이 그대로(안에만 → 줄임말 3.8)
+    assert set(ids(by["각ㅈ "])) == set(got)  # 다 친 낱말이어도 같다
+    # 결과가 있으면 뒤에 홑자음이 없는 받침은 떼지 않는다: '구조' 는 '구좇'(치는 중)과 달리 그대로
+    assert "M1522.000900" in ids(by["구조"]) and all(s < 5 for s in by["구조"]["scores"])
 
 
 def test_qwerty_dept_prof(found):
@@ -204,9 +241,16 @@ def test_real_data_speed_and_rules(tmp_path):
     courses = ew.export_courses(lectures)["courses"]
     multi = ["대학 글쓰기", "컴공 자구", "글쓰기 교양", "물리학 2", "AI 3학점"]
     words = sorted({w + " " for q in multi for w in q.split()[:-1]} | {q.split()[-1] for q in multi})
-    typing = ["대학 글쓰기", "컴퓨터의 개념 및 실습", "자료구조", "선형대수학", "글쓰기 나민애", "수학연습", "M1522.000900", "301동", "eogkr rmfTmrl"]
-    out = run(tmp_path, courses, multi + words + ["ㄱ", "대", "교양", "그"], typing, top=50)
+    # 끝의 둘은 결과가 없어 받침을 떼어 다시 찾는 검색어(가장 오래 걸리는 경우)
+    typing = ["대학 글쓰기", "컴퓨터의 개념 및 실습", "자료구조", "선형대수학", "글쓰기 나민애", "수학연습", "M1522.000900", "301동", "eogkr rmfTmrl",
+              "경쟁력강화전략론입문쀍", "닭닭닭닭쀍 닭닭닭닭쀍"]
+    ime = ["ㄳ", "ㄱㅅ", "ㅋㄳ", "ㅋㄱㅅ", "자룍ㅈ", "자료ㄱㅈ", "공핛ㅎ", "각ㅈ", "학ㄱ"]  # 글자판이 합친 자음
+    out = run(tmp_path, courses, multi + words + ["ㄱ", "대", "교양", "그"] + ime, typing, top=50)
     by = {r["q"]: r for r in out["results"]}
+    assert by["ㄳ"]["count"] > 100 and (by["ㄳ"]["ids"], by["ㄳ"]["scores"]) == (by["ㄱㅅ"]["ids"], by["ㄱㅅ"]["scores"])
+    assert by["ㅋㄳ"]["ids"] == by["ㅋㄱㅅ"]["ids"] and by["ㅋㄳ"]["count"] > 0
+    assert by["자룍ㅈ"]["ids"] == by["자료ㄱㅈ"]["ids"] and by["자룍ㅈ"]["hits"][0]["name"].startswith("자료구조")
+    assert by["공핛ㅎ"]["hits"][0]["name"].startswith("공학수학")
     for q in multi:  # 그리고: 여러 낱말 결과는 낱말마다의 결과 안에 있다
         parts = q.split()
         each = [set(by[w + " "]["ids"]) for w in parts[:-1]] + [set(by[parts[-1]]["ids"])]
