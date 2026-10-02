@@ -118,6 +118,7 @@
   --width-pane: 360px;
   --pane-h: 356px;
   --pane-h-wide: 460px;
+  --tt-hour-min: 32px;
   --bp-stack: 360px;
   --bp-medium: 600px;
   --bp-two-pane: 680px;
@@ -555,35 +556,43 @@ dialog.sheet.is-dragging { transition: none; }
 .daytabs button[aria-selected="true"] { background: var(--accent); color: var(--on-color); }
 
 /* ---------------------------------------------------------------- 시간표 | 지도 */
-.panes { display: flex; gap: var(--space-2); height: var(--pane-h); margin-top: var(--space-3); }
+/* 한 시간은 tt-hour-min(32px) 이상(10/2 디자인): 축이 길어(저녁 수업) 시간표가 기본 높이(--tt-h)보다 길어지면 app.js(sizeTimetable)가 늘어난
+   만큼을 --tt-extra 로 준다. 시간 눈금·격자·두 칸이 같이 길어지고, 위아래로 쌓는 좁은 폭에서는 시간표 칸만 길어진다 */
+.panes { display: flex; gap: var(--space-2); height: calc(var(--pane-h) + var(--tt-extra, 0px)); margin-top: var(--space-3); }
 .panes > .card { flex: 1 1 0; min-width: 0; padding: var(--space-3); }
 .panes.is-fading > .card { animation: tt-fade var(--dur-fade) var(--ease-standard); }
 @keyframes tt-fade { from { opacity: .35; } }
 .tt { display: flex; gap: var(--space-2); }
-.tt-hours { position: relative; flex-shrink: 0; width: 1.125rem; height: var(--tt-h); margin-top: var(--space-2); }
+.tt-hours { position: relative; flex-shrink: 0; width: 1.125rem; height: calc(var(--tt-h) + var(--tt-extra, 0px)); margin-top: var(--space-2); }
 .tt-hours span { position: absolute; right: 0; transform: translateY(-8px); font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text3); }
-.tt-grid { position: relative; flex: 1; min-width: 0; height: var(--tt-h); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+.tt-grid { position: relative; flex: 1; min-width: 0; height: calc(var(--tt-h) + var(--tt-extra, 0px)); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
 .tt-line { position: absolute; left: 0; right: 0; height: 1px; background: var(--line); }
-/* 수업 칸: 교과구분 연한 색 바탕(app.js 가 칠한다), 과목명 14px, 강의실 12px. 칸 높이에 맞춰 과목명 줄 수(--lines)를 정한다 */
+/* 수업 칸: 교과구분 연한 색 바탕(app.js 가 칠한다), 과목명 t-block(어느 칸이나 14px), 강의실 t-label(늘 보인다). 칸 높이에 맞춰 과목명 줄 수(--lines)를 정한다 */
 .tt-block { position: absolute; left: 0; right: 0; display: flex; flex-direction: column; justify-content: center; padding: 3px var(--space-2); overflow: hidden;
   border-radius: var(--radius-xs); background: var(--cls-etc-bg); }
 .tt-block .b-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--lines, 2); overflow: hidden; font-size: 0.875rem; line-height: 1.125rem;
   font-weight: 500; color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
 .tt-block .b-room { overflow: hidden; font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text2); white-space: nowrap; text-overflow: ellipsis; }
-/* 과목명 한 줄과 강의실 줄을 쌓을 수 없는 낮은 칸: 과목명(t-label) 옆에 강의실을 한 줄로(10/2 사용자). 과목명이 먼저 줄고,
-   강의실은 app.js 가 폭을 재어 '43-1동 301호' → '43-1동' 가운데 들어가는 것을 넣는다. 늦음 알약 자리(--late-w)는 비운다 */
-.tt-block.short { flex-direction: row; align-items: center; justify-content: flex-start; gap: 6px; padding: 0 calc(var(--space-2) + var(--late-w, 0px)) 0 var(--space-2); }
-.tt-block.short .b-title { display: block; flex: 0 100 auto; min-width: 0; font-size: 0.75rem; line-height: 1rem; white-space: nowrap; text-overflow: ellipsis; }
-.tt-block.short .b-room { flex: 0 1 auto; min-width: 0; }
+/* 38px 보다 낮은 칸(50분 수업): 과목명(14px 그대로)과 강의실을 한 줄로, 사이 space-2(10/2 사용자·디자인: 낮은 칸이라고 과목명을 줄이지
+   않는다. 가운뎃점 없이 크기·색으로 가른다). 과목명이 먼저 줄고(세 글자 + … 까지), 강의실은 app.js 가 폭을 재어 '43-1동 301호' → '43-1동'
+   가운데 들어가는 것을 넣는다(그래서 줄이지 않는다). 늦음 알약 자리(--late-w)는 비운다 */
+.tt-block.short { flex-direction: row; align-items: center; justify-content: flex-start; gap: var(--space-2); padding: 0 calc(var(--space-2) + var(--late-w, 0px)) 0 var(--space-2); }
+.tt-block.short .b-title, .tt-block .b-line .b-title { display: block; flex: 0 100 auto; min-width: 0; white-space: nowrap; text-overflow: ellipsis; }
+.tt-block.short .b-room, .tt-block .b-line .b-room { flex: none; } /* 폭은 app.js 가 재어 들어가는 것만 넣는다(줄면 0.1px 에도 말줄임이 된다) */
 .tt-block.short .tt-late { top: 50%; transform: translateY(-50%); }
-/* 알약 줄 밑에 과목명과 강의실 줄이 다 안 들어가는 늦는 칸: 강의실을 알약 줄 왼쪽(비어 있던 자리)에 두고 과목명은 그 아래 */
-.tt-block.room-top { justify-content: flex-start; }
-.tt-block.room-top .b-room { order: -1; margin-bottom: 2px; padding-right: var(--late-w, 0px); }
-/* 늦는 수업: 빨간 'N분 늦음'을 오른쪽 위에. 과목명 첫 줄 옆이나 글 위에 자리가 있으면 그대로 두고, 없을 때만 과목명 위에 한 줄(.is-late,
-   app.js 가 재어 정한다). 낮은 칸은 한 줄 오른쪽 끝(글은 알약 앞에서 끝난다) */
+/* 늦는 수업: 빨간 'N분 늦음'을 오른쪽 위에. 자리는 app.js 가 글 폭을 재어 이 순서로 정한다(10/2 디자인):
+   1) 과목명 첫 줄 옆에 들어가거나 가운데 놓인 글이 알약 아래에서 시작하면 그대로 겹쳐 둔다 2) 칸에 여유가 있으면 .is-late: 과목명 위에 알약 줄
+   3) 알약 줄 + 과목명 + 강의실이 안 들어가는 75분 칸은 .room-top: 강의실을 알약 줄 왼쪽(비어 있던 자리)에, 과목명은 그 아래
+   4) 알약 옆에 건물 이름도 안 들어가는 좁은 칸(폰 360)은 .is-late.pill-row: 알약 줄은 알약만, 그 아래 .b-line 에 과목명과 강의실을 나란히
+   5) 낮은 칸은 한 줄 끝(세로 가운데)에 알약, 글은 알약 앞에서 끝난다 */
 .tt-late { position: absolute; top: 3px; right: 4px; z-index: 1; padding: 0 6px; border-radius: var(--radius-full); background: var(--danger); color: var(--on-danger);
   font-size: 0.75rem; line-height: 1rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tt-block.is-late .tt-late { position: static; align-self: flex-end; margin-bottom: 2px; }
+.tt-block.room-top { justify-content: flex-start; }
+.tt-block.room-top .b-room { order: -1; margin-bottom: 2px; padding-right: var(--late-w, 0px); }
+.tt-block.pill-row { padding-top: 2px; padding-bottom: 2px; }
+.tt-block.pill-row .tt-late { margin-bottom: 0; } /* .is-late 의 margin-bottom 뒤에 와야 한다 */
+.tt-block .b-line { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
 .tt-empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; line-height: 1.25rem; color: var(--text3); }
 .mapcard { display: flex; flex-direction: column; gap: var(--space-2); }
 .map-box { position: relative; display: flex; flex: 1; min-height: 0; container-type: inline-size; }
@@ -640,10 +649,10 @@ dialog.sheet.is-dragging { transition: none; }
 .day-summary { display: flex; align-items: center; gap: var(--space-2); min-height: 22px; margin: var(--space-3) var(--space-1) 0; font-size: 0.875rem; line-height: 1.25rem;
   color: var(--text2); }
 .day-summary b { color: var(--text); font-weight: 500; }
-@media (max-width: 22.4375em) { .panes { flex-direction: column; height: auto; } .panes > .card { flex: none; height: var(--pane-h); } }
+@media (max-width: 22.4375em) { .panes { flex-direction: column; height: auto; } .panes > .card { flex: none; height: var(--pane-h); } .panes > .card.tt { height: calc(var(--pane-h) + var(--tt-extra, 0px)); } }
 @media (min-width: 52.5em) {
   :root { --tt-h: 420px; }
-  .panes { height: var(--pane-h-wide); }
+  .panes { height: calc(var(--pane-h-wide) + var(--tt-extra, 0px)); }
   .panes .legend { grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); }
   .panes .legend li.line { grid-column: auto; }
 }
@@ -666,6 +675,7 @@ dialog.sheet.is-dragging { transition: none; }
 .blabel span { display: block; font-size: 12px; line-height: 14px; font-weight: 500; color: var(--map-name); }
 .blabel.day { transform: translate(calc(var(--pin-half, 12px) + 3px), -50%); text-align: left; }
 .blabel.day.left { transform: translate(calc(-100% - var(--pin-half, 12px) - 3px), -50%); text-align: right; }
+.blabel.day.below { transform: translate(calc(-50% + var(--dx, 0px)), 14px); text-align: center; } /* 양옆에 자리가 없으면 핀 아래(핀 반 높이 12 + 2) */
 
 /* Leaflet 안 */
 .leaflet-container { font-family: inherit; background: var(--map-land); }

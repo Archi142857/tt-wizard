@@ -48,7 +48,7 @@ const state = {
   // 담은 과목 [{id, excluded: Set<분반 키>, name, cls, credit, dept}]. 이름 등은 자료에서 사라진 과목을 보이려고 함께 저장한다
   picks: [],
   overrides: {}, // 분반 키 → {rooms: {수업 번호: 건물}, times: [[요일, 시작, 끝, 건물]]} 강의실·시간 미정을 직접 넣은 것
-  home: "919", homeOther: "", mode: "slope",
+  home: "919", homeOther: "", homeDorm: "", mode: "slope",
   errors: { noSections: new Set(), overlap: new Set(), general: null }, // 주요 버튼을 누른 뒤의 오류
   result: null, rank: 0, day: 0, ranksShown: RANKS_STEP, reveal: false,
 };
@@ -130,7 +130,15 @@ function buildingLabel(b) {
   if (b === "GATE") return "정문";
   return `${b}동`;
 }
+// 기숙사 동(update40 자료): campus.json 의 dorms = [[동, 종류]]. 919-A~D 처럼 ids 에 없는 동은 좌표만 있다(이동은 919)
+const DORM_NAME = { 학부: "학부생활관", 대학원: "대학원생활관", 글로벌: "글로벌생활관", 가족: "가족생활관", BK: "BK국제관" }; // 지도에 쓰는 이름(자료의 건물 이름 대신 종류로)
+const dormKind = (b) => ((state.campus?.dorms || []).find(([id]) => id === b) || [])[1] || "";
+const isDorm = (b) => !!dormKind(b);
+/** 지도에 쓰는 건물 이름(많이 확대했을 때 번호 아래). */
+const buildingName = (b) => DORM_NAME[dormKind(b)] || ((state.campus?.buildings || {})[b] || [])[0] || "";
+/** 출발·도착 이름: 기숙사 동은 어느 동이든 '기숙사'(어느 동인지는 입력 화면 선택칸과 결과 화면 조건 줄만 밝힌다), 정문, 그 밖은 건물. */
 function placeLabel(b) {
+  if (isDorm(b)) return "기숙사";
   const home = (state.campus?.homes || []).find(([id]) => id === b);
   return home ? home[1] : buildingLabel(b);
 }
@@ -197,22 +205,36 @@ function meetingGroups(meetings) {
   return [...groups.values()].sort((a, b) => a.days[0] - b.days[0] || a.start - b.start);
 }
 
-let buildingOpts = null;
-/** 고를 수 있는 건물: 이동시간 자료(경로·경사)가 있는 강의 건물. 출발 후보(기숙사·정문)는 뺀다. [[건물, '301동 제1공학관']] */
+const natKey = (b) => b.split(/(\d+)/).map((x) => (/^\d+$/.test(x) ? x.padStart(5, "0") : x)).join("");
+let buildingOpts = null, dormOpts = null;
+/** 고를 수 있는 기숙사 동: 이동시간 지점(ids)인 동을 번호순으로, 번호만(사는 사람은 번호로 찾는다). [[동, '919동']]
+ *  919-A~D 는 빠진다(919 한 항목). 옛 자료(dorms 없음)면 빈 목록이라 예전처럼 기숙사 = 919 하나이고 선택칸이 없다. */
+function dormOptions() {
+  if (!dormOpts) {
+    const ids = new Set(state.campus.ids);
+    dormOpts = (state.campus.dorms || []).filter(([b]) => ids.has(b))
+      .sort(([a], [b]) => natKey(a).localeCompare(natKey(b)))
+      .map(([b]) => [b, buildingLabel(b)]);
+  }
+  return dormOpts;
+}
+/** 고를 수 있는 건물: 이동시간 자료(경로·경사)가 있는 강의 건물. 출발 후보(기숙사·정문)와 기숙사 동은 뺀다(기숙사는 '기숙사'에서 고른다). [[건물, '301동 제1공학관']] */
 function buildingOptions() {
   if (!buildingOpts) {
-    const nat = (b) => b.split(/(\d+)/).map((x) => (/^\d+$/.test(x) ? x.padStart(5, "0") : x)).join("");
-    const homes = new Set((state.campus.homes || []).map(([id]) => id));
+    const skip = new Set((state.campus.homes || []).map(([id]) => id).concat("GATE"));
     buildingOpts = state.campus.ids
-      .filter((b) => !homes.has(b) && b !== "GATE")
-      .sort((a, b) => nat(a).localeCompare(nat(b)))
+      .filter((b) => !skip.has(b) && !isDorm(b))
+      .sort((a, b) => natKey(a).localeCompare(natKey(b)))
       .map((b) => { const name = (state.campus.buildings[b] || [""])[0]; return [b, `${b}동${name ? " " + name : ""}`]; });
   }
   return buildingOpts;
 }
 
 function buildingSelect(value, attrs) {
-  const el = h("select", attrs, h("option", { value: "" }, "미정"), buildingOptions().map(([b, text]) => h("option", { value: b }, text)));
+  const opts = buildingOptions();
+  // 전에 넣어 둔 건물이 목록에서 빠졌어도(기숙사 동) 고른 값은 그대로 보인다
+  const kept = value && !opts.some(([b]) => b === value) ? [[value, buildingLabel(value)]] : [];
+  const el = h("select", attrs, h("option", { value: "" }, "미정"), kept.concat(opts).map(([b, text]) => h("option", { value: b }, text)));
   el.value = value || "";
   return el;
 }
@@ -232,7 +254,7 @@ async function start() {
   try {
     const [campus, index] = await Promise.all([getJson("data/campus.json"), getJson("data/semesters.json").catch(() => null)]);
     state.campus = campus;
-    buildingOpts = null;
+    buildingOpts = dormOpts = null;
     state.current = (index && index.current) || (campus.meta || {}).semester || "";
     state.semesters = index && index.list && index.list.length ? index.list : [[state.current, "courses.json"]];
     migrateStore(state.current);
@@ -240,6 +262,7 @@ async function start() {
     const saved = store.get("home", homes[0] || "919");
     state.home = homes.includes(saved) || campus.ids.includes(saved) ? saved : homes[0] || campus.ids[0];
     state.homeOther = store.get("homeOther", "");
+    state.homeDorm = store.get("homeDorm", "");
     state.mode = campus.slope ? store.get("mode", "slope") : "flat";
     renderSettings();
     // 지난번에 보던 학기로 연다. 그사이 새 학기가 올라왔으면 새 학기로
@@ -1092,38 +1115,65 @@ for (const d of document.querySelectorAll("dialog.sheet")) {
 
 const segItem = (name, value, label, checked) => h("label", {}, h("input", { type: "radio", name, value, checked }), label);
 
+/** 출발·도착이 어느 세그먼트인지: 기숙사 동이면 'dorm'(동은 아래 선택칸에서), 정문 같은 출발 후보면 그 건물, 나머지는 'other'. */
+function homeSeg(b) {
+  if (isDorm(b)) return "dorm";
+  return (state.campus.homes || []).some(([x]) => x === b) ? b : "other";
+}
+
+/** 세그먼트 아래 선택칸은 한 자리다(10/2 디자인): '기숙사'면 동(이름 '기숙사 동'), '다른 건물'이면 건물(이름 '건물'), '정문'이면 없다.
+ *  세그먼트 라디오는 다시 그리지 않아서, 선택칸이 나타나거나 바뀌어도 초점은 고른 라디오에 남는다. */
+function syncHomeSelect() {
+  const seg = homeSeg(state.home), sel = $("home-select");
+  const kind = seg === "dorm" ? (dormOptions().length > 1 ? "dorm" : "") : seg === "other" ? "other" : "";
+  if (kind && sel.dataset.kind !== kind) {
+    sel.replaceChildren(...(kind === "dorm" ? dormOptions() : buildingOptions()).map(([b, text]) => h("option", { value: b }, text)));
+    sel.setAttribute("aria-label", kind === "dorm" ? "기숙사 동" : "건물");
+    sel.dataset.kind = kind;
+  }
+  sel.hidden = !kind;
+  if (kind) sel.value = state.home;
+}
+
 function renderSettings() {
   const homes = state.campus.homes || [];
-  const preset = homes.some(([b]) => b === state.home);
-  $("home-seg").replaceChildren(...homes.map(([b, label]) => segItem("home", b, label, b === state.home)), segItem("home", "other", "다른 건물", !preset));
+  const seg = homeSeg(state.home);
+  // 출발 후보의 기숙사(919)가 기숙사 동 묶음의 세그먼트다: 기숙사 | 정문 | 다른 건물
+  $("home-seg").replaceChildren(
+    ...homes.map(([b, label]) => { const v = isDorm(b) ? "dorm" : b; return segItem("home", v, label, v === seg); }),
+    segItem("home", "other", "다른 건물", seg === "other"));
   $("home-seg").hidden = false;
-  const sel = $("home-select");
-  sel.replaceChildren(...buildingOptions().map(([b, text]) => h("option", { value: b }, text)));
-  sel.hidden = preset;
-  if (!preset) sel.value = state.home;
+  delete $("home-select").dataset.kind; // 자료를 새로 받았으면 목록도 새로
+  syncHomeSelect();
   for (const r of document.querySelectorAll('input[name="mode"]')) {
     r.checked = r.value === state.mode;
     r.disabled = r.value === "slope" && !state.campus.slope;
   }
 }
 
-function setHome(b, other = false) {
+/** 출발·도착을 바꾼다. 기숙사 동과 다른 건물은 마지막에 고른 것을 따로 기억해, 세그먼트를 오가도 그대로다. */
+function setHome(b) {
   cancelCompute();
   state.home = b;
   store.set("home", b);
-  if (other) { state.homeOther = b; store.set("homeOther", b); }
+  const seg = homeSeg(b);
+  if (seg === "dorm") { state.homeDorm = b; store.set("homeDorm", b); }
+  else if (seg === "other") { state.homeOther = b; store.set("homeOther", b); }
   state.result = null;
-  const preset = (state.campus.homes || []).some(([x]) => x === b);
-  $("home-select").hidden = preset;
-  if (!preset) $("home-select").value = b;
+  syncHomeSelect();
 }
 
 $("home-seg").addEventListener("change", (e) => {
-  if (e.target.value !== "other") { setHome(e.target.value); return; }
-  const opts = [...$("home-select").options].map((o) => o.value);
-  setHome(opts.includes(state.homeOther) ? state.homeOther : opts[0], true);
+  const v = e.target.value;
+  if (v === "dorm") {
+    const first = (state.campus.homes || []).map(([b]) => b).find(isDorm); // 처음에는 919동
+    setHome(dormOptions().some(([b]) => b === state.homeDorm) ? state.homeDorm : first);
+  } else if (v === "other") {
+    const opts = buildingOptions().map(([b]) => b);
+    setHome(opts.includes(state.homeOther) ? state.homeOther : opts[0]);
+  } else setHome(v);
 });
-$("home-select").addEventListener("change", (e) => setHome(e.target.value, true));
+$("home-select").addEventListener("change", (e) => setHome(e.target.value));
 document.querySelector(".settings").addEventListener("change", (e) => {
   if (e.target.name !== "mode") return;
   cancelCompute();
@@ -1418,7 +1468,8 @@ function renderResult() {
   const R = state.result;
   if (!R) return;
   $("rank-count").replaceChildren(...rankTitle(R));
-  $("rank-cond").textContent = `출발·도착 ${placeLabel(R.home)} · ${R.mode === "slope" ? "경사 반영" : "평지"}`;
+  // 결과 화면에서 기숙사 동을 밝히는 곳은 이 줄뿐이다: '출발·도착 기숙사 906동 · 경사 반영'(번호표·파선 견본·핀 이름은 어느 동이든 '기숙사')
+  $("rank-cond").textContent = `출발·도착 ${isDorm(R.home) ? `기숙사 ${buildingLabel(R.home)}` : placeLabel(R.home)} · ${R.mode === "slope" ? "경사 반영" : "평지"}`;
   $("daytabs").replaceChildren(...R.days.map((d) => h("button", { type: "button", role: "tab", id: `tab-${d}`, "data-day": String(d), "aria-controls": "day-panel" }, DAY_KO[d])));
   updateTabs();
   renderDay({ reveal: state.reveal });
@@ -1466,9 +1517,10 @@ function remember(el) {
 }
 
 function renderDay({ reveal = false, fade = false } = {}) {
+  const gridPx = sizeTimetable(); // 칸 높이를 먼저 정하고 그 크기를 기억한다(그린 뒤에 길어지면 ResizeObserver 가 다시 그려 첫 결과의 경로 그리기를 끊는다)
   remember($("panes"));
   const ev = currentEv();
-  renderTimetable(ev, state.day);
+  renderTimetable(ev, state.day, gridPx);
   if (!maps.small) maps.small = makeMap($("map"), false);
   if (maps.small) renderMap(maps.small, ev, state.day, { reveal });
   renderSummary(ev, state.day);
@@ -1480,8 +1532,22 @@ function renderDay({ reveal = false, fade = false } = {}) {
   }
 }
 
-const ttHeight = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--tt-h")) || 316;
 const remPx = () => parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+
+/** 시간표 높이(px). 한 시간은 tt-hour-min(32px, 글자 크기 설정만큼 더) 이상이다(10/2 사용자: "75분 수업에서 폰트 줄이는 건 용납을
+ *  못하겠다. 통일성이 떨어지는 것 같음"): 75분 칸(40px - 사이 2px)에 과목명 한 줄(14px)과 강의실 줄이 늘 들어가고, 50분 칸(약 25px)에도
+ *  과목명이 14px 그대로 한 줄 들어간다. 기본 높이(--tt-h: 폰 316px, 840px부터 420px)로 모자라면(저녁 수업으로 축이 긴 결과) 시간표가
+ *  그만큼 길어지고, 늘어난 만큼을 .panes 의 --tt-extra 로 주어 옆의 지도 칸도 같이 길어진다(style.css).
+ *  축은 결과 전체(hourRange)라서 요일·후보를 바꿔도 높이가 그대로다. */
+function sizeTimetable() {
+  const cs = getComputedStyle(document.documentElement);
+  const base = parseFloat(cs.getPropertyValue("--tt-h")) || 316;
+  const hourMin = parseFloat(cs.getPropertyValue("--tt-hour-min")) || 32;
+  const [h0, h1] = state.result.axis;
+  const px = Math.max(base, Math.ceil((h1 - h0) * hourMin * (remPx() / 16)));
+  $("panes").style.setProperty("--tt-extra", `${px - base}px`);
+  return px;
+}
 
 /** 늦는 까닭: 걷는 시간과 쉬는 시간(강의실 미정 수업 앞뒤 쉬는 시간 포함). */
 function lateWhy(l) {
@@ -1489,12 +1555,11 @@ function lateWhy(l) {
 }
 
 /** 칸 하나: 교과구분 연한 색 바탕에 과목명(부제 괄호 뺀 것)과 강의실, 늦으면 빨간 'N분 늦음'. */
-function renderTimetable(ev, day) {
+function renderTimetable(ev, day, gridPx) {
   const box = $("tt");
   if (!(ev.days[day] || []).length) { box.replaceChildren(h("p", { class: "tt-empty" }, "수업 없음")); return; }
   const [h0, h1] = state.result.axis;
   const span = (h1 - h0) * 60;
-  const gridPx = ttHeight();
   const k = remPx() / 16; // 글자 크기 설정만큼 줄 높이도 커진다
   const top = (m) => `${((m - h0 * 60) / span) * 100}%`;
   const hours = h("div", { class: "tt-hours", "aria-hidden": "true" });
@@ -1508,7 +1573,7 @@ function renderTimetable(ev, day) {
   const textW = grid.clientWidth - 16; // 칸 안 글자 폭(좌우 여백 8)
   const family = getComputedStyle(grid).fontFamily;
   const titleFont = `500 ${14 * k}px ${family}`, labelFont = `500 ${12 * k}px ${family}`; // t-block, t-label
-  const widthOf = (text) => { canvas.font = labelFont; return canvas.measureText(text).width; };
+  const widthOf = (text, font = labelFont) => { canvas.font = font; return canvas.measureText(text).width; };
   const legs = ev.legs.filter((l) => l.day === day);
   let n = 0;
   legs.forEach((l, i) => {
@@ -1518,11 +1583,12 @@ function renderTimetable(ev, day) {
     const late = lateOf(l);
     const heightPct = ((m.end - m.start) / span) * 100;
     const px = (heightPct / 100) * gridPx;
-    // 강의실은 늘 보인다(10/2 사용자: '동이 왜 안 뜨지? 공간이 없으면 나란히 배치해서라도'. 예전에는 낮은 칸과, 과목명을 다 보이면
-    // 강의실 줄이 안 들어가는 칸에서 강의실을 뺐다). 낮은 칸(38px 미만, 과목명이 t-label 한 줄인 칸)은 과목명 옆에 한 줄로 둔다
-    // (과목명이 먼저 세 글자까지 줄고, 그래도 안 들어가면 호수를 빼고 건물만 '43-1동').
-    // 쌓는 칸은 강의실 줄을 늘 두고 과목명은 남는 줄 수만큼(1–3줄, 넘치면 마지막 줄에 말줄임). 과목명 한 줄 + 강의실 줄(34)이
-    // 겨우 들어가는 칸(38–40px)은 위아래 여백을 줄여 쓴다
+    // 강의실은 늘 보이고(10/2 사용자: '동이 왜 안 뜨지? 공간이 없으면 나란히 배치해서라도') 과목명은 어느 칸이나 14px 다(10/2 사용자:
+    // 75분 칸만 글자가 작아지면 통일성이 떨어진다. 그래서 한 시간이 32px 이상, sizeTimetable).
+    // 쌓는 칸(38px 이상, 75분 이상 수업): 강의실 줄을 늘 두고 과목명은 남는 줄 수만큼(1–3줄, 넘치면 마지막 줄에 말줄임). 과목명 한 줄 +
+    // 강의실 줄(34)이 겨우 들어가는 칸(38–40px)은 위아래 여백을 줄여 쓴다.
+    // 낮은 칸(38px 미만, 50분 수업): 한 줄에 과목명과 강의실을 나란히(사이 8px, 가운뎃점 없이 크기·색으로 가른다). 넘치면 과목명이 먼저
+    // 세 글자 + … 까지 줄고, 그래도 안 들어가면 호수를 빼고 건물만 '43-1동'
     const short = px < 38 * k;
     const title = shortName(m.section.name);
     const need = Math.min(3, textLines(title, titleFont, textW));
@@ -1544,18 +1610,31 @@ function renderTimetable(ev, day) {
       const below = (px - 6 - fit(px - 6).used) / 2 >= 16 * k + 2;
       if (!beside && !below) lateRow = 18 * k;
     }
-    let room = rooms[0], roomTop = false, lines = 1;
+    // 글 자리(10/2 디자인 '시간표'의 순서). 한 줄에 나란히 둘 때는 캔버스로 잰 폭에 1px 여유를 둔다: 강의실은 줄이지 않으므로(flex: none)
+    // 0.1px 만 모자라도 과목명 끝 글자가 … 로 바뀐다
+    let room = rooms[0], roomTop = false, pillRow = false, roomOnly = false, lines = 1;
+    const gap = 8 * k + 1, tW = widthOf(title, titleFont);
+    let head = "", count = 0;
+    for (const ch of title) { head += ch; if (ch.trim() && ++count >= 3) break; }
+    const minT = Math.min(tW, widthOf(`${head}…`, titleFont)); // 과목명은 세 글자 + … 까지만 줄인다(그 아래로 자르면 읽히지 않는다)
+    const roomBeside = (rowW) => rooms.find((r) => tW + gap + widthOf(r) <= rowW) || rooms.find((r) => minT + gap + widthOf(r) <= rowW) || "";
     if (short) {
-      // 한 줄: 과목명(t-label) 옆에 강의실. 과목명은 세 글자까지 줄어들 수 있다. 늦음 알약 자리는 비운다
-      let head = "", count = 0;
-      for (const ch of title) { head += ch; if (ch.trim() && ++count >= 3) break; }
-      const rowW = textW - (late ? pillW + 6 : 0), tW = widthOf(title), minT = Math.min(tW, widthOf(`${head}…`));
-      room = rooms.find((r) => tW + 6 + widthOf(r) <= rowW) || rooms.find((r) => minT + 6 + widthOf(r) <= rowW) || "";
+      // 낮은 칸: 과목명(14px 그대로) 옆에 강의실, 늦으면 줄 끝에 알약(글은 알약 앞에서 끝난다).
+      // 알약 옆에 과목명 세 글자와 강의실이 안 들어가면 과목명만, 과목명 세 글자도 안 들어가면 과목명 대신 강의실
+      const rowW = textW - (late ? pillW + 6 : 0);
+      room = roomBeside(rowW);
+      if (!room && minT > rowW) { room = rooms.find((r) => widthOf(r) + 1 <= rowW) || ""; roomOnly = !!room; }
     } else if (lateRow && px - 4 - lateRow < 34 * k) {
-      // 알약 줄 밑에 과목명과 강의실 줄이 다 안 들어가면 강의실을 알약 줄 왼쪽에(비어 있던 자리)
-      roomTop = true;
-      room = rooms.find((r) => widthOf(r) <= textW - pillW - 6) || "";
-      lines = Math.max(1, Math.min(3, Math.floor((px - 6 - lateRow) / (18 * k))));
+      // 알약 줄 밑에 과목명과 강의실 줄이 다 안 들어가는 75분 칸: 강의실을 알약 줄 왼쪽에(비어 있던 자리), 과목명은 그 아래
+      room = rooms.find((r) => widthOf(r) + 1 <= textW - pillW - 6) || "";
+      if (room) {
+        roomTop = true;
+        lines = Math.max(1, Math.min(3, Math.floor((px - 6 - lateRow) / (18 * k))));
+      } else {
+        // 좁은 칸(폰 360)은 알약 옆에 건물 이름도 안 들어간다: 알약 줄은 알약만, 그 아래 줄에 과목명과 강의실을 나란히(낮은 칸처럼)
+        pillRow = true;
+        room = roomBeside(textW);
+      }
     } else ({ lines } = fit(px - 6 - lateRow));
     const cls = state.byId.get(m.section.courseId)?.cls || "";
     const nx = legs[i + 1];
@@ -1566,15 +1645,15 @@ function renderTimetable(ev, day) {
     }
     const said = [`${n}. ${hm(m.start)}~${hm(m.end)} ${m.section.name}`, roomLabel(m), late ? `${late}분 늦음(${lateWhy(l)})` : "", next].filter(Boolean).join(", ");
     grid.append(h("li", {
-      class: `tt-block${short ? " short" : ""}${roomTop ? " room-top" : lateRow ? " is-late" : ""}`,
+      class: `tt-block${short ? " short" : ""}${roomTop ? " room-top" : pillRow ? " is-late pill-row" : lateRow ? " is-late" : ""}`,
       style: { top: top(m.start), height: `calc(${heightPct}% - 2px)`, background: clsFill(cls), "--lines": String(lines),
         ...(late && (short || roomTop) ? { "--late-w": `${Math.ceil(pillW + 6)}px` } : {}) }, // 알약과 같은 줄의 글은 알약 앞에서 끝난다
       title: `${m.section.name} ${hm(m.start)}~${hm(m.end)} ${roomLabel(m)}`,
     },
     h("span", { class: "sr-only" }, said),
     late ? h("span", { class: "tt-late", "aria-hidden": "true", title: lateWhy(l) }, `${late}분 늦음`) : null,
-    h("span", { class: "b-title", "aria-hidden": "true" }, title),
-    room ? h("span", { class: "b-room", "aria-hidden": "true" }, room) : null));
+    ...(pillRow ? [h("span", { class: "b-line", "aria-hidden": "true" }, h("span", { class: "b-title" }, title), room ? h("span", { class: "b-room" }, room) : null)]
+      : [roomOnly ? null : h("span", { class: "b-title", "aria-hidden": "true" }, title), room ? h("span", { class: "b-room", "aria-hidden": "true" }, room) : null])));
   });
 }
 
@@ -1698,14 +1777,18 @@ function loadBasemap() {
   return basemapWait;
 }
 
-/** 빈 땅이 보이지 않게(사용자 결정): 캠퍼스가 다 들어오는 배율과, 화면이 자료 범위 안에 드는 배율 중 큰 쪽보다 덜 축소하지 않는다. */
+/** 빈 땅이 보이지 않게(사용자 결정): 캠퍼스가 다 들어오는 배율과, 화면이 자료 범위 안에 드는 배율 중 큰 쪽보다 덜 축소하지 않는다.
+ *  캠퍼스는 가장자리 MIN_ZOOM_EDGE 를 비우고 들어와야 한다(핀 자리): 폰의 좁고 긴 지도에서 캠퍼스 끝에서 끝까지 걷는 날도 핀이 잘리지 않게 맞출 수 있다. */
+const MIN_ZOOM_EDGE = 20;
 function mapMinZoom(map) {
-  const fit = map.getBoundsZoom(campusBounds, false);
+  const fit = map.getBoundsZoom(campusBounds, false, L.point(2 * MIN_ZOOM_EDGE, 2 * MIN_ZOOM_EDGE));
   return dataBounds ? Math.max(fit, map.getBoundsZoom(dataBounds, true)) : Math.max(12, fit);
 }
 /** 최소 배율을 바꾼다. setMinZoom 은 지금 배율이 더 낮으면 애니메이션으로 확대하는데, 그사이 setView 로 옮겨도
  *  애니메이션이 끝나는 순간 그 자리로 되돌아간다(전체 화면 지도가 경로 대신 최소 배율로 열렸다). 그래서 애니메이션 없이 */
 function applyMinZoom(map) {
+  // getBoundsZoom 은 지금 최소 배율보다 낮게 답하지 않는다. 지도 칸이 낮아진 날(번호표가 길거나 시간표가 짧은 날)에 앞 요일의 값에 묶이지 않게 먼저 푼다
+  map.options.minZoom = 0;
   const mz = mapMinZoom(map);
   map.options.minZoom = mz;
   if (map.getZoom() < mz) map.setZoom(mz, { animate: false });
@@ -1883,13 +1966,16 @@ const BaseMap = typeof L === "undefined" ? null : L.Renderer.extend({
   },
 });
 
-/** 건물 번호 목록(번호만인 건물 먼저, 짧은 번호 먼저): 수업이 없는 날 모든 건물 번호를 겹치지 않게 놓을 때 이 순서로. */
+/** 건물 번호 목록(번호만인 건물 먼저, 짧은 번호 먼저): 수업이 없는 날 모든 건물 번호를 겹치지 않게 놓을 때 이 순서로.
+ *  기숙사(10/2 디자인): 919동은 번호를 919 하나만 쓴다(자료에 좌표만 있는 919-A~D 는 따로 쓰지 않는다. 넷을 다 쓰면 겹쳐서 일부만 남는다).
+ *  기숙사 동의 이름은 자료의 건물 이름('(관악사)학부 생활관') 대신 종류로 쓴다(학부생활관). */
 let buildingMarks = null;
 function allBuildingMarks() {
   if (!buildingMarks) {
+    const ids = new Set(state.campus.ids);
     buildingMarks = Object.entries(state.campus.buildings || {})
-      .filter(([, v]) => v && v[1] !== null && v[1] !== undefined)
-      .map(([id, v]) => ({ id, text: id === "GATE" ? "정문" : id, name: v[0] || "", at: L.latLng(v[1], v[2]), pri: /^\d+$/.test(id) ? 0 : 1 }))
+      .filter(([id, v]) => v && v[1] !== null && v[1] !== undefined && !(isDorm(id) && !ids.has(id)))
+      .map(([id, v]) => ({ id, text: id === "GATE" ? "정문" : id, name: buildingName(id), at: L.latLng(v[1], v[2]), pri: /^\d+$/.test(id) ? 0 : 1 }))
       .sort((a, b) => a.pri - b.pri || a.id.length - b.id.length);
   }
   return buildingMarks;
@@ -1906,7 +1992,8 @@ function makeMap(el, full) {
     zoomControl: false, attributionControl: false, // 저작권 표기는 지도 밖 .map-attr(늘 보이고, 스크린리더가 읽는다)
     dragging: full || mouse, touchZoom: true, doubleClickZoom: true, scrollWheelZoom: full || mouse, boxZoom: mouse,
     keyboard: true, inertia: !still, zoomAnimation: !still, fadeAnimation: !still, markerZoomAnimation: !still,
-    zoomSnap: 0.25, zoomDelta: 0.5, maxZoom: 19.5, maxBounds: dataBounds || campusBounds, maxBoundsViscosity: 1.0,
+    // 끌 수 있는 범위는 바탕 지도 자료 범위(loadBasemap 이 받으면 건다). 받기 전에 캠퍼스 범위로 묶으면 첫 요일을 맞출 때 가운데가 캠퍼스에 묶여 핀이 잘린다
+    zoomSnap: 0.25, zoomDelta: 0.5, maxZoom: 19.5, maxBounds: dataBounds || undefined, maxBoundsViscosity: 1.0,
   });
   const buttons = full || mouse;
   if (buttons) L.control.zoom({ position: "topright", zoomInTitle: "확대", zoomOutTitle: "축소" }).addTo(map);
@@ -2039,8 +2126,26 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
   const top = Math.max(mp.full || mp.buttons ? 40 : 56, Math.round(24 + 16 * k)), bottom = Math.max(32, Math.round(16 + 16 * k), (attr ? attr.offsetHeight : 0) + 8);
   const pad = mp.full ? { paddingTopLeft: [24, top], paddingBottomRight: [68, bottom] }
     : mp.buttons ? { paddingTopLeft: [20, top], paddingBottomRight: [56, bottom] } : { paddingTopLeft: [20, top], paddingBottomRight: [20, bottom] };
-  if (pts.length > 1) map.fitBounds(L.latLngBounds(pts), { ...pad, maxZoom: 17, animate: false });
-  else if (pts.length) map.setView(pts[0], 16, { animate: false });
+  if (pts.length > 1) {
+    const bounds = L.latLngBounds(pts), fit = { ...pad, maxZoom: 17, animate: false };
+    map.fitBounds(bounds, fit);
+    // 묶인 핀(2·3·4·5·6)은 한 핀보다 넓다. 가장자리 밖으로 잘리면 그만큼 더 비우고 다시 맞춘다(묶음은 배율마다 달라서 몇 번 본다).
+    // 배율이 그대로면 더 비운 폭의 반만큼만 옮겨지므로 둘째부터는 두 배로 비운다
+    for (let i = 0; i < 4; i++) {
+      const w = map.getSize().x;
+      let l = 0, r = 0;
+      for (const pin of groupStops(map, stops)) {
+        const x = map.latLngToContainerPoint(pin.at).x;
+        l = Math.max(l, 4 + pin.w / 2 - x);
+        r = Math.max(r, x + pin.w / 2 + 4 - w);
+      }
+      if (l < 1 && r < 1) break;
+      const more = (v) => (v < 1 ? 0 : Math.ceil(v) * (i ? 2 : 1));
+      fit.paddingTopLeft = [fit.paddingTopLeft[0] + more(l), fit.paddingTopLeft[1]];
+      fit.paddingBottomRight = [fit.paddingBottomRight[0] + more(r), fit.paddingBottomRight[1]];
+      map.fitBounds(bounds, fit);
+    }
+  } else if (pts.length) map.setView(pts[0], 16, { animate: false });
   mp.data = { stops, legs: legLines, homeAt, homeLines };
   drawReturn(mp);
   placeMarks(mp);
@@ -2049,12 +2154,10 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
   if (reveal && !reduceMotion.matches) revealRoute(mp, drawn);
 }
 
-/** 핀. 화면에서 겹치는 수업 핀은 1·2 로 묶는다(배율이 바뀔 때마다 다시). 구간 라벨은 placeLegLabels. */
-function placeMarks(mp) {
-  const { map, marks, data } = mp;
-  marks.clearLayers();
+/** 지금 배율에서 겹치는 수업 핀을 묶는다: [{at, nums, names, bs, label '2·3', w 핀 폭}] */
+function groupStops(map, stops) {
   const merged = [];
-  for (const st of data.stops) {
+  for (const st of stops) {
     const pt = map.latLngToContainerPoint(st.at);
     const near = merged.find((m) => Math.abs(m.pt.x - pt.x) < 24 && Math.abs(m.pt.y - pt.y) < 24);
     if (near) {
@@ -2063,17 +2166,26 @@ function placeMarks(mp) {
       if (!near.bs.includes(st.b)) near.bs.push(st.b);
     } else merged.push({ at: st.at, pt, nums: [...st.nums], names: [...st.names], bs: [st.b] });
   }
+  for (const st of merged) {
+    st.label = st.nums.join("·");
+    st.w = st.label.length > 1 ? 12 + 7 * st.label.length : 24;
+  }
+  return merged;
+}
+
+/** 핀. 화면에서 겹치는 수업 핀은 1·2 로 묶는다(배율이 바뀔 때마다 다시). 구간 라벨은 placeLegLabels. */
+function placeMarks(mp) {
+  const { map, marks, data } = mp;
+  marks.clearLayers();
+  const merged = groupStops(map, data.stops);
   if (data.homeAt) {
     L.marker(data.homeAt, { keyboard: false, interactive: false,
       icon: L.divIcon({ className: "", html: `<div class="pin home" role="img" aria-label="${esc(placeLabel(state.result.home))}">${HOME_PIN}</div>`, iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(marks);
   }
   for (const st of merged) {
-    const label = st.nums.join("·");
-    const w = label.length > 1 ? 12 + 7 * label.length : 24;
-    st.w = w;
-    const name = [label, ...new Set(st.names), st.bs.map(buildingLabel).join("·")].join(", "); // 1, 동물생화학 2, 26동
+    const name = [st.label, ...new Set(st.names), st.bs.map(buildingLabel).join("·")].join(", "); // 1, 동물생화학 2, 26동
     L.marker(st.at, { keyboard: false, interactive: false, zIndexOffset: 100,
-      icon: L.divIcon({ className: "", html: `<div class="pin" role="img" aria-label="${esc(name)}">${label}</div>`, iconSize: [w, 24], iconAnchor: [w / 2, 12] }) }).addTo(marks);
+      icon: L.divIcon({ className: "", html: `<div class="pin" role="img" aria-label="${esc(name)}">${st.label}</div>`, iconSize: [st.w, 24], iconAnchor: [st.w / 2, 12] }) }).addTo(marks);
   }
   mp.pins = merged;
 }
@@ -2096,13 +2208,18 @@ const mapTextW = (() => {
 /** 건물 번호(.blabel b, 12px 700)와 이름(span, 12px 500) 가운데 넓은 쪽 + 테두리 여유. */
 const blabelW = (text, name) => Math.max(mapTextW(700, text), name ? mapTextW(500, name) : 0) + 4;
 
-/** 수업이 있는 날 핀 옆 건물 번호: 글, (많이 확대하면) 이름, 폭, 핀 왼쪽에 둘지(오른쪽 가장자리에 걸리면). */
+/** 수업이 있는 날 핀 옆 건물 번호: 글, (많이 확대하면) 이름, 폭, 자리. 핀 오른쪽이 기본이고 오른쪽 가장자리에 걸리면 왼쪽,
+ *  왼쪽도 걸리면(폰의 좁은 지도에서 넓게 묶인 핀 2·3·4·5·6) 핀 아래에 둔다(dx: 가장자리에 걸리지 않게 옆으로 민 만큼). */
 function pinTag(map, pin, withName) {
-  const B = state.campus.buildings || {};
   const text = pin.bs.map((b) => (b === "GATE" ? "정문" : b)).join("·");
-  const name = withName ? pin.bs.map((b) => (B[b] || [])[0]).filter(Boolean).join("·") : "";
-  const x = map.latLngToContainerPoint(pin.at).x, lw = blabelW(text, name);
-  return { text, name, lw, left: x + pin.w / 2 + 3 + lw > map.getSize().x - 4 };
+  const name = withName ? pin.bs.map(buildingName).filter(Boolean).join("·") : "";
+  const x = map.latLngToContainerPoint(pin.at).x, lw = blabelW(text, name), W = map.getSize().x, hw = pin.w / 2;
+  let side = x + hw + 3 + lw > W - 4 ? "left" : "right", dx = 0;
+  if (side === "left" && x - hw - 3 - lw < 4 && x - hw >= 0 && x + hw <= W) { // 핀이 화면 안에 있을 때만(지도를 끌어 핀이 나가면 번호도 따라 나간다)
+    side = "below";
+    dx = Math.max(4 + lw / 2 - x, Math.min(0, W - 4 - lw / 2 - x));
+  }
+  return { text, name, lw, side, dx };
 }
 
 // ---- 구간 라벨 자리
@@ -2146,14 +2263,16 @@ function placeLegLabels(mp) {
   for (const pin of mp.pins || []) {
     const p = map.latLngToLayerPoint(pin.at), hw = pin.w / 2, t = pinTag(map, pin, withName), hh = t.name ? 15 : 9;
     pins.push([p.x - hw - 2, p.y - 14, p.x + hw + 2, p.y + 14]);
-    avoid.push(t.left ? [p.x - hw - 5 - t.lw, p.y - hh, p.x - hw, p.y + hh] : [p.x + hw, p.y - hh, p.x + hw + 5 + t.lw, p.y + hh]);
+    avoid.push(t.side === "below" ? [p.x + t.dx - t.lw / 2 - 2, p.y + 12, p.x + t.dx + t.lw / 2 + 2, p.y + 16 + 2 * hh]
+      : t.side === "left" ? [p.x - hw - 5 - t.lw, p.y - hh, p.x - hw, p.y + hh] : [p.x + hw, p.y - hh, p.x + hw + 5 + t.lw, p.y + hh]);
   }
-  avoid.push(...pins);
+  const ui = [];
   const host = mp.el.getBoundingClientRect();
   for (const el of mp.el.parentElement.querySelectorAll(".map-expand, .leaflet-control-zoom, .map-attr")) {
     const r = el.getBoundingClientRect();
-    if (r.width) avoid.push([o.x + r.left - host.left - 4, o.y + r.top - host.top - 4, o.x + r.right - host.left + 4, o.y + r.bottom - host.top + 4]);
+    if (r.width) ui.push([o.x + r.left - host.left - 4, o.y + r.top - host.top - 4, o.x + r.right - host.left + 4, o.y + r.bottom - host.top + 4]);
   }
+  avoid.push(...pins, ...ui);
   const view = [o.x + 4, o.y + 4, o.x + size.x - 4, o.y + size.y - 4];
   // 구간 선(layer 좌표). 출발·도착 자리로 가는 길은 그려진 대로 오른쪽으로 비킨 선
   const lines = data.legs.map((lg) => (lg.home ? offsetPoints(map, lg.line, RETURN_OFFSET) : lg.line.map((ll) => map.latLngToLayerPoint(ll))));
@@ -2245,7 +2364,7 @@ function placeLegLabels(mp) {
     L.marker(map.layerPointToLatLng([c.x, c.y]), { interactive: false, keyboard: false,
       icon: L.divIcon({ className: "", html: `<span class="leg-label${it.lg.home ? " to-home" : ""}" aria-hidden="true">${it.lg.home ? HOME_PIN.replace('width="12" height="12"', 'width="10" height="10"') : ""}${it.lg.tag ? `<span class="num">${it.lg.tag}</span>` : ""}${it.lg.text}</span>`, iconSize: [0, 0] }) }).addTo(mp.legLabels);
   }
-  mp.boxes = pins.concat(placed); // 수업이 없는 날 건물 번호가 피할 자리(placeLabels)
+  mp.boxes = pins.concat(ui, placed); // 수업이 없는 날 건물 번호가 피할 자리(placeLabels): 핀, 지도 버튼·저작권 표기, 구간 라벨
 }
 
 /**
@@ -2262,9 +2381,9 @@ function placeLabels(mp) {
   const size = map.getSize();
   if (data.stops.length) {
     for (const pin of mp.pins || []) {
-      const { text, name, left } = pinTag(map, pin, withName); // 오른쪽 가장자리에 걸리면 핀 왼쪽에
+      const { text, name, side, dx } = pinTag(map, pin, withName); // 오른쪽 가장자리에 걸리면 핀 왼쪽, 왼쪽도 걸리면 핀 아래
       L.marker(pin.at, { interactive: false, keyboard: false, zIndexOffset: 50,
-        icon: icon(`<div class="blabel day${left ? " left" : ""}" style="--pin-half:${pin.w / 2}px" aria-hidden="true"><b>${esc(text)}</b>${name ? `<span>${esc(name)}</span>` : ""}</div>`) }).addTo(names);
+        icon: icon(`<div class="blabel day${side === "right" ? "" : " " + side}" style="--pin-half:${pin.w / 2}px;--dx:${dx}px" aria-hidden="true"><b>${esc(text)}</b>${name ? `<span>${esc(name)}</span>` : ""}</div>`) }).addTo(names);
     }
     return;
   }
