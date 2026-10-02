@@ -166,7 +166,7 @@ def test_slope_travel(tmp_path):
     t = {(r["from"], r["to"]): float(r["minutes"]) for r in csv.DictReader(open(out, encoding="utf-8"))}
     rows = {(r["from"], r["to"]): r for r in csv.DictReader(open(stats, encoding="utf-8-sig"))}
     assert len(t) == 6
-    # 10 % 오르막 200 m: 마법 지도 시간 × exp(0.35), 내리막 −10 %는 평지와 같다
+    # 10 % 오르막 200 m: 평지 시간 × exp(0.35), 내리막 −10 %는 평지와 같다
     assert t[("A", "B")] == pytest.approx(200 / 1.1 / 60 * math.exp(0.35), rel=1e-3)
     assert t[("B", "A")] == pytest.approx(200 / 1.1 / 60, rel=1e-3)
     ab = rows[("A", "B")]
@@ -177,6 +177,9 @@ def test_slope_travel(tmp_path):
     assert float(ac["route_m"]) == pytest.approx(145, abs=1)
     assert float(ac["slope_factor"]) > 1 > float(rows[("C", "A")]["slope_factor"]) - 0.05
     assert ac["check"] and not ab["check"]  # 마법 지도 표(0.5분)와 우리 경로(2.2분)가 크게 다르다
+    # 최종 값은 표가 아니라 우리 경로의 경사 반영 시간이다(표와 크게 다른 쌍도)
+    assert ac["minutes"] == ac["route_slope_min"] and t[("A", "C")] == pytest.approx(float(ac["route_slope_min"]), abs=0.006)
+    assert t[("A", "C")] > 145 / 1.1 / 60 > float(ac["magicmap_min"])
     # 웹 지도용 경로 모양: 곧은 길은 양 끝만, C 쪽은 노드 3에서 꺾인다
     shapes = json.loads(paths.read_text(encoding="utf-8"))
     assert shapes["ids"] == ["A", "B", "C"]
@@ -224,7 +227,8 @@ def test_campus_model(tmp_path):
 
 
 def test_slope_travel_extra_points(tmp_path):
-    """표 밖 지점(기숙사 동): 우리 경로로 경사·평지 시간을 내고, 평지는 travel.csv 에 source = route 로. 출입구는 패치에서."""
+    """표 밖 지점(기숙사 동)도 표 지점과 같이 우리 경로로 경사·평지 시간을 낸다. 평지는 travel.csv 에 source = route 로(실측 행은 그대로).
+    출입구는 패치에서. --base magicmap(예전 방식)이면 표 쌍은 표 값(source = magicmap)으로 두고 표 밖 쌍만 route 로 쓴다."""
     pts = {1: (0, 0), 2: (0, 50), 3: (0, 100), 4: (0, 150), 5: (0, 200), 6: (40, 100)}
     lon, lat = PROJ.inv([p[0] for p in pts.values()], [p[1] for p in pts.values()])
     nodes = [{"id": i, "lng": float(a), "lat": float(b), "ele": 100 + 0.1 * pts[i][1] if i != 6 else 110.0}
@@ -269,11 +273,16 @@ def test_slope_travel_extra_points(tmp_path):
     ad = rows[("A", "D")]
     assert ad["magicmap_min"] == "" and float(ad["route_m"]) == pytest.approx(145, abs=1)  # 100 m + 40 m + 패치 출입구 5 m
     assert t[("A", "D")] == pytest.approx(float(ad["route_slope_min"]), abs=0.01) and t[("A", "D")] > t[("D", "A")]
-    assert t[("A", "B")] == pytest.approx(200 / 1.1 / 60 * math.exp(0.35), rel=1e-3)  # 표 쌍은 그대로 표 × 경사 계수
-    f = {(r["from"], r["to"]): r for r in csv.DictReader(open(flat, encoding="utf-8"))}
-    assert f[("A", "B")]["source"] == "magicmap" and f[("A", "X")]["source"] == "measured"  # 다른 출처는 그대로
+    assert t[("A", "B")] == pytest.approx(200 / 1.1 / 60 * math.exp(0.35), rel=1e-3)  # 표 쌍도 우리 경로(여기서는 표와 같은 200 m)
+    read = lambda: {(r["from"], r["to"]): r for r in csv.DictReader(open(flat, encoding="utf-8"))}  # noqa: E731
+    f = read()
+    assert f[("A", "B")] == {"from": "A", "to": "B", "minutes": "3.03", "source": "route"}  # 표 값 대신 우리 경로 평지 시간
+    assert f[("A", "X")]["source"] == "measured"  # 실측은 그대로
     assert ("A", "Z") not in f  # 이번에 안 나온 옛 route 행은 지운다
     assert f[("A", "D")]["source"] == "route" and float(f[("A", "D")]["minutes"]) == pytest.approx(145 / 1.1 / 60, abs=0.01)
+    assert st.main(args + ["--base", "magicmap"]) == 0  # 예전 방식: 표 쌍은 표 값으로 되돌리고 표 밖 쌍만 route
+    f = read()
+    assert f[("A", "B")]["source"] == "magicmap" and f[("A", "X")]["source"] == "measured" and f[("A", "D")]["source"] == "route"
     shapes = json.loads(paths.read_text(encoding="utf-8"))["paths"]
     assert "A|D" in shapes and "B|E" in shapes and "D|E" not in shapes  # 기숙사 동끼리는 그리지 않는다
 
@@ -446,8 +455,8 @@ def test_build_skips_curated_area(tmp_path):
 
 
 def test_base_route_and_back(tmp_path):
-    """--base route: 표에 있는 쌍도 우리 경로의 경사 반영 시간을 그대로 쓰고, travel.csv 의 표 쌍(source = magicmap)을 우리 경로
-    평지 시간(source = route)으로 바꾼다(실측 행은 그대로). 다시 magicmap 기준으로 돌리면 표 값으로 돌아온다."""
+    """기본(--base route): 표에 있는 쌍도 우리 경로의 경사 반영 시간을 그대로 쓰고, travel.csv 의 표 쌍(source = magicmap)을 우리 경로
+    평지 시간(source = route)으로 바꾼다(실측 행은 그대로). --base magicmap(예전 방식: 표 시간 × 경사 계수)으로 돌리면 표 값으로 돌아온다."""
     pts = {1: (0, 0), 2: (0, 200)}
     lon, lat = PROJ.inv([p[0] for p in pts.values()], [p[1] for p in pts.values()])
     nodes = [{"id": i, "lng": float(a), "lat": float(b), "ele": 100 + 0.1 * pts[i][1]} for i, a, b in zip(pts, lon, lat)]
@@ -474,12 +483,12 @@ def test_base_route_and_back(tmp_path):
     read = lambda p, enc="utf-8": {(r["from"], r["to"]): r for r in csv.DictReader(open(p, encoding=enc))}  # noqa: E731
     up = 200 / 1.1 / 60 * math.exp(0.35)  # 10 % 오르막 200 m 를 우리 경로로 걷는 시간(분)
 
-    assert st.main(args) == 0  # 기본: 표 시간 × 경사 계수
+    assert st.main(args + ["--base", "magicmap"]) == 0  # 예전 방식: 표 시간 × 경사 계수
     assert float(read(out)[("A", "B")]["minutes"]) == pytest.approx(2 * up, rel=1e-3)
     assert read(flat)[("A", "B")] == {"from": "A", "to": "B", "minutes": "6.06", "source": "magicmap"}
     assert read(stats, "utf-8-sig")[("A", "B")]["check"] == "경로 다름"  # 표 6.06분, 우리 경로 3.03분
 
-    assert st.main(args + ["--base", "route"]) == 0
+    assert st.main(args) == 0  # 기본: 우리 경로
     assert float(read(out)[("A", "B")]["minutes"]) == pytest.approx(up, rel=1e-3)
     assert float(read(out)[("B", "A")]["minutes"]) == pytest.approx(200 / 1.1 / 60, rel=1e-3)
     f = read(flat)
@@ -488,10 +497,13 @@ def test_base_route_and_back(tmp_path):
     row = read(stats, "utf-8-sig")[("A", "B")]
     assert row["minutes"] == row["route_slope_min"] and float(row["magicmap_min"]) == pytest.approx(400 / 1.1 / 60, abs=0.01)
 
-    assert st.main(args) == 0  # 되돌리기: 표 쌍의 route 행이 표 값으로 돌아온다
+    assert st.main(args + ["--base", "magicmap"]) == 0  # 되돌리기: 표 쌍의 route 행이 표 값으로 돌아온다
     assert float(read(out)[("A", "B")]["minutes"]) == pytest.approx(2 * up, rel=1e-3)
     assert read(flat)[("A", "B")] == {"from": "A", "to": "B", "minutes": "6.06", "source": "magicmap"}
     assert read(flat)[("B", "A")]["source"] == "measured"
+
+    assert st.main(args + ["--base", "route"]) == 0 and st.main(args) == 0  # route 를 적어 줘도 기본과 같다
+    assert read(flat)[("A", "B")]["source"] == "route" and float(read(out)[("A", "B")]["minutes"]) == pytest.approx(up, rel=1e-3)
 
 
 def test_load_points_alias(tmp_path):
@@ -508,3 +520,26 @@ def test_load_points_alias(tmp_path):
     assert listing["71-1"]["lat"] and listing["71-1"]["lon"]
     pts = st.load_points(["71-1", "71", "GATE"], extra=data / "dorm_buildings.csv", patch=[data / "graph_patch"])
     assert pts["71-1"] != pts["71"] and len(pts["GATE"]) >= 1
+
+
+def test_travel_matrices_follow_our_routes():
+    """올려 둔 이동시간 행렬은 점검한 그래프 위 우리 경로에서 나온 값이다: travel_slope.csv = 경사 반영 시간, travel.csv = 같은 경로의
+    평지 시간(source = route. 실측 행만 예외). 예전 방식(--base magicmap: 표 시간 × 경사 계수)으로 만든 행렬을 올리면 여기서 걸린다
+    (2026-10-02: 그래프·출입구를 고쳐도 표 지점 쌍의 거리에는 반영되지 않던 것을 바로잡음)."""
+    data = ROOT / "data"
+    stats = {(r["from"], r["to"]): r for r in st._rows(data / "route_stats.csv")}
+    slope = {(r["from"], r["to"]): r for r in st._rows(data / "travel_slope.csv")}
+    flat = {(r["from"], r["to"]): r for r in st._rows(data / "travel.csv")}
+    assert set(stats) == set(slope) and set(stats) <= set(flat) and len(stats) > 10000
+    table = 0
+    for k, r in stats.items():
+        assert slope[k]["minutes"] == r["minutes"] == r["route_slope_min"], k
+        f = flat[k]
+        assert f["source"] in ("route", "measured"), (k, f["source"])
+        if f["source"] == "route":
+            assert f["minutes"] == r["route_flat_min"], k
+        table += bool(r["magicmap_min"])
+        # 같은 경로라 경사 반영 ÷ 평지 = 경사 계수(반올림 오차 안)
+        if float(r["route_flat_min"]) > 1:
+            assert float(r["minutes"]) / float(r["route_flat_min"]) == pytest.approx(float(r["slope_factor"]), abs=0.02), k
+    assert table == 11772  # 마법 지도 표의 쌍은 견줄 값(magicmap_min)으로 남아 있다

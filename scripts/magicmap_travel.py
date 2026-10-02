@@ -2,6 +2,10 @@
 
   python scripts/magicmap_travel.py
 
+예전 기준(2026-10-02 까지)이다. 지금 travel.csv 는 slope_travel.py 가 우리 경로의 평지 시간(source = route)으로 쓴다:
+표가 끊긴 그래프에서 계산돼 있어서다(docs/travel_time_method.md '표와 우리 경로'). 이 스크립트를 돌린 뒤 slope_travel.py 를
+기본값으로 돌리면 표 값은 다시 우리 경로 값으로 바뀐다. 표 값 그대로 쓰려면 slope_travel.py --base magicmap.
+
 입력  data/magicmap/building_pair_times.csv   from,to,distance_m,time_s (109개 지점의 모든 방향 쌍, time = 거리 ÷ 1.1 m/s)
 출력  data/travel.csv                          from,to,minutes,source (ttwizard/travel.py 형식, source = magicmap)
       이미 있는 travel.csv 는 합친다: 표에 있는 쌍은 마법 지도 값으로 바꾸되 measured(실측) 행은 그대로 두고,

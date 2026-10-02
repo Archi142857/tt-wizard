@@ -36,8 +36,7 @@ python -m ttwizard parse data/raw/latest.xls -o data/lectures.json
 python scripts/fetch_buildings.py
 
 # 3) 이동시간 행렬 → data/travel.csv (평지), data/travel_slope.csv (경사 반영)
-#    '캠퍼스 마법 지도' 건물쌍 거리표(data/magicmap/)에서 만든다. 표에 없는 쌍만 TMAP 보행자 API로 (.env 에 TMAP_APP_KEY)
-python scripts/magicmap_travel.py
+#    '캠퍼스 마법 지도' 도로 그래프(data/magicmap/ + 보강 data/graph_patch/) 위에서 건물 출입구 사이 경로를 찾아 만든다
 python scripts/slope_travel.py
 
 # 4) 과목 찾기 → 탐색 (--travel 을 빼면 평지 행렬 data/travel.csv)
@@ -137,27 +136,26 @@ python scripts/building_elevation.py         # → data/buildings_elevation.csv,
 
 ## 캠퍼스 마법 지도 도로 그래프와 이동시간
 
-'캠퍼스 마법 지도'에서 받은 도로 그래프와 건물쌍 거리표(`data/magicmap/`, 출처·허락 범위는 그 폴더의 README)를 쓴다.
+'캠퍼스 마법 지도'에서 받은 도로 그래프(`data/magicmap/`, 출처·허락 범위는 그 폴더의 README) 위에서 경로를 찾는다. 같이 받은 건물쌍 거리표는 견줄 값으로 쓴다.
 
 ```bash
-python scripts/magicmap_travel.py            # 건물쌍 거리표 → data/travel.csv (평지 1.1 m/s, 알고리즘 입력)
 python scripts/graph_patch.py                # 기숙사 둘레 OSM 길 → data/graph_patch/dorm.geojson (campus·gwanaksa.geojson 은 손으로 고친 것)
 python scripts/entrance_links.py             # 출입구마다 건물·담장·옹벽을 피해 길까지 가는 접속선 → data/graph_patch/links.geojson
 python scripts/graph_slopes.py               # 그래프(+ 보강)에 노드 고도·구간별 경사 → data/magicmap/roads_graph_slope.json, *.csv
-python scripts/slope_travel.py               # 경사 반영 이동시간(방향별) → data/travel_slope.csv, data/route_stats.csv
+python scripts/slope_travel.py               # 출입구 사이 경로 → 평지 data/travel.csv, 경사 반영(방향별) data/travel_slope.csv, data/route_stats.csv
 ```
 
-마법 지도 표에는 기숙사가 919동뿐이라, 다른 기숙사 동(`data/dorm_buildings.csv`: 900~906·915~918·921~926·931~935·946동, 지도 번호만인 919-A~D)은
-우리 경로 시간으로 더한다(평지는 `travel.csv` 에 source `route`).
+지점은 마법 지도 표의 109곳에 기숙사 동(`data/dorm_buildings.csv`: 900~906·915~918·921~926·931~935·946동. 919-A~D 는 지도 번호만)을 더한 132곳이다.
 
 받은 그래프는 고치지 않고, 더할 길·실제로 없는 엣지·출입구는 `data/graph_patch/` 에 둔다(출처·형식·고치는 법은 그 폴더 README).
 `campus.geojson` 은 관악캠 전체를 카카오 로드뷰·스카이뷰와 국토지리정보원 1:1,000 수치지형도로 점검한 결과(2026-10-02: 출입구 확인·더하기, 빠진 보도·계단·횡단보도,
 건물을 뚫는 엣지·공사 구역 막기), `gwanaksa.geojson` 은 관악학생생활관 둘레를 수치지형도로 그린 길, `dorm.geojson` 은 `graph_patch.py` 가
 OSM 으로 만드는 그 밖의 기숙사 둘레 길, `links.geojson` 은 `entrance_links.py` 가 만드는 출입구 접속선이다. 받은 그래프의 끊긴 갈림목(엣지 위에 찍힌 노드)도 이때 잇는다.
 
-경사 반영 시간 = 마법 지도 표 시간 × 경사 계수. 경사 계수는 우리 출입구에서 그래프 위 최단 경로를 찾아(다른 건물의 출입구는 지나가지 않는다),
-30 m 창으로 잰 경사에 Tobler 보행 함수를 적용한 시간 ÷ 같은 경로의 평지 시간이다. `--base route` 를 주면 표 대신 우리 경로의 시간을 그대로 쓴다
-(표는 끊긴 그래프에서 계산돼 1분 넘게 다른 쌍이 2,488개다). 방법·결과·한계는 `docs/travel_time_method.md`.
+이동시간은 우리 출입구에서 그래프 위 최단 경로를 찾아(다른 건물의 출입구는 지나가지 않는다) 잰다. 평지는 경로 길이 ÷ 1.1 m/s,
+경사 반영은 30 m 창으로 잰 경사에 Tobler 보행 함수를 적용한 시간이다. 2026-10-02 까지는 마법 지도 건물쌍 표 시간 × 경사 계수였는데,
+표가 끊긴 그래프에서 계산돼 우리 경로와 1분 넘게 다른 쌍이 2,488개라 우리 경로 시간으로 바꿨다(`--base magicmap` 으로 예전 값을 낼 수 있다).
+방법·결과·한계는 `docs/travel_time_method.md`.
 
 현장에서 확인한 출입구는 `data/entrances_manual.csv`(`building,lat,lon,floor,kind,note`)에 적으면 그 건물은 자동 후보 대신 그것을 쓴다.
 
@@ -193,11 +191,11 @@ scripts/
   fetch_osm_footprints.py    OpenStreetMap 건물 윤곽·출입구·보행로 → osm_*.geojson
   dem_from_contours.py       1:5,000 수치지형도 등고선·표고점 → DEM(1:1,000 표고점으로 검증), 건물 윤곽
   building_elevation.py      DEM + 윤곽 + 출입구 → 건물별·출입구별 고도 (buildings_elevation.csv, building_entrances.csv)
-  magicmap_travel.py         마법 지도 건물쌍 거리표 → travel.csv
+  magicmap_travel.py         마법 지도 건물쌍 거리표 → travel.csv (예전 기준. 지금은 slope_travel.py 가 travel.csv 도 쓴다)
   graph_patch.py             도로 그래프 보강: 패치(graph_patch/*.geojson)를 그래프에 더하기(끊긴 갈림목 잇기, 없는 엣지 막기), 기숙사 둘레 OSM 길 → dorm.geojson
   entrance_links.py          출입구에서 길까지 건물·담장·옹벽을 피해 가는 접속선 → graph_patch/links.geojson
   graph_slopes.py            마법 지도 도로 그래프(+ graph_patch)에 노드 고도·구간별 경사
-  slope_travel.py            경사 반영 건물쌍 이동시간 → travel_slope.csv, route_stats.csv, route_paths.json(지도용 경로)
+  slope_travel.py            건물쌍 이동시간(우리 경로) → travel.csv(평지), travel_slope.csv(경사 반영), route_stats.csv, route_paths.json(지도용 경로)
   export_web.py              data/ → web/data/*.json (웹 화면 자료)
   campus_model.py            관악캠퍼스 3D·2D 모델링 → web/model/*.html (템플릿: campus_model_3d.html, campus_model_2d.html)
   build_history.py           지난 학기 편람 엑셀 → data/history/<학기>.json (웹 화면 학기 선택)

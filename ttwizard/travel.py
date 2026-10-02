@@ -2,7 +2,7 @@
 
 데이터 파일
 - buildings.csv : building,name,lat,lon          (동 번호, 이름, 위경도)
-- travel.csv    : from,to,minutes,source          (source: magicmap / tmap / naver / measured / estimate)
+- travel.csv    : from,to,minutes,source          (source: route / magicmap / tmap / naver / measured / estimate)
 
 조회 순서
 1. travel.csv 에 (from,to)가 있으면 그 값

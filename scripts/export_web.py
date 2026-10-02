@@ -5,7 +5,7 @@
 
 출력 (화면과 알고리즘을 잇는 유일한 접점이라 형식을 바꾸면 web/js/ 도 같이 바꾼다)
   web/data/courses.json  과목 → 분반 → 수업(요일, 시작·끝 분, 동, 호실). 논문 과목은 뺀다
-  web/data/campus.json   이동시간 행렬(평지 = 마법 지도 표, 경사 반영), 건물 이름·좌표, 출발 후보, 갱신 시각
+  web/data/campus.json   이동시간 행렬(평지 data/travel.csv, 경사 반영 data/travel_slope.csv: 둘 다 우리 경로), 건물 이름·좌표, 출발 후보, 갱신 시각
   web/data/routes.json   지도에 그릴 경로 모양(data/route_paths.json 그대로. 없으면 화면이 직선으로 잇는다)
   web/data/basemap.json  바탕 지도(data/basemap.json 그대로. scripts/basemap.py 가 만든다. 형식은 docs/basemap.md)
   web/data/semesters.json, semesters/<학기>.json

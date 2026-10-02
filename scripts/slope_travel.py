@@ -23,19 +23,19 @@
             몇 m 구간의 경사는 오차에 휘둘리기 때문이다(1:1,000 표고점 검증 MAE 0.9 m)
   속도      Tobler 보행 함수 v(g) = v0 · exp(−3.5 |g + 0.05|) / exp(−3.5 × 0.05). 평지에서 v0, 완만한 내리막(−5 %)에서 가장 빠르다
   경사 계수  F = 경사 반영 시간 ÷ 평지 시간 (같은 경로, 방향별). v0와 무관하다
-  결과      마법 지도 표 시간 × F. 평지 기준이 travel.csv(마법 지도)와 같아 두 파일의 차이는 경사 효과뿐이다.
-            --base route 면 우리 경로의 경사 반영 시간(v0 = --speed)을 그대로 쓰고, travel.csv 의 표 쌍(source = magicmap)도
-            우리 경로 평지 시간(source = route)으로 바꿔 두 파일의 평지 기준을 맞춘다(실측 행은 그대로).
-            되돌리려면 --base magicmap(기본)으로 다시 돌린다(표 쌍의 route 행을 표 시간으로 되돌린다)
-            표에 없는 쌍(기숙사 동)은 우리 경로 시간: 경사 반영은 travel_slope.csv, 평지(경로 길이 ÷ 1.1 m/s)는
-            travel.csv 에 source = route 로 더한다(마법 지도 표 시간과 우리 경로 평지 시간은 중앙값 0.07분 차이)
+  결과      우리 경로의 경사 반영 시간(평지 속도 v0 = --speed, 마법 지도와 같은 1.1 m/s). 같은 경로의 평지 시간(경로 길이 ÷ v0)은
+            travel.csv 에 source = route 로 쓴다(마법 지도 표 값과 옛 route 행을 바꾸고, 실측 행은 그대로). 두 파일이 같은 경로에서
+            나오므로 둘의 차이는 경사 효과뿐이다.
+            --base magicmap 은 예전 방식(2026-10-02 까지 기본): 표에 있는 쌍은 마법 지도 표 시간 × F 를 쓰고 travel.csv 의 표 쌍도
+            표 시간으로 되돌린다(표에 없는 기숙사 동 쌍만 우리 경로). 표는 끊긴 그래프와 직선 접속으로 계산돼 있어 표 지점
+            11,772쌍 중 2,488쌍이 우리 경로와 1분 넘게 다르다(docs/travel_time_method.md '표와 우리 경로')
             (출입구가 여러 곳인 건물을 거치면 더 빠른 쌍이 있어 삼각부등식이 성립하지 않는다. 탐색은 이를 감안해 하한을 잰다)
 
 출력
   data/travel_slope.csv   from,to,minutes,source (= slope). python -m ttwizard search ... --travel data/travel_slope.csv
-  data/route_stats.csv    쌍마다 마법 지도 시간, 우리 경로의 평지·경사 시간, 경사 계수, 최종 시간, 경로 길이, 오르막·내리막,
+  data/route_stats.csv    쌍마다 마법 지도 표 시간(견줄 값), 우리 경로의 평지·경사 시간, 경사 계수, 최종 시간, 경로 길이, 오르막·내리막,
                           우리 경로와 마법 지도 표가 크게 다른 쌍 표시(check)
-  data/travel.csv         표에 없는 쌍만 source = route 로 바꿔 쓴다(마법 지도·실측 행은 그대로)
+  data/travel.csv         모든 쌍의 평지 시간을 source = route 로 쓴다(실측 행은 그대로). --base magicmap 이면 표에 없는 쌍만
   data/route_paths.json   웹 지도에 그릴 경로 모양. {"ids": [...], "paths": {"a|b": 인코딩한 선}} (a → b 방향,
                           Google polyline 형식·소수 5자리, 1 m 넘게 벗어나지 않는 점만 남김).
                           기숙사 동끼리는 그리지 않는다(수업이 없어 지도에 그 구간이 나올 일이 없고, 파일만 커진다)
@@ -520,12 +520,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--points", default=str(POINTS))
     ap.add_argument("--extra", default=str(EXTRA), help="표 밖 지점(기숙사 동, travel = Y). 빈 값이면 표 지점만")
     ap.add_argument("--patch", nargs="*", default=[str(gp.PATCH_DIR)], help="출입구를 더 읽을 그래프 패치(graph_patch.py)")
-    ap.add_argument("--flat", default=str(FLAT), help="표 밖 쌍의 평지 시간을 source = route 로 더할 travel.csv. 빈 값이면 안 쓴다")
+    ap.add_argument("--flat", default=str(FLAT), help="우리 경로의 평지 시간을 source = route 로 쓸 travel.csv. 빈 값이면 안 쓴다")
     ap.add_argument("--window", type=float, default=30.0, help="경사를 재는 창 길이(m)")
-    ap.add_argument("--speed", type=float, default=1.1, help="평지 보행 속도(m/s). --base route 일 때 쓴다")
+    ap.add_argument("--speed", type=float, default=1.1, help="평지 보행 속도(m/s)")
     ap.add_argument("--slack", type=float, default=20.0, help="가장 가까운 길보다 이만큼 먼 길까지 접속 후보(m)")
-    ap.add_argument("--base", choices=["magicmap", "route"], default="magicmap",
-                    help="magicmap: 마법 지도 시간 × 경사 계수, route: 우리 경로의 경사 반영 시간")
+    ap.add_argument("--base", choices=["route", "magicmap"], default="route",
+                    help="route(기본): 우리 경로의 경사 반영 시간, magicmap: 마법 지도 표 시간 × 경사 계수(표에 없는 쌍만 우리 경로)")
     ap.add_argument("-o", "--output", default=str(OUT))
     ap.add_argument("--stats", default=str(OUT_STATS))
     ap.add_argument("--paths", default=str(OUT_PATHS), help="웹 지도용 경로 모양(JSON)")
@@ -631,10 +631,11 @@ def main(argv: list[str] | None = None) -> int:
               f" 범위 {both.min():+.1f} ~ {both.max():+.1f}분")
     print(f"  경사 계수: 중앙값 {np.median(F):.3f}, 10% {np.percentile(F, 10):.3f}, 90% {np.percentile(F, 90):.3f},"
           f" 최대 {F.max():.2f}, 평지보다 빠른 방향 {np.mean(F < 1) * 100:.0f}%")
-    diff = sorted(((minutes[(r['from'], r['to'])] - float(r["magicmap_min"] or 0), r) for r in rows if r["magicmap_min"]),
+    flat_col = "route_flat_min" if args.base == "route" else "magicmap_min"  # 최종 값과 평지 기준이 같은 칸
+    diff = sorted(((minutes[(r['from'], r['to'])] - float(r[flat_col]), r) for r in rows if r["magicmap_min"]),
                   key=lambda x: -x[0])[:5]
     print("  경사로 가장 많이 늘어난 쌍: " + ", ".join(
-        f"{r['from']}→{r['to']} {r['magicmap_min']}→{r['minutes']}분(오르막 {r['ascent_m']} m)" for _, r in diff))
+        f"{r['from']}→{r['to']} {r[flat_col]}→{r['minutes']}분(오르막 {r['ascent_m']} m)" for _, r in diff))
     pairs = sorted(((abs(minutes[(a, b)] - minutes[(b, a)]), a, b) for (a, b) in profiles), reverse=True)[:3]
     print("  방향에 따라 가장 다른 쌍: " + ", ".join(
         f"{a}→{b} {minutes[(a, b)]:.1f}분 / {b}→{a} {minutes[(b, a)]:.1f}분" for _, a, b in pairs))

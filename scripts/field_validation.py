@@ -9,8 +9,8 @@
 모형 값 (data/route_stats.csv, slope_travel.py 결과)
   route_slope_min  우리 경로의 경사 반영 시간 (평지 1.1 m/s, Tobler, 30 m 창) — 실측과 같은 길이라 1차 비교 대상
   route_flat_min   같은 경로의 평지 시간
-  minutes          앱이 쓰는 값 = 마법 지도 표 × 경사 계수 (data/travel_slope.csv)
-  magicmap_min     마법 지도 표(평지, data/travel.csv)
+  minutes          앱이 쓰는 값 (data/travel_slope.csv). 지금은 route_slope_min 과 같다(slope_travel.py --base magicmap 이면 표 × 경사 계수)
+  magicmap_min     마법 지도 건물쌍 표(평지). 견줄 값으로만 남긴다
 
 걷는 속도는 사람마다 다르므로 두 가지로 본다.
   그대로   1.1 m/s 기준 예측과 실측의 차이
@@ -745,7 +745,7 @@ def write_readme(path: Path, source: Path, s: dict, routes: list[dict], figs: li
     lines += ["", "## 오차 (실측 − 모형, 분)", "",
               "| 모형 | MAE | 평균 (+면 실측이 느림) | RMSE |", "| --- | --- | --- | --- |"]
     for key, label in (("slope", "경사 반영 (우리 경로, 1.1 m/s)"), ("flat", "평지 (우리 경로, 1.1 m/s)"),
-                       ("app", "앱 값 (마법 지도 × 경사 계수)"), ("magicmap", "마법 지도 표 (평지)"),
+                       ("app", "앱 값 (travel_slope.csv)"), ("magicmap", "마법 지도 표 (평지)"),
                        ("slope_calibrated", "경사 반영, 사람별 속도 보정"), ("flat_calibrated", "평지, 사람별 속도 보정")):
         m = s[key]
         lines.append(f"| {label} | {m['mae']} | {m['bias']:+} | {m['rmse']} |")

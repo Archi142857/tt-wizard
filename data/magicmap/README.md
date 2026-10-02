@@ -20,6 +20,6 @@
 | --- | --- | --- |
 | `roads_graph_slope.json` | `scripts/graph_slopes.py` | 받은 그래프와 같은 구조에 노드 `ele`, 엣지 `eleFrom`·`eleTo`·`rise`·`grade`·`ascent`·`descent`·`maxGrade`·`surface`를 더한 것 (마법 지도 전달용). 우리가 더한 길·출입구 접속선·끊긴 갈림목을 이은 조각(`../graph_patch/`)도 들어 있다: 노드 9,194번·엣지 19,351번부터, `src: "ttwizard"` (출입구 노드는 `building`·`entrance`, 엣지는 `osm`·`split_of`·`connector`·`role`: `entrance_link` 접속선, `junction` 갈림목 조각). 받은 엣지 가운데 실제로 없다고 본 것(건물을 뚫는 선, 공사 구역)에는 `blocked`(이유)가 붙는다. 다른 값은 받은 그대로다 |
 | `graph_nodes_elevation.csv`, `graph_edges_slope.csv` | 〃 | 같은 내용의 표 |
-| `../travel.csv` | `scripts/magicmap_travel.py` | 시간표 알고리즘 입력(`from,to,minutes,source`). 표에 없는 기숙사 동 쌍은 `slope_travel.py` 가 우리 경로 평지 시간(source `route`)으로 더한다 |
+| `../travel.csv` | `scripts/slope_travel.py` | 시간표 알고리즘 입력(`from,to,minutes,source`): 우리 경로의 평지 시간(source `route`). 2026-10-02 까지는 `scripts/magicmap_travel.py` 가 이 표의 시간을 그대로 옮겼다(source `magicmap`). 표와 우리 경로의 차이는 `docs/travel_time_method.md` '표와 우리 경로' |
 
 경사 계산 방법은 `docs/elevation_method.md`의 '도로 그래프 경사'.

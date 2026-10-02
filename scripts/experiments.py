@@ -672,7 +672,7 @@ def write_readme(path: Path, args, sem: str, summary: list[dict], spread: list[d
         "",
         f"`python scripts/experiments.py --bundles {args.bundles} --seed {args.seed}` 로 만든 파일이다 "
         f"({time.strftime('%Y-%m-%d %H:%M')}, 편람 {sem}). 정의와 방법은 `docs/experiments.md`.",
-        "이동시간은 캠퍼스 마법 지도 표 × 경사 계수로 추정한 값이고 실측이 아니다.",
+        "이동시간은 캠퍼스 마법 지도 도로 그래프(점검·보강한 것) 위 우리 경로에 경사를 반영해 추정한 값이고 실측이 아니다.",
         "",
         "## 1. 분반–건물 분산 (학부, 분반 둘 이상인 과목)",
         "",
