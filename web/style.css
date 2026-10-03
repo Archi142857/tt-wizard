@@ -13,6 +13,10 @@
   --tt-white: #ffffff;
   --tt-star: #fdd27e;
   --bg: var(--tt-pale);
+  --bg-tone: var(--bg);
+  --bg-pattern: none;
+  --bg-hover: var(--surface-hover);
+  --inset: var(--bg);
   --card: var(--tt-white);
   --raised: var(--tt-white);
   --surface-hover: #f7f8fe;
@@ -23,6 +27,12 @@
   --text2: #51596a;
   --text3: #646c7e;
   --muted: #8a92a6;
+  --on-bg-heading: var(--heading);
+  --on-bg-text: var(--text);
+  --on-bg-text2: var(--text2);
+  --on-bg-text3: var(--text3);
+  --on-bg-link: var(--accent-text);
+  --on-bg-danger: var(--danger);
   --line: #dee1f7;
   --line-strong: #7d8599;
   --fill: #e2e5f9;
@@ -30,6 +40,9 @@
   --accent-press: #3048d4;
   --accent-text: var(--accent);
   --accent-weak: var(--tt-pale);
+  --accent-line: var(--accent);
+  --cta: var(--accent);
+  --on-cta: var(--on-color);
   --on-color: var(--tt-white);
   --on-disabled: #ffffff;
   --focus: var(--tt-primary);
@@ -44,6 +57,7 @@
   --inverse-accent: #a9b8ff;
   --scrim: #18203366;
   --home: var(--tt-deep-navy);
+  --on-home: var(--bg);
   --route: var(--tt-primary);
   --route-home: var(--home);
   --cls-req: var(--tt-primary);
@@ -151,7 +165,7 @@
 /* ---------------------------------------------------------------- 다크 테마: 기기 설정을 따른다(디자인 규칙 '다크 테마').
    라이트를 뒤집은 것이 아니라 따로 맞춘 한 벌이고, 글자 크기·굵기·간격·배치는 같고 색만 바뀐다 */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #16171b;
     --card: #1e2026;
     --raised: #26272d;
@@ -268,11 +282,11 @@ html[data-nav="back"]::view-transition-new(root) { animation: none; }
 .list { margin: 0; padding: 0; list-style: none; }
 .list > li + li { border-top: 1px solid var(--line); }
 h2.section-title { display: flex; align-items: baseline; gap: var(--space-2); margin: var(--space-8) var(--space-1) var(--space-3);
-  font-size: 1.25rem; line-height: 1.75rem; font-weight: 700; letter-spacing: -0.01em; color: var(--heading); }
-h2.section-title .count { color: var(--text3); }
+  font-size: 1.25rem; line-height: 1.75rem; font-weight: 700; letter-spacing: -0.01em; color: var(--on-bg-heading); }
+h2.section-title .count { color: var(--on-bg-text3); }
 /* 담은 과목 제목 오른쪽 '총 18학점'(t-body-strong text). 좁으면 다음 줄 오른쪽으로 */
 #picked-title { flex-wrap: wrap; row-gap: 0; }
-#picked-title .credits { margin-left: auto; font-size: 1rem; line-height: 1.5rem; font-weight: 500; letter-spacing: 0; color: var(--text); font-variant-numeric: tabular-nums; }
+#picked-title .credits { margin-left: auto; font-size: 1rem; line-height: 1.5rem; font-weight: 500; letter-spacing: 0; color: var(--on-bg-text); font-variant-numeric: tabular-nums; }
 .empty { margin: 0; padding: var(--space-5) var(--space-4); font-size: 1rem; line-height: 1.5rem; color: var(--text3); }
 
 /* ---------------------------------------------------------------- 상단 바 */
@@ -282,7 +296,8 @@ h2.section-title .count { color: var(--text3); }
   margin: 0 calc(var(--gutter-right) * -1) 0 calc(var(--gutter-left) * -1); padding-right: var(--gutter-right); padding-left: var(--gutter-left); }
 /* 입력 화면 로고: 워드마크만(사용자 요청). 로고 묶음(32px)보다 글자가 커 보이게 36px */
 .wordmark { display: block; height: var(--logo-topbar); width: auto; -webkit-touch-callout: none; }
-.topbar .title { flex: 1; min-width: 0; margin: 0; font-size: 1.0625rem; line-height: 1.5rem; font-weight: 700; color: var(--heading);
+.wm-white { display: none; } /* 바탕이 짙은 이벤트 테마에서만 보인다(흰 단색 워드마크) */
+.topbar .title { flex: 1; min-width: 0; margin: 0; font-size: 1.0625rem; line-height: 1.5rem; font-weight: 700; color: var(--on-bg-heading);
   overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .topbar .title:focus { outline: none; }
 .topbar .title:focus-visible { outline: 2px solid var(--focus); }
@@ -290,13 +305,17 @@ h2.section-title .count { color: var(--text3); }
 .topbar > .icon-btn:last-child { margin-right: calc(var(--space-3) * -1); }
 .icon-btn { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: var(--touch); height: var(--touch);
   padding: 0; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text2); }
-.icon-btn.back { margin-left: calc(var(--space-3) * -1); color: var(--heading); }
+/* 상단 바의 아이콘 버튼은 바탕 위에 있다: 바탕 위 글자색(on-bg-*)과 바탕 위 누름색(bg-hover) */
+.topbar .icon-btn { color: var(--on-bg-text2); }
+.icon-btn.back { margin-left: calc(var(--space-3) * -1); color: var(--on-bg-heading); }
 .icon-btn.remove { color: var(--muted); }
+.icon-btn.remove:active { color: var(--text2); } /* 누른·올린 면(surface-hover) 위에서 muted 는 3:1 에 못 미친다(라이트 2.94, 크리스마스 2.88). 올릴 때는 아래 hover 묶음 */
 .icon-btn:active { background: var(--surface-hover); }
+.topbar .icon-btn:active { background: var(--bg-hover); }
 
 /* ---------------------------------------------------------------- 버튼 */
 .btn-primary { display: flex; align-items: center; justify-content: center; gap: var(--space-2); width: 100%; max-width: 600px; min-height: var(--cta-height);
-  margin: 0 auto; border: 0; border-radius: var(--radius-md); background: var(--accent); color: var(--on-color);
+  margin: 0 auto; border: 0; border-radius: var(--radius-md); background: var(--cta); color: var(--on-cta);
   font-size: 1.0625rem; line-height: 1.5rem; font-weight: 700; transition: box-shadow var(--dur-press) var(--ease-standard); }
 .btn-primary:active, .btn-primary.is-pressed { box-shadow: var(--shadow-press); }
 .btn-primary:disabled { background: var(--disabled); color: var(--on-disabled); box-shadow: none; cursor: default; }
@@ -305,6 +324,9 @@ h2.section-title .count { color: var(--text3); }
   border-radius: var(--radius-sm); background: transparent; color: var(--accent-text); font-size: 1rem; line-height: 1.5rem; font-weight: 500; }
 .btn-text.small { position: relative; min-height: 36px; padding: 0 var(--space-2); font-size: 0.875rem; line-height: 1.25rem; }
 .btn-text:active { background: var(--surface-hover); }
+/* 바탕 위에 놓이는 글자 버튼(설치, 다시 시도, 취소, 더 보기, 자료 출처) */
+.topbar .btn-text, .bottom-bar .btn-text, .picked-error .btn-text, .ranks-more .btn-text, .footnote .btn-text { color: var(--on-bg-link); }
+.topbar .btn-text:active, .bottom-bar .btn-text:active, .picked-error .btn-text:active, .ranks-more .btn-text:active, .footnote .btn-text:active { background: var(--bg-hover); }
 .btn-add { position: relative; display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 2px; min-width: 56px; min-height: 36px;
   padding: 0 var(--space-3); border: 0; border-radius: var(--radius-sm); background: var(--accent-weak); color: var(--accent-text);
   font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; }
@@ -359,6 +381,9 @@ body.is-typing .bottom-bar { display: none; }
 .spinner { flex-shrink: 0; width: 20px; height: 20px; border: 2px solid currentColor; border-right-color: transparent;
   border-radius: 50%; animation: tt-spin .8s linear infinite; will-change: transform; }
 .spinner.small { width: 16px; height: 16px; }
+/* 찾는 중인 글자 버튼(더 찾기, aria-disabled): 눌림·올림 바탕 없이. 스피너는 글자색 */
+button.btn-text[aria-disabled="true"], button.btn-text[aria-disabled="true"]:hover, button.btn-text[aria-disabled="true"]:active { background: transparent; cursor: default; }
+.btn-text .spinner { margin-right: var(--space-1); }
 @keyframes tt-spin { to { transform: rotate(360deg); } }
 
 /* ---------------------------------------------------------------- 태그 */
@@ -377,7 +402,7 @@ body.is-typing .bottom-bar { display: none; }
   background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23646c7e' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right var(--space-3) center;
   color: var(--text); font-size: 1rem; line-height: 1.5rem; font-weight: 500; cursor: pointer; }
 .term-left { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-width: 0; }
-.asof { font-size: 0.8125rem; line-height: 1.125rem; color: var(--text3); white-space: nowrap; }
+.asof { font-size: 0.8125rem; line-height: 1.125rem; color: var(--on-bg-text3); white-space: nowrap; }
 .banner { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-1) 0 var(--space-3); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
   border-radius: var(--radius-md); background: var(--danger-weak); color: var(--text); font-size: 0.875rem; line-height: 1.25rem; }
 .banner p { flex: 1; margin: 0; }
@@ -461,7 +486,7 @@ body.is-typing .bottom-bar { display: none; }
 .c-error { display: block; margin-top: 2px; font-size: 0.875rem; line-height: 1.25rem; color: var(--danger); }
 .course .tags { display: flex; gap: var(--space-1); }
 .picked-error { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--space-2); margin: calc(var(--space-1) * -1) var(--space-1) var(--space-3); }
-.picked-error .error-line { margin: 0; }
+.picked-error .error-line { margin: 0; color: var(--on-bg-danger); }
 
 /* ---------------------------------------------------------------- 조건 */
 .settings { display: flex; flex-direction: column; gap: var(--space-5); padding: var(--space-4); }
@@ -469,7 +494,7 @@ body.is-typing .bottom-bar { display: none; }
 .field-label { display: flex; align-items: center; min-height: 24px; margin: 0 0 var(--space-2); padding: 0; font-size: 0.875rem; line-height: 1.25rem;
   font-weight: 500; color: var(--text2); }
 .field-label .icon-btn { position: relative; width: 36px; height: 36px; margin: -6px 0; color: var(--text3); }
-.seg { display: flex; gap: var(--space-1); padding: var(--space-1); border-radius: var(--radius-md); background: var(--bg); }
+.seg { display: flex; gap: var(--space-1); padding: var(--space-1); border-radius: var(--radius-md); background: var(--inset); }
 .seg label { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; min-width: 0; min-height: var(--touch); padding: 0 var(--space-2);
   overflow-wrap: anywhere;
   border: 1px solid transparent; border-radius: var(--radius-sm); color: var(--text2); font-size: 1rem; line-height: 1.5rem; font-weight: 500; text-align: center;
@@ -495,7 +520,7 @@ body.is-typing .bottom-bar { display: none; }
   font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; }
 @keyframes tt-rise { from { opacity: 0; transform: translateY(8px); } }
 .footnote { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; column-gap: var(--space-2); margin: var(--space-6) var(--space-1) 0; }
-.footnote p { margin: 0; font-size: 0.8125rem; line-height: 1.125rem; color: var(--text3); }
+.footnote p { margin: 0; font-size: 0.8125rem; line-height: 1.125rem; color: var(--on-bg-text3); }
 .footnote .btn-text { margin-right: calc(var(--space-2) * -1); }
 
 /* ---------------------------------------------------------------- 시트 */
@@ -513,6 +538,11 @@ dialog.sheet.is-dragging { transition: none; }
 .sheet-head .h { flex: 1; min-width: 0; }
 .sheet-title { margin: 0; font-size: 1.0625rem; line-height: 1.5rem; font-weight: 700; color: var(--heading); word-break: keep-all; }
 .sheet-head > .btn-text { margin-top: calc(var(--space-3) * -1); }
+/* 묻는 시트(확인 대화상자): 제목은 질문 하나, 그 아래 오른쪽에 텍스트 버튼 둘(왼쪽 닫기, 오른쪽 동사). 넓은 화면에서는 좁은 가운데 대화상자 */
+.sheet.ask .sheet-head { padding-right: var(--space-5); padding-bottom: var(--space-1); }
+.sheet.ask .sheet-title:focus { outline: none; }  /* 사용자가 누르지 않았는데 뜨는 시트라 처음 초점은 제목에 둔다(버튼에 초점 테두리가 먼저 보이지 않게). Tab 을 누르면 닫기부터 */
+.sheet-actions { display: flex; justify-content: flex-end; gap: var(--space-2); padding: var(--space-1) var(--space-3) var(--space-3); }  /* 위 4px: 초점 테두리가 머리 밑에 가리지 않게 */
+@media (min-width: 37.5em) { dialog.sheet.ask { max-width: 22.5rem; } }
 .sheet-meta { margin: 2px 0 0; font-size: 0.8125rem; line-height: 1.125rem; color: var(--text3); }
 .sheet-body { padding: 0 var(--space-5) var(--space-6); }
 .sheet-body > p { max-width: 40em; margin: 0 0 var(--space-2); font-size: 1rem; line-height: 1.5rem; color: var(--text2); }
@@ -555,7 +585,7 @@ dialog.sheet.is-dragging { transition: none; }
 .daytabs { display: flex; gap: var(--space-2); }
 .daytabs button { flex: 1; min-width: 0; min-height: var(--touch); overflow-wrap: anywhere; border: 1px solid transparent; border-radius: var(--radius-sm); background: var(--card); color: var(--text2);
   font-size: 1rem; line-height: 1.5rem; font-weight: 500; transition: background-color var(--dur-move) var(--ease-standard); }
-.daytabs button[aria-selected="true"] { background: var(--accent); color: var(--on-color); }
+.daytabs button[aria-selected="true"] { background: var(--cta); color: var(--on-cta); }
 
 /* ---------------------------------------------------------------- 시간표 | 지도 */
 /* 칸 높이 pane-h 는 기기 글자 크기를 따라간다(10/3 디자인): 시간표 격자 --tt-h(19.75rem = 316px, 840px부터 26.25rem = 420px) + 위아래 40px.
@@ -616,7 +646,7 @@ dialog.sheet.is-dragging { transition: none; }
 .legend li > span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .num { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 1.125rem; height: 1.125rem; padding: 0 3px; border-radius: var(--radius-full);
   background: var(--accent); color: var(--on-color); font-size: 0.75rem; line-height: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.num.home { padding: 0; background: var(--home); color: var(--bg); }
+.num.home { padding: 0; background: var(--home); color: var(--on-home); }
 /* 파선 견본 '기숙사 가는 길': 좁은 두 칸 번호표에서는 한 줄을 다 쓴다 */
 .legend li.line { grid-column: 1 / -1; }
 .line-key { flex-shrink: 0; color: var(--route-home); }
@@ -634,7 +664,7 @@ dialog.sheet.is-dragging { transition: none; }
 .pin { display: flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 5px; border: 2px solid var(--card);
   border-radius: var(--radius-full); background: var(--accent); color: var(--on-color); font-size: 12px; line-height: 16px; font-weight: 700; white-space: nowrap;
   box-shadow: var(--shadow-sm); }
-.pin.home { padding: 0; background: var(--home); color: var(--bg); }
+.pin.home { padding: 0; background: var(--home); color: var(--on-home); }
 .leg-label { display: inline-block; padding: 1px 6px; border-radius: var(--radius-full); background: var(--card); color: var(--text2);
   font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap; box-shadow: var(--shadow-sm); transform: translate(-50%, -50%); }
 .leg-label svg { margin-right: 2px; vertical-align: -1px; } /* 출발·도착 자리로 가는 구간: ⌂ 19분 */
@@ -651,12 +681,12 @@ dialog.sheet.is-dragging { transition: none; }
 .map-stub-home { stroke: var(--route-home); }
 .map-stub-case { stroke: var(--card); }
 .cls-legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin: var(--space-2) var(--space-1) 0; font-size: 0.75rem; line-height: 1rem;
-  font-weight: 500; color: var(--text2); }
+  font-weight: 500; color: var(--on-bg-text2); }
 .cls-legend > span { display: inline-flex; align-items: center; gap: var(--space-1); }
 .cls-legend .dot { margin: 0; }
 .day-summary { display: flex; align-items: center; gap: var(--space-2); min-height: 22px; margin: var(--space-3) var(--space-1) 0; font-size: 0.875rem; line-height: 1.25rem;
-  color: var(--text2); }
-.day-summary b { color: var(--text); font-weight: 500; }
+  color: var(--on-bg-text2); }
+.day-summary b { color: var(--on-bg-text); font-weight: 500; }
 @media (min-width: 52.5em) {
   :root { --tt-h: 26.25rem; }
   .panes { height: calc(var(--pane-h-wide) + var(--tt-extra, 0px)); }
@@ -718,14 +748,14 @@ dialog.sheet.is-dragging { transition: none; }
   margin: var(--space-8) var(--space-1) var(--space-3); }
 .result-head h2.section-title { flex-wrap: wrap; column-gap: var(--space-2); row-gap: 0; margin: 0; }
 /* 목록 제목 두 덩이: 희미한 전체 조합 수(t-body text3)와 찾은 수(t-h2). 따로 줄을 바꿔 폰에서는 희미한 쪽이 윗줄 */
-.result-head .rank-total { font-size: 1rem; line-height: 1.5rem; font-weight: 400; letter-spacing: 0; color: var(--text3); font-variant-numeric: tabular-nums; }
+.result-head .rank-total { font-size: 1rem; line-height: 1.5rem; font-weight: 400; letter-spacing: 0; color: var(--on-bg-text3); font-variant-numeric: tabular-nums; }
 .result-head .rank-found { font-variant-numeric: tabular-nums; }
-.result-head .cond { font-size: 0.875rem; line-height: 1.25rem; color: var(--text3); }
+.result-head .cond { font-size: 0.875rem; line-height: 1.25rem; color: var(--on-bg-text3); }
 /* 후보 카드: 순위와 한 주 요약, 요일별 미리보기(칸마다 수업 막대). 고른 카드는 테두리와 담은 분반 목록 */
 .ranks { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
 .rank { overflow: hidden; border: 2px solid transparent; border-radius: var(--radius-lg); background: var(--card); transition: border-color var(--dur-fade) var(--ease-standard);
   container-type: inline-size; }
-.rank.selected { border-color: var(--accent); }
+.rank.selected { border-color: var(--accent-line); }
 .rank:has(.rank-hit:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .rank-hit { display: flex; flex-direction: column; gap: var(--space-2); width: 100%; padding: var(--space-3); border: 0; background: transparent; color: var(--text); text-align: left;
   transition: background-color var(--dur-fade) var(--ease-standard); }
@@ -739,7 +769,7 @@ dialog.sheet.is-dragging { transition: none; }
 .rank-sum .nw { white-space: nowrap; } /* 요약 덩이(걷기 주 105분, 월화수목 등교, 월수 2분 늦음) 안에서는 줄을 바꾸지 않는다 */
 .week { display: grid; grid-template-columns: repeat(var(--days, 5), minmax(0, 1fr)); gap: 6px; }
 .week .wd { font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text3); text-align: center; }
-.week .wc { position: relative; height: 48px; border-radius: var(--radius-xs); background: var(--bg); }
+.week .wc { position: relative; height: 48px; border-radius: var(--radius-xs); background: var(--inset); }
 .week .wb { position: absolute; left: 0; right: 0; min-height: 4px; border-radius: var(--radius-2xs); }
 /* 고른 카드의 분반 목록: 과목명 | 분반 두 열(행마다 subgrid 로 열을 맞춰 번호를 세로로 훑게). 번호만 진하게, 교수는 흐리게.
    같은 시간·건물 분반은 아래 줄에 '같은 시간·건물'(과목명 열)과 그 분반(분반 열) */
@@ -762,7 +792,9 @@ dialog.sheet.is-dragging { transition: none; }
   .rank-picks .p-twins { display: block; grid-column: 2; }
   .rank-picks .p-tw { inline-size: auto; min-inline-size: 0; }
 }
-.ranks-more { display: flex; justify-content: center; margin-top: var(--space-2); }
+/* 목록 아래 버튼 자리(높이 48): 더 보기 · 더 찾기 · 찾는 중(오래 걸리면 오른쪽에 취소) · 더 찾지 못했어요 + 다시 시도. 라벨이 바뀌어도 아래 고지가 안 움직인다 */
+.ranks-more { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: var(--space-1); min-height: var(--touch); margin-top: var(--space-2); }
+.ranks-more .error-line { margin: 0; color: var(--on-bg-danger); }
 @media (min-width: 56.25em) { .ranks { /* bp-cards 900px */ display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); align-items: start; } }
 
 /* ---------------------------------------------------------------- 정보 화면 */
@@ -770,10 +802,18 @@ dialog.sheet.is-dragging { transition: none; }
 .info-row { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 56px; padding: 0 var(--space-3) 0 var(--space-4); border: 0;
   background: transparent; text-align: left; color: var(--text); font-size: 1rem; line-height: 1.5rem; text-decoration: none; }
 .info-row .v { margin-left: auto; color: var(--text3); font-size: 0.875rem; line-height: 1.25rem; }
+/* 테마 행: 오른쪽 값을 누르면 시스템 선택 창이 뜬다. 값은 t-body-sm-strong text, 화살표는 다른 행의 화살표와 같은 자리·크기·색.
+   보이는 값 위에 투명한 select 를 덮는다(과목 시트의 강의실 값과 같은 방식): select 글자가 16px 보다 작으면 iOS 가 누를 때 화면을 확대한다 */
+.info-pick { position: relative; display: flex; align-items: center; margin-left: auto; min-height: var(--touch); padding: 0 28px 0 var(--space-2); border-radius: var(--radius-sm);
+  color: var(--text); font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; white-space: nowrap; }
+.info-pick select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 1rem; cursor: pointer; }
+.info-pick:has(select:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
+.info-pick svg { position: absolute; right: 0; pointer-events: none; }
 .info-row svg { flex-shrink: 0; margin-left: auto; color: var(--muted); }
 button.info-row:active, a.info-row:active { background: var(--surface-hover); }
+.info-row:active svg { color: var(--text2); } /* 누른·올린 면 위의 꺾쇠·링크 아이콘·펼침 화살표(muted 는 그 면에서 3:1 에 못 미친다) */
 .info-row:focus-visible { outline-offset: -2px; }
-.info-foot { margin: var(--space-4) var(--space-1) 0; font-size: 0.8125rem; line-height: 1.125rem; color: var(--text3); }
+.info-foot { margin: var(--space-4) var(--space-1) 0; font-size: 0.8125rem; line-height: 1.125rem; color: var(--on-bg-text3); }
 .page-card { margin-top: var(--space-2); padding: var(--space-1) var(--space-4); }
 .src { margin: 0; padding: 0; list-style: none; }
 .src li { display: flex; gap: var(--space-3); padding: var(--space-2) 0; font-size: 0.875rem; line-height: 1.25rem; }
@@ -782,15 +822,75 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
 .src .v { flex: 1; min-width: 0; overflow-wrap: anywhere; word-break: keep-all; }
 .src a { color: var(--text); text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
 
+/* ---------------------------------------------------------------- 이벤트 테마(디자인 규칙 '이벤트 테마'). 정해 둔 기간에 <html data-theme="…"> 로 켠다(js/app.js 의 THEMES).
+   테마는 한 벌뿐이다: 기기가 다크여도 같은 모습이고, 기본 테마의 다크 값은 테마가 꺼져 있을 때만 쓴다(:root:not([data-theme])).
+   글자 크기·굵기·간격·배치는 같고 색과 맨 뒤 바탕 무늬만 바뀐다.
+   무늬는 화면에 붙은 맨 뒤 층에만 그린다(카드·버튼·시간표 칸·지도에는 없다). 상단 바와 하단 띠는 같은 무늬를 화면 기준으로 다시 그려 이어 보인다 */
+html[data-theme] body { background: transparent; }
+html[data-theme] body::before, html[data-theme] .topbar::before, html[data-theme] .bottom-bar::before { content: ""; position: fixed; z-index: -1;
+  background: var(--bg-pattern), var(--bg); pointer-events: none; }
+html[data-theme] body::before { inset: 0; }
+/* 상단 바는 제 바탕색(bg)을 그대로 두고 그 위에 무늬 띠를 얹는다: 글자를 아주 키워 바가 높아져도 밑으로 들어온 내용이 비치지 않는다 */
+html[data-theme] .topbar::before { top: 0; left: 0; right: 0; height: calc(var(--topbar-h) + var(--safe-top)); }
+html[data-theme] .bottom-bar { background: none; }
+html[data-theme] .bottom-bar::before { inset: 0;
+  -webkit-mask-image: linear-gradient(to top, #000 calc(var(--bottom-bar-h) * 0.76), transparent var(--bottom-bar-h));
+  mask-image: linear-gradient(to top, #000 calc(var(--bottom-bar-h) * 0.76), transparent var(--bottom-bar-h)); }
+/* 넓은 화면: 하단 바가 오른쪽 칸 안에 붙어 있다(sticky). 화면에 붙인 무늬 층을 그 바 자리만큼만 보이게 자른다(초점 테두리가 잘리지 않게 좌우 8px 더).
+   칸이 화면보다 길어 버튼이 카드 위에 떠도 버튼 뒤로 카드 내용이 비치지 않는다 */
+@media (min-width: 42.5em), (horizontal-viewport-segments: 2) {
+  html[data-theme] .input-right .bottom-bar { clip-path: inset(0 -8px); }
+  html[data-theme] .input-right .bottom-bar::before { --band: calc(var(--cta-height) + var(--space-3) + var(--space-6) + var(--safe-bottom));
+    -webkit-mask-image: linear-gradient(to top, #000 calc(var(--band) * 0.76), transparent var(--band));
+    mask-image: linear-gradient(to top, #000 calc(var(--band) * 0.76), transparent var(--band)); }
+}
+html[data-theme] .view-map { background: var(--bg-pattern), var(--bg); }
+/* 전체 화면 지도의 번호표는 카드 면 위에(번호표·파선 견본이 지도에서 보던 색 그대로 보이게) */
+html[data-theme] .view-map .legend { background: var(--card); }
+/* 색 풀이 줄은 무늬 없는 판 위에(색 점이 무늬 점과 섞이지 않게). 자리는 그대로다 */
+html[data-theme] .cls-legend { width: fit-content; border-radius: var(--radius-2xs); background: var(--bg); box-shadow: 0 0 0 3px var(--bg); }
+
+/* 크리스마스(12월 1일~25일): 짙은 솔잎 초록 바탕에 같은 크기 점을 육각 격자로 깐 땡땡이(점 5px, 간격 16px), 흰 카드,
+   빨강은 주요 버튼과 고른 요일 탭에만. 넓은 초록은 어둡고 탁하게, 좁은 빨강은 선명하게(면적 하양 5 : 초록 4 : 빨강 0.5).
+   무늬와 바탕의 밝기 차는 1.36배이고 바탕 위 글자는 두 색 모두에서 4.5:1 을 넘는다. 워드마크는 흰 단색 */
+html[data-theme="xmas"] {
+  --bg: #103924; --bg-tone: #165032; --bg-hover: #165032; --card: #ffffff; --raised: #ffffff; --surface-hover: #f1f9f4; --inset: #e5f2ea;
+  --row-picked: #dbebe0; --row-picked-btn: #ffffff; --heading: #0b3a23; --text: #17211b; --text2: #45524a; --text3: #525e56; --muted: #89968d;
+  --on-bg-heading: #ffffff; --on-bg-text: #ffffff; --on-bg-text2: #deece3; --on-bg-text3: #bbd1c3; --on-bg-link: #f8d788; --on-bg-danger: #ffc3c1;
+  --line: #d7e6dc; --line-strong: #728679; --fill: #dbebe0; --accent: #0d6f44; --accent-press: #005d36; --accent-text: #0d6f44; --accent-weak: #def8e7;
+  --accent-line: #14a968; --cta: #df2932; --on-cta: #ffffff; --on-color: #ffffff; --on-disabled: #a2b7aa; --focus: #14a968; --disabled: #355542;
+  --danger: #d8152f; --on-danger: #ffffff; --danger-weak: #ffedec; --inverse: #1f6441; --on-inverse: #ffffff; --inverse-accent: #f8d788;
+  --scrim: #03140b80; --home: #0b3a23; --on-home: #ffffff; --route: #148753; --route-home: #0b3a23;
+  --shadow-sm: 0 1px 3px #03140b40; --shadow-md: 0 6px 20px #03140b4d;
+  --bg-pattern: radial-gradient(circle, var(--bg-tone) 0 2.25px, transparent 2.75px) 0 0 / 16px 28px,
+    radial-gradient(circle, var(--bg-tone) 0 2.25px, transparent 2.75px) 8px 14px / 16px 28px;
+}
+html[data-theme="xmas"] dialog.sheet::backdrop { background: var(--scrim, #03140b80); } /* ::backdrop 이 :root 변수를 물려받지 않는 브라우저용 값 */
+/* 화면 스크롤 막대가 자리를 차지하는 브라우저(윈도우 등): 짙은 바탕 옆에 흰 띠로 남지 않게 길은 바탕색, 손잡이는 line-strong(길과 3.1:1).
+   카드·시트 안의 스크롤 막대는 밝은 면 위라 그대로 둔다 */
+html[data-theme="xmas"] { scrollbar-color: var(--line-strong) var(--bg); }
+html[data-theme="xmas"] body { scrollbar-color: auto; }
+/* 그림으로 넣은 색은 우리가 색을 칠할 때만 바꾼다(강제 색에서는 바탕이 기기 색으로 바뀌므로 기본 그대로): 흰 워드마크,
+   선택칸 화살표(그림이라 변수를 못 쓴다. 이 테마의 text3, 둘러보기는 muted) */
+@media not (forced-colors: active) {
+  html[data-theme="xmas"] .wm-default { display: none; }
+  html[data-theme="xmas"] .wm-white { display: block; }
+  html[data-theme="xmas"] .select, html[data-theme="xmas"] .term-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23525e56' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
+  html[data-theme="xmas"] .browse-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2389968d' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
+}
+/* 대비를 높인 기기와 강제 색에서는 무늬를 끈다 */
+@media (prefers-contrast: more), (forced-colors: active) { html[data-theme] { --bg-pattern: none; } }
+
 /* ---------------------------------------------------------------- 마우스를 올릴 수 있을 때만 */
 @media (hover: hover) {
   .icon-btn:hover, .btn-text:hover, .result:hover, .rank-hit:hover, button.info-row:hover, a.info-row:hover, .course-hit:hover .c-title { background: var(--surface-hover); }
+  .topbar .icon-btn:hover, .topbar .btn-text:hover, .bottom-bar .btn-text:hover, .picked-error .btn-text:hover, .ranks-more .btn-text:hover, .footnote .btn-text:hover { background: var(--bg-hover); }
   .result.is-picked:hover { background: var(--row-picked); } /* 담은 행은 어두운 그대로, 버튼만 빨갛게(빼기) */
   .course-hit:hover .c-title { background: none; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
-  .term-select:hover, .browse-select:hover { background-color: var(--surface-hover); }
+  .term-select:hover, .browse-select:hover, .info-pick:hover { background-color: var(--surface-hover); }
   .btn-add.is-on:hover { background: var(--danger-weak); color: var(--danger); }
   .recent-list .chip:has(.chip-q:hover) { background: var(--surface-hover); }
-  .chip .chip-x:hover { color: var(--text2); }
+  .chip .chip-x:hover, .icon-btn.remove:hover, button.info-row:hover svg, a.info-row:hover svg, label.info-row:hover svg { color: var(--text2); }
 }
 
 /* ---------------------------------------------------------------- 작은 컨트롤의 누르는 영역을 48px로 넓힌다 */
@@ -799,10 +899,10 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
 
 /* ---------------------------------------------------------------- 다크 전용 */
 @media (prefers-color-scheme: dark) {
-  body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; } /* 밝은 글자가 굵어 보이지 않게 */
-  .select, .term-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23afb2bb' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
-  .browse-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23898c96' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
-  dialog.sheet::backdrop { background: var(--scrim, #000000a6); }
+  html:not([data-theme]) body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; } /* 밝은 글자가 굵어 보이지 않게 */
+  html:not([data-theme]) .select, html:not([data-theme]) .term-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23afb2bb' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
+  html:not([data-theme]) .browse-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23898c96' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
+  html:not([data-theme]) dialog.sheet::backdrop { background: var(--scrim, #000000a6); }
 }
 
 /* ---------------------------------------------------------------- 고대비(강제 색) */
@@ -814,6 +914,7 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
   .tt-block { border: 1px solid CanvasText; }
   .dot, .swatch, .week .wb { forced-color-adjust: none; } /* 교과구분 색 표시는 그대로 둔다 */
   :focus-visible { outline: 2px solid Highlight; }
+  html[data-theme] .line-key { color: CanvasText; } /* 이벤트 테마의 파선 견본 색(흰 카드용 짙은 색)이 어두운 강제 색 바탕에서 묻히지 않게 */
 }
 
 /* ---------------------------------------------------------------- 동작 줄이기 */
@@ -821,3 +922,6 @@ button.info-row:active, a.info-row:active { background: var(--surface-hover); }
   *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
   .spinner { animation-duration: 1.6s !important; animation-iteration-count: infinite !important; }
 }
+/* 크기를 바꾸자마자 자리를 잴 때(더 찾기로 시간 축이 넓어져 스크롤을 맞출 때, app.js findMore): 위의 1ms 전환은 전환을 정하지 않은 속성(높이)에도
+   걸려서, 바꾼 값이 한 틀 뒤에야 배치에 잡힌다. 재는 동안만 전환을 끈다 */
+html.is-still *, html.is-still *::before, html.is-still *::after { transition: none !important; }

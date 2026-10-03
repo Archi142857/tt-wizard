@@ -12,7 +12,7 @@ const CACHE = "ttw-v2";
 const SHELL = [
   "./", "index.html", "style.css", "js/app.js", "js/engine.js", "js/search-worker.js", "js/search.js", "manifest.webmanifest",
   "vendor/leaflet/leaflet.css", "vendor/leaflet/leaflet.js", "icons/icon-192.png", "icons/favicon-32.png", "icons/favicon.svg",
-  "icons/wordmark.svg", "icons/wordmark-dark.svg",
+  "icons/wordmark.svg", "icons/wordmark-dark.svg", "icons/wordmark-white.svg",
   "data/campus.json", "data/courses.json", "data/semesters.json", "data/basemap.json",
 ];
 const WAIT_MS = 3000;

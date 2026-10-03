@@ -8,6 +8,9 @@
 <meta name="theme-color" content="#eef0ff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#16171b" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
+<!-- 이벤트 테마를 화면을 그리기 전에 건다(바탕이 번쩍이지 않게). 기간·색·저장 이름은 js/app.js 의 THEMES·seasonTheme 과 같게 둔다.
+     기간 안이고 이번 해에 돌아가기를 고르지 않았으면 켠다. 주소에 ?theme=xmas 를 붙이면 기간 밖에서도 켠다(시험용: 고른 것은 xmas-test 로 따로 기억한다) -->
+<script>(function(){try{var d=new Date(),k=("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2),t=/[?&]theme=xmas(&|$)/.test(location.search),o="";if(!t&&(k<"12-01"||k>"12-25"))return;try{o=JSON.parse(localStorage.getItem("ttw.themeOff"))}catch(e){}if(o===(t?"xmas-test":"xmas-"+d.getFullYear()))return;document.documentElement.dataset.theme="xmas";var m=document.querySelectorAll('meta[name="theme-color"]');m[0].content=m[1].content="#103924"}catch(e){}})()</script>
 <meta name="text-scale" content="scale">
 <meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest">
@@ -30,10 +33,11 @@
 <!-- 입력 화면 -->
 <div id="view-input" class="view">
   <header class="topbar">
-    <picture>
+    <picture class="wm-default">
       <source srcset="icons/wordmark-dark.svg" media="(prefers-color-scheme: dark)">
       <img class="wordmark" src="icons/wordmark.svg" alt="TT Wizard" width="126" height="36">
     </picture>
+    <img class="wordmark wm-white" src="icons/wordmark-white.svg" alt="TT Wizard" width="126" height="36">
     <span class="tag" id="offline-tag" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l20 20M5.8 9.3A5.5 5.5 0 0 0 7 20h10.5M20.9 17.3A4.5 4.5 0 0 0 17.5 10h-.9A7 7 0 0 0 9.9 5.2"></path></svg>오프라인</span>
     <span class="spacer"></span>
     <button type="button" class="btn-text small" id="install" hidden>설치</button>
@@ -142,7 +146,11 @@
     </div>
     <div class="result-head"><h2 class="section-title" id="rank-count"></h2><span class="cond" id="rank-cond"></span></div>
     <ol class="ranks" id="ranks"></ol>
-    <div class="ranks-more" id="ranks-more" hidden><button type="button" class="btn-text">더 보기</button></div>
+    <div class="ranks-more" id="ranks-more" hidden>
+      <p class="error-line" id="ranks-error" hidden>더 찾지 못했어요</p>
+      <button type="button" class="btn-text" id="ranks-more-btn">더 보기</button>
+      <button type="button" class="btn-text" id="ranks-cancel" hidden>취소</button>
+    </div>
     <div class="footnote">
       <p>추정값이라 실제로 걸리는 시간과 다를 수 있어요</p>
       <button type="button" class="btn-text" id="open-sources">자료 출처</button>
@@ -216,6 +224,15 @@
   </div>
   <div class="sheet-body">
     <p>공유 버튼을 누른 뒤 홈 화면에 추가를 고르세요. 공유 버튼이 안 보이면 ⋯을 먼저 누르세요.</p>
+  </div>
+</dialog>
+
+<!-- 이벤트 테마가 켜진 뒤 처음 들어왔을 때 한 번 묻는다(묻는 시트: 제목은 질문, 버튼은 닫기와 동사) -->
+<dialog class="sheet ask" id="theme-ask" aria-labelledby="theme-ask-title">
+  <div class="sheet-head"><div class="h"><h2 class="sheet-title" id="theme-ask-title" tabindex="-1" autofocus>기본 테마로 돌아갈까요?</h2></div></div>
+  <div class="sheet-actions">
+    <button type="button" class="btn-text" data-close>닫기</button>
+    <button type="button" class="btn-text" id="theme-ask-yes">돌아가기</button>
   </div>
 </dialog>
 
