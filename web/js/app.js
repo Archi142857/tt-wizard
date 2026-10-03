@@ -23,12 +23,15 @@ const APP_VERSION = "0.6.0";
 const PRIVACY_URL = ""; // 개인정보 처리방침 공개 페이지(스토어에 적는 주소와 같게)
 const CONTACT_URL = ""; // 문의 페이지(App Store 지원 URL과 같은 곳)
 const REVIEW_URL = { android: "", ios: "" }; // 스토어 앱 페이지(스토어 앱에서만 '리뷰 남기기')
-const TOP_K = 20; // 처음 찾는 조합 수이자 '더 찾기' 한 번에 목록에 붙는 수. 처음 찾은 것은 6개씩 보인다(넓은 화면의 2·3열이 꽉 차게)
 const RESULTS_STEP = 8; // 폰 검색 결과: 처음 개수이자 '더 보기' 한 번에 더 보이는 개수
 // 넓은 화면 결과 카드(검색 결과, 과목 둘러보기)는 더 보기 없이 다 보인다(10/2 사용자). 처음엔 FEED_STEP 개를 그리고 끝의 FEED_LEAD 개 행
 // 가운데 하나가 보이면 다음 FEED_STEP 개를 이어 붙인다(결과 2천 개를 한 번에 그리지 않게, 한 글자 칠 때 16개만. 카드 안 스크롤은 style.css)
 const FEED_STEP = 16, FEED_LEAD = 6;
-const RANKS_STEP = 6; // 후보 카드 처음 개수이자 '더 보기' 한 번에 더 보이는 개수
+// 후보 카드: 처음 목록에 올리는 수이자 '더 보기' 한 번에 붙는 수(넓은 화면의 2·3열이 꽉 차는 수). 목록 제목의 찾은 수도 이만큼씩 는다
+// (10/4 사용자: 더 보기와 더 찾기를 하나로, 개수도 하나로)
+const RANKS_STEP = 6;
+// 처음 찾는 조합 수(24). 6개만 목록에 올리고 나머지는 찾아 둔다(아래 '순위'). RANKS_STEP 의 배수라 찾아 둔 것이 늘 한 번 누를 몫으로 떨어진다
+const TOP_K = RANKS_STEP * 4;
 // 워커를 못 쓰는 브라우저에서 화면 스레드로 계산할 때: 조합 수 어림(과목마다 분반 묶음 수를 곱한 것)이 이보다 크면
 // 스피너를 먼저 띄우고 계산한다(계산하는 동안에는 500ms 뒤에 스피너를 그릴 수 없다)
 const HEAVY = 100000;
@@ -50,7 +53,7 @@ const state = {
   overrides: {}, // 분반 키 → {rooms: {수업 번호: 건물}, times: [[요일, 시작, 끝, 건물]]} 강의실·시간 미정을 직접 넣은 것
   home: "", homeOther: "", homeDorm: "", mode: "slope", // 출발·도착의 처음 값은 자료(campus.homes)의 첫 항목이다(지금은 정문)
   errors: { noSections: new Set(), overlap: new Set(), general: null }, // 주요 버튼을 누른 뒤의 오류
-  result: null, rank: 0, day: 0, ranksShown: RANKS_STEP, reveal: false,
+  result: null, rank: 0, day: 0, reveal: false,
 };
 
 // ---------------------------------------------------------------- 작은 도구
@@ -1286,7 +1289,7 @@ function runHere(courses, { topK = TOP_K, home = state.home, mode = state.mode, 
 
 /**
  * 탐색: {ranked, stats, total} 또는 조합이 없으면 {ranked: [], conflict: [과목 id]}. total = {count, exact}(전체 조합 수).
- * opts = {topK, home, mode, count, spare}. 더 찾기는 결과를 만든 조건(home·mode) 그대로 topK 만 키워 다시 부르고 전체 수는 다시 세지 않는다
+ * opts = {topK, home, mode, count, spare}. 이어 찾기는 결과를 만든 조건(home·mode) 그대로 topK 만 키워 다시 부르고 전체 수는 다시 세지 않는다
  * (count: false. 달라는 것보다 적게 왔을 때만 total 이 온다). spare: 누르기 전에 미리 찾아 두는 탐색이라 워커가 없으면 하지 않는다.
  */
 function compute(courses, onProgress, opts = {}) {
@@ -1404,14 +1407,14 @@ function sortSections(ranked, courses) {
 
 function showResult(res, courses) {
   sortSections(res.ranked, courses);
-  // ranked: 목록에 올린 조합(제목의 찾은 수). ahead: 찾아 뒀지만 아직 목록에 올리지 않은 다음 순위('더 찾기'를 눌러야 올린다).
-  // full: 마지막 탐색이 달라는 만큼 다 왔다(그 뒤 순위가 더 있을 수 있다). 더 찾기는 아래 '순위'의 findMore
-  state.result = { ranked: res.ranked, ahead: [], full: res.ranked.length >= TOP_K, total: res.total || null, courses, home: state.home, mode: state.mode,
-    days: weekDays(res.ranked), axis: hourRange(res.ranked) };
+  // ranked: 목록에 올린 조합(제목의 찾은 수). 처음에는 RANKS_STEP 개다. ahead: 찾아 뒀지만 아직 목록에 올리지 않은 다음 순위('더 보기'를 누를 때마다
+  // RANKS_STEP 개씩 올린다). full: 마지막 탐색이 달라는 만큼 다 왔다(그 뒤 순위가 더 있을 수 있다). 더 보기는 아래 '순위'의 showMore.
+  // days·axis: 요일 탭과 시간 축은 처음 찾은 것 전체(TOP_K 개)로 잡는다. 목록에 올린 것만으로 잡으면 더 보기를 누를 때마다 시간표가 움직인다
+  state.result = { ranked: res.ranked.slice(0, RANKS_STEP), ahead: res.ranked.slice(RANKS_STEP), full: res.ranked.length >= TOP_K, total: res.total || null,
+    courses, home: state.home, mode: state.mode, days: weekDays(res.ranked), axis: hourRange(res.ranked) };
   rankMore.failed = rankMore.held = false;
   state.rank = 0;
   state.day = firstDay(res.ranked[0]);
-  state.ranksShown = RANKS_STEP;
   state.reveal = true;
   // 이벤트 테마 기간에 처음 시간표를 만든 사람에게는 그 해에 묻지 않는다(10/3 밤 디자인: 기본 테마를 써 본 적이 없어 '돌아갈' 곳이 없다.
   // 정보 화면의 '테마' 행으로는 바꿀 수 있고 다음 해에는 묻는다)
@@ -1430,9 +1433,9 @@ const currentEv = () => state.result.ranked[state.rank];
 /** 찾아 둔 것(목록에 올린 것 + ahead) 뒤로 조합이 더 있나. 전체 수를 알면 그 수와 견주고, 다 못 센 큰 묶음이거나 수를 모르면(예전 워커)
  *  마지막 탐색이 달라는 만큼 다 왔을 때다. */
 const moreBeyond = (R) => (R.total && R.total.exact ? R.total.count > R.ranked.length + R.ahead.length : R.full);
-/** 목록에 올리지 않은 조합이 남았나(목록 아래의 '더 찾기', 제목의 '걷는 시간이 짧은 …'). */
+/** 목록에 올리지 않은 조합이 남았나(목록 아래의 '더 보기', 제목의 '걷는 시간이 짧은 …'). */
 const hasMore = (R) => R.ahead.length > 0 || moreBeyond(R);
-/** 목록 제목의 큰 덩이(더 찾은 뒤에는 알림 영역도 이 문장을 읽는다). 찾은 수는 목록에 올린 수이고 쉼표만 찍는다('1,020개'). */
+/** 목록 제목의 큰 덩이(더 보기로 카드가 붙은 뒤에는 알림 영역도 이 문장을 읽는다). 찾은 수는 목록에 올린 수이고 쉼표만 찍는다('1,020개'). */
 const foundText = (R) => `${hasMore(R) ? "걷는 시간이 짧은" : "전체 조합"} ${R.ranked.length.toLocaleString("ko-KR")}개를 찾았어요`;
 
 function firstDay(ev) {
@@ -1447,7 +1450,7 @@ function weekDays(ranked) {
   return [...used].sort((a, b) => a - b);
 }
 
-/** 시간 축: 찾은 조합들의 한 주 전체에서 가장 이른 정시부터 가장 늦은 정시까지(요일·순위를 바꿔도 움직이지 않는다). 너무 좁으면 네 시간. */
+/** 시간 축: 조합들의 한 주 전체에서 가장 이른 정시부터 가장 늦은 정시까지(요일·순위를 바꿔도 움직이지 않는다). 너무 좁으면 네 시간. */
 function hourRange(ranked) {
   let lo = Infinity, hi = -Infinity;
   for (const ev of ranked) for (const ms of Object.values(ev.days)) for (const m of ms) { lo = Math.min(lo, m.start); hi = Math.max(hi, m.end); }
@@ -1525,8 +1528,8 @@ function roughCount(n) {
 }
 
 /**
- * 목록 제목: 희미한 '(전체 조합 1,234개 중)' + '걷는 시간이 짧은 20개를 찾았어요'. 찾은 수는 목록에 올린 수라 '더 찾기'로 찾은 만큼 는다('40개').
- * 찾은 것이 전부면(처음부터든 더 찾아서든) '전체 조합 4개를 찾았어요' 하나.
+ * 목록 제목: 희미한 '(전체 조합 1,234개 중)' + '걷는 시간이 짧은 6개를 찾았어요'. 찾은 수는 목록에 올린 수라 '더 보기'를 누를 때마다 는다('12개').
+ * 목록에 올린 것이 전부면(처음부터든 더 보기로든) '전체 조합 4개를 찾았어요' 하나.
  * total 은 워커가 센 겹치지 않는 조합 수(같은 시간·건물 분반은 하나라 찾은 수와 단위가 같다). 1만부터는 '(전체 조합 2.4만 개 중)'.
  * exact=false 면 그보다 많다는 뜻이라 어림수로 '(1만 개가 넘는 조합 중)'. total 이 없으면(예전 워커) 희미한 부분 없이.
  */
@@ -2658,21 +2661,19 @@ function rankPicks(ev) {
   }));
 }
 
-function renderRanks({ focus = null } = {}) {
-  const R = state.result;
-  const shown = Math.min(state.ranksShown, R.ranked.length);
-  $("ranks").replaceChildren(...R.ranked.slice(0, shown).map((ev, i) => rankItem(ev, i)));
+function renderRanks() {
+  $("ranks").replaceChildren(...state.result.ranked.map((ev, i) => rankItem(ev, i)));
   renderMore();
-  if (focus !== null) $("ranks").querySelector(`[data-rank="${focus}"]`)?.focus({ preventScroll: true });
 }
 
-// ---- 더 보기와 더 찾기(디자인 규칙 '후보 카드'. 10/3 밤 사용자: "개수 상관없이 더 찾기 누르면 다음 순위 이어서 찾아줘")
-// 목록 아래 버튼 한 자리. 찾은 것 가운데 안 보인 것이 있으면 '더 보기'(RANKS_STEP 개씩 편다), 다 보였고 조합이 더 있으면 '더 찾기'(다음 순위
-// TOP_K 개를 목록에 붙인다. 한도 없음), 다 찾았으면 자리를 숨기고 제목이 '전체 조합 N개를 찾았어요'가 된다.
+// ---- 더 보기(10/4 사용자: "지금 더 보기랑 더 찾기가 나눠져 있는데 이거 하나로 통일", 6개씩, 버튼 이름은 '더 보기'. 그 앞은 10/3 밤 사용자:
+// "개수 상관없이 더 찾기 누르면 다음 순위 이어서 찾아줘")
+// 목록 아래 버튼 하나. 처음에는 RANKS_STEP 개를 목록에 올리고, 누를 때마다 다음 순위 RANKS_STEP 개를 붙인다(한도 없음). 목록 제목의 찾은 수는
+// 목록에 올린 수다('6개' → '12개' → '18개' …). 다 올리면 자리를 숨기고 제목이 '전체 조합 N개를 찾았어요'가 된다.
 // 엔진은 이어서 찾지 못하고 topK 를 키워 처음부터 다시 찾는다(순위는 topK 와 상관없이 정해져 있어 앞쪽은 그대로이고 그 뒤 순위가 이어 붙는다).
 // 걸리는 시간은 topK 가 커져도 거의 같아서(10/3 잼, 분반이 많은 과목 일곱: 20개 2.0초, 60개 2.2초, 1,000개 2.8초) 찾을 때는 넉넉히 찾아 두고
-// (찾아 둔 수 20 → 60 → 140 → 300 …) TOP_K 개씩 목록에 올린다. 또 버튼이 '더 찾기'가 될 때 찾아 둔 것이 없으면 다음 몫을 미리 찾는다:
-// 그러면 대개 누르자마자 붙는다. 찾아 둔 것(R.ahead)은 누르기 전까지 목록에도 제목의 수에도 넣지 않는다.
+// (찾아 둔 수 24 → 72 → 168 → 360 …. 모두 RANKS_STEP 의 배수) RANKS_STEP 개씩 목록에 올린다. 찾아 둔 것이 한 번 누를 몫 이하로 남으면 다음 몫을
+// 미리 찾는다: 그러면 대개 누르자마자 붙는다. 찾아 둔 것(R.ahead)은 누르기 전까지 목록에도 제목의 수에도 넣지 않는다.
 const rankMore = {
   job: null, // 돌고 있는 탐색 {opts, onProgress, done: Promise<"ok" | "cancelled" | "failed">}
   waiting: false, // 눌러 놓고 탐색을 기다리는 중(버튼은 aria-disabled, 500ms 뒤 '찾는 중')
@@ -2682,24 +2683,24 @@ const rankMore = {
 
 function renderMore() {
   const R = state.result;
-  const rest = state.ranksShown < R.ranked.length; // 찾은 것 가운데 안 보인 것이 있다
   const more = hasMore(R);
-  $("ranks-more").hidden = !rest && !more;
+  $("ranks-more").hidden = !more;
   if (rankMore.waiting) return; // 기다리는 동안의 라벨은 waitMore 가 그린다
-  const failed = !rest && more && rankMore.failed;
+  const failed = more && rankMore.failed;
   $("ranks-error").hidden = !failed;
   const btn = $("ranks-more-btn");
   btn.classList.toggle("small", failed); // 오류 줄 옆의 '다시 시도'는 다른 곳처럼 작은 텍스트 버튼
-  btn.replaceChildren(rest ? "더 보기" : failed ? "다시 시도" : "더 찾기");
+  btn.replaceChildren(failed ? "다시 시도" : "더 보기");
   if (failed) btn.setAttribute("aria-describedby", "ranks-error"); else btn.removeAttribute("aria-describedby");
-  // 버튼이 '더 찾기'가 됐다: 찾아 둔 것이 없으면 다음 몫을 미리 찾는다. 워커에서만(화면 스레드에서 돌리면 누르지도 않았는데 화면이 멈춘다)
-  if (!rest && !R.ahead.length && moreBeyond(R) && !rankMore.job && !rankMore.held && !rankMore.failed && startWorker()) seekMore(R, true);
+  // 찾아 둔 것이 한 번 누를 몫 이하로 남았고 그 뒤로 조합이 더 있으면 다음 몫을 미리 찾는다(다음다음 누름이 기다리지 않게).
+  // 워커에서만(화면 스레드에서 돌리면 누르지도 않았는데 화면이 멈춘다)
+  if (R.ahead.length <= RANKS_STEP && moreBeyond(R) && !rankMore.job && !rankMore.held && !rankMore.failed && startWorker()) seekMore(R, true);
 }
 
 /** 찾아 둔 것 뒤의 순위를 찾기 시작한다(결과를 만든 과목·조건 그대로 topK 만 키워서). 찾은 것은 R.ahead 에 둔다. spare = 누르기 전에 미리 찾는 것. */
 function seekMore(R, spare) {
   const have = R.ranked.length + R.ahead.length;
-  let want = have * 2 + TOP_K; // 찾아 둔 수가 20 → 60 → 140 → 300 …
+  let want = have * 2 + TOP_K; // 찾아 둔 수가 24 → 72 → 168 → 360 …
   if (R.total && R.total.exact) want = Math.min(want, R.total.count);
   const courses = R.courses.map((c) => ({ id: c.id, name: c.name, cls: c.cls, sections: c.sections }));
   const job = { opts: { topK: want, home: R.home, mode: R.mode, count: false, spare }, onProgress: null, done: null };
@@ -2734,7 +2735,7 @@ async function waitMore(R) {
   $("ranks-error").hidden = true;
   btn.classList.remove("small");
   btn.removeAttribute("aria-describedby");
-  btn.replaceChildren("더 찾기");
+  btn.replaceChildren("더 보기");
   btn.setAttribute("aria-disabled", "true"); // disabled 는 초점을 잃게 해서 쓰지 않는다. 두 번째 누름은 rankMore.waiting 으로 무시한다
   const t0 = performance.now();
   let shownAt = 0, long = false;
@@ -2775,17 +2776,18 @@ async function waitMore(R) {
 }
 
 /**
- * '더 찾기'(찾지 못한 뒤에는 '다시 시도')를 눌렀다. 찾아 둔 것이 있으면 바로, 없으면 찾는 동안 기다렸다가 다음 순위 TOP_K 개를 목록에 붙인다.
+ * '더 보기'(찾지 못한 뒤에는 '다시 시도')를 눌렀다. 다음 순위 RANKS_STEP 개를 목록에 붙인다: 찾아 둔 것이 있으면 바로, 없으면 찾는 동안 기다렸다가.
  * 이미 보이던 카드의 차례와 고른 카드는 그대로이고, 새 카드는 애니메이션 없이 붙고, 화면은 스크롤하지 않는다(버튼이 있던 자리에 새 카드의 첫 장).
- * 달라는 것보다 적게 왔으면 그게 전부라 버튼 자리가 없어지고 제목이 '전체 조합 N개를 찾았어요'가 된다.
+ * 남은 것이 RANKS_STEP 개보다 적으면 그만큼만 붙고, 다 올리면 버튼 자리가 없어지고 제목이 '전체 조합 N개를 찾았어요'가 된다.
  */
-async function findMore() {
+async function showMore() {
   const R = state.result;
   if (rankMore.waiting || !R) return;
   rankMore.failed = rankMore.held = false;
   const box = $("ranks-more"), btn = $("ranks-more-btn");
   const at = document.activeElement; // 누를 때의 초점
-  let how = !R.ahead.length && moreBeyond(R) ? await waitMore(R) : "ok";
+  // 찾아 둔 것이 한 번 누를 몫에 못 미치고 그 뒤로 조합이 더 있으면 찾는 동안 기다린다(미리 찾기가 아직 안 끝났거나, 워커가 없어 미리 찾지 못했다)
+  let how = R.ahead.length < RANKS_STEP && moreBeyond(R) ? await waitMore(R) : "ok";
   if (state.result !== R) return; // 그사이 새 결과가 왔다
   if (how === "ok" && screen !== "result") how = "cancelled"; // 탐색이 막 끝났을 때 다른 화면으로 갔다: 찾은 것은 찾아 둔 채로 두고 목록은 그대로
   // 기다리는 동안 초점이 다른 데로 갔으면(카드를 골랐거나 Tab 으로 떠났다) 옮기지 않는다
@@ -2798,19 +2800,22 @@ async function findMore() {
     return;
   }
   const from = R.ranked.length;
-  R.ranked.push(...R.ahead.splice(0, TOP_K));
-  state.ranksShown = R.ranked.length;
-  // 새로 올린 조합에 더 이르거나 늦은 수업, 주말 수업이 있으면 시간 축과 요일 탭이 넓어진다(줄지는 않는다)
-  const days = weekDays(R.ranked), axis = hourRange(R.ranked);
-  axis[0] = Math.min(axis[0], R.axis[0]);
-  axis[1] = Math.max(axis[1], R.axis[1]);
-  const grew = days.length !== R.days.length || axis[0] !== R.axis[0] || axis[1] !== R.axis[1];
-  R.days = days;
-  R.axis = axis;
-  // 목록 위쪽의 높이가 달라져도(시간 축이 넓어져 칸이 길어진다, 다 찾아서 제목의 희미한 줄이 없어진다) 보던 목록 자리가 밀리지 않게 달라진 만큼 스크롤을 맞춘다.
+  R.ranked.push(...R.ahead.splice(0, RANKS_STEP));
+  // 요일 탭과 시간 축은 처음 찾은 TOP_K 개로 잡아 뒀다(showResult). 목록이 그 뒤 순위까지 가면, 새로 올린 조합에 더 이르거나 늦은 수업·주말 수업이
+  // 있을 때 넓어진다(줄지는 않는다)
+  let grew = false;
+  if (R.ranked.length > TOP_K) {
+    const days = weekDays(R.ranked), axis = hourRange(R.ranked);
+    axis[0] = Math.min(axis[0], R.axis[0]);
+    axis[1] = Math.max(axis[1], R.axis[1]);
+    grew = days.length !== R.days.length || axis[0] !== R.axis[0] || axis[1] !== R.axis[1];
+    R.days = days;
+    R.axis = axis;
+  }
+  // 목록 위쪽의 높이가 달라져도(시간 축이 넓어져 칸이 길어진다, 다 올려서 제목의 희미한 줄이 없어진다) 보던 목록 자리가 밀리지 않게 달라진 만큼 스크롤을 맞춘다.
   // 목록을 보고 있을 때만이다(목록 머리가 상단 바 위로 지나갔을 때). 기다리는 동안 위로 올라가 시간표를 보고 있으면 그 자리가 그대로여야 한다.
   // 재는 동안 전환을 끈다(style.css 의 is-still): 동작 줄이기에서는 모든 속성이 1ms 전환이라 바뀐 높이가 한 틀 뒤에야 잡힌다
-  // (스크롤 붙잡기가 없는 Safari 에서 목록이 그만큼 밀렸다. 크롬은 붙잡기가 대신 맞춰 준다)
+  // (스크롤 붙잡기를 끈 크롬에서 목록이 그만큼 밀렸다. 붙잡기가 없는 Safari 26 까지가 그렇다. 크롬과 Safari 27 부터는 붙잡기가 대신 맞춰 준다)
   const top = $("ranks").getBoundingClientRect().top;
   const inList = top < document.querySelector("#view-result .topbar").getBoundingClientRect().bottom;
   let back = "";
@@ -2831,7 +2836,7 @@ async function findMore() {
     document.documentElement.classList.remove("is-still");
   }
   if (back) document.querySelector(back)?.focus({ preventScroll: true });
-  // 초점은 새 카드의 첫 장으로(버튼은 새 카드 뒤에 있어서, 버튼에 두면 스무 장을 거슬러 올라가야 한다). 새 카드가 없으면(다 찾았다) 마지막 카드로
+  // 초점은 새 카드의 첫 장으로(버튼은 새 카드 뒤에 있어서, 버튼에 두면 붙은 카드를 거슬러 올라가야 한다). 새 카드가 없으면(다 올렸다) 마지막 카드로
   if (!stay) $("ranks").querySelector(`[data-rank="${Math.min(from, R.ranked.length - 1)}"]`)?.focus({ preventScroll: true });
   announce(foundText(R)); // 초점이 카드로 가도 목록 제목의 수가 바뀐 것은 읽히지 않는다
 }
@@ -2842,7 +2847,7 @@ function selectRank(i) {
     state.rank = i;
     updateTabs();
     renderDay({ fade: true });
-    // 바뀌는 두 장만 다시 그린다(더 찾기로 목록이 수백 장이 되면 다 다시 그리는 데만 0.1~0.4초가 걸린다. 폰은 그 서너 배)
+    // 바뀌는 두 장만 다시 그린다(더 보기로 목록이 수백 장이 되면 다 다시 그리는 데만 0.1~0.4초가 걸린다. 폰은 그 서너 배)
     for (const k of [was, i]) list.children[k]?.replaceWith(rankItem(state.result.ranked[k], k));
     list.children[i]?.querySelector(".rank-hit").focus({ preventScroll: true });
     announce(`${i + 1}위 시간표`);
@@ -2857,13 +2862,7 @@ $("ranks").addEventListener("click", (e) => {
   const b = e.target.closest("[data-rank]");
   if (b) selectRank(Number(b.dataset.rank));
 });
-$("ranks-more-btn").addEventListener("click", () => {
-  if (rankMore.waiting) return;
-  const from = state.ranksShown;
-  if (from >= state.result.ranked.length) { findMore(); return; }
-  state.ranksShown += RANKS_STEP;
-  renderRanks({ focus: from });
-});
+$("ranks-more-btn").addEventListener("click", () => showMore());
 $("ranks-cancel").addEventListener("click", () => cancelCompute());
 
 // ---------------------------------------------------------------- 정보 화면, 자료 출처, 오픈소스 라이선스
@@ -3030,7 +3029,7 @@ function transition(apply, dir) {
 
 function show(name, dir, extra = {}) {
   if ((name === "result" || name === "map") && !state.result) name = "input";
-  if (name !== "input" || screen === "result") cancelCompute(); // 결과 화면을 떠나면 더 찾기도 멈춘다
+  if (name !== "input" || screen === "result") cancelCompute(); // 결과 화면을 떠나면 이어 찾던 것도 멈춘다
   const from = screen;
   scrollOf[from] = window.scrollY;
   if (from === "input") store.set("scroll", window.scrollY);

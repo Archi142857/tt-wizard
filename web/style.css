@@ -381,7 +381,7 @@ body.is-typing .bottom-bar { display: none; }
 .spinner { flex-shrink: 0; width: 20px; height: 20px; border: 2px solid currentColor; border-right-color: transparent;
   border-radius: 50%; animation: tt-spin .8s linear infinite; will-change: transform; }
 .spinner.small { width: 16px; height: 16px; }
-/* 찾는 중인 글자 버튼(더 찾기, aria-disabled): 눌림·올림 바탕 없이. 스피너는 글자색 */
+/* 찾는 중인 글자 버튼(후보 목록의 더 보기, aria-disabled): 눌림·올림 바탕 없이. 스피너는 글자색 */
 button.btn-text[aria-disabled="true"], button.btn-text[aria-disabled="true"]:hover, button.btn-text[aria-disabled="true"]:active { background: transparent; cursor: default; }
 .btn-text .spinner { margin-right: var(--space-1); }
 @keyframes tt-spin { to { transform: rotate(360deg); } }
@@ -792,7 +792,7 @@ dialog.sheet.is-dragging { transition: none; }
   .rank-picks .p-twins { display: block; grid-column: 2; }
   .rank-picks .p-tw { inline-size: auto; min-inline-size: 0; }
 }
-/* 목록 아래 버튼 자리(높이 48): 더 보기 · 더 찾기 · 찾는 중(오래 걸리면 오른쪽에 취소) · 더 찾지 못했어요 + 다시 시도. 라벨이 바뀌어도 아래 고지가 안 움직인다 */
+/* 목록 아래 버튼 자리(높이 48): 더 보기 · 찾는 중(오래 걸리면 오른쪽에 취소) · 더 찾지 못했어요 + 다시 시도. 라벨이 바뀌어도 아래 고지가 안 움직인다 */
 .ranks-more { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: var(--space-1); min-height: var(--touch); margin-top: var(--space-2); }
 .ranks-more .error-line { margin: 0; color: var(--on-bg-danger); }
 @media (min-width: 56.25em) { .ranks { /* bp-cards 900px */ display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); align-items: start; } }
@@ -922,6 +922,6 @@ html[data-theme="xmas"] body { scrollbar-color: auto; }
   *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
   .spinner { animation-duration: 1.6s !important; animation-iteration-count: infinite !important; }
 }
-/* 크기를 바꾸자마자 자리를 잴 때(더 찾기로 시간 축이 넓어져 스크롤을 맞출 때, app.js findMore): 위의 1ms 전환은 전환을 정하지 않은 속성(높이)에도
+/* 크기를 바꾸자마자 자리를 잴 때(더 보기로 시간 축이 넓어져 스크롤을 맞출 때, app.js showMore): 위의 1ms 전환은 전환을 정하지 않은 속성(높이)에도
    걸려서, 바꾼 값이 한 틀 뒤에야 배치에 잡힌다. 재는 동안만 전환을 끈다 */
 html.is-still *, html.is-still *::before, html.is-still *::after { transition: none !important; }
