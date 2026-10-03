@@ -146,14 +146,26 @@ def test_search_worker_contract():
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node 없음")
 def test_conflicts_and_progress():
-    """겹치지 않는 조합이 없을 때 까닭인 과목(가장 작은 묶음), 진행 알림(결과는 같다), 전체 조합 수."""
+    """겹치지 않는 조합이 없을 때 까닭인 과목(가장 작은 묶음), 진행 알림(결과는 같다), 더 찾기, 전체 조합 수."""
     run = subprocess.run(["node", str(ROOT / "tests" / "conflict_runner.mjs")], capture_output=True, text=True,
                          encoding="utf-8", check=True)
     r = json.loads(run.stdout)
     assert r["pair"] == ["A", "B"] and r["triple"] == ["A", "B", "C"] and r["ok"] == []
     assert r["feasible"] == [False, False, True]
     assert r["ticks"] >= 2 and r["ticksMonotone"] and r["lastTick"] == 1 and r["sameResult"]
-    # 전체 조합 수: 정확히 셀 때, 상한(1만)·시간 제한에 걸리면 exact=false, 무작위 작은 묶음은 완전탐색과 같다
+    # 더 찾기: topK 를 키워 다시 찾으면 앞쪽은 그대로이고 그 뒤 순위가 이어 붙는다. 비용이 같은 조합(끝자리만 다른 것 포함)이 많은 묶음 80개
+    assert r["moreOk"] == 80 and r["moreTies"] > 1000 and r["moreNoise"] > 100
+    # 워커도 같다: 처음 20개(전체 수 포함) → 40개(total: false 면 다시 세지 않는다) → 전부(total 이 정확한 수)
+    assert r["worker"] == {"first": True, "more": True, "all": True, "enough": True}
+    # 전체 조합 수: 기본은 끝까지 센다(1만을 넘어도). limit 을 주면 그보다 많을 때 {limit, false}, 시간이 없으면 exact=false
     assert r["count"] == [{"count": 1, "exact": True}, {"count": 0, "exact": True}, {"count": 0, "exact": True}, {"count": 3, "exact": True}]
     assert r["countLimit"] == {"count": 10000, "exact": False} and r["countAll"] == {"count": 8 ** 5, "exact": True}
-    assert r["countBudget"] is False and r["randomOk"]
+    assert r["countDefault"] == {"count": 8 ** 5, "exact": True} and r["countBudget"] == {"count": 0, "exact": False}
+    # 하나씩 세지 않아도 하나씩 센 것과 같다: 무작위 묶음 150개(수업 여러 번·시간 없는 분반·분반 많은 과목), limit 도 같은 뜻
+    assert r["randomOk"] and r["randomBig"] == 150 and r["randomLimit"]
+    # 하나씩 세면 3억 개가 넘는 묶음도 바로 센다(시간이 같은 분반은 묶어 곱하고, 같은 상태는 한 번만)
+    assert r["countShared"] == {"count": 5 ** 6 * 8 * 7 * 6 * 5 * 4 * 3, "exact": True}
+    # 시간 제한에 걸리면 바로 멈추고 센 데까지만 준다: 다 세면 10,556,929개(하나씩 세어 확인한 값, 0.3초쯤)인 묶음을 2ms 에서 끊으면
+    # 그 1/10 도 못 센다(멈추지 않고 끝까지 돌면 거의 다 센다)
+    assert r["countHard"] == {"count": 10556929, "exact": True}
+    assert r["countHardCut"]["exact"] is False and 0 <= r["countHardCut"]["count"] < 10556929 // 10

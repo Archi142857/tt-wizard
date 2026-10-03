@@ -155,10 +155,16 @@ export function conflicts(s, t) {
 
 const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
+/** 비용을 견주는 단위(백만분의 1분). 같은 구간을 더하는 순서만 달라 생기는 부동소수점 차이는 동점으로 본다 */
+const costKey = (cost) => Math.round(cost * 1e6);
+
 /**
  * 백트래킹 + 분기 한정. courses = [{sections: [...]}], 반환 {ranked, stats}.
  * 부분 비용은 closure() 행렬로 잰다: 원래 행렬은 삼각부등식을 어겨 수업을 더 넣으면 비용이 줄 수도 있다.
  * onProgress(done) 를 주면 progressMs 마다 끝낸 몫(0~1, 탐색 나무의 앞 세 층 기준 추정)을 알린다. 결과는 같다.
+ *
+ * 순위는 비용이 낮은 순, 비용이 같으면 먼저 찾은 순(과목·분반 차례)이다. topK 와 상관없이 정해지는 차례라서
+ * topK 를 키워 다시 부르면 앞쪽은 그대로이고 그 뒤 순위가 이어 붙는다(화면의 '더 찾기').
  */
 export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, useBound = true, onProgress = null, progressMs = 200 } = {}) {
   const t0 = now();
@@ -180,20 +186,35 @@ export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, use
     boundTravel = travel.closure([...ids].sort());
   }
   const stats = { nCombinations: courses.reduce((p, c) => p * c.sections.length, 1), nodes: 0, leaves: 0, prunedConflict: 0, prunedBound: 0, ms: 0 };
-  const kept = []; // {cost, seq, ev}
+  // kept: 지금까지의 상위 topK 개 {q, seq, ev}. 가장 나쁜 것(비용이 큰 것, 같으면 늦게 찾은 것)이 맨 앞에 오는 힙
+  const kept = [];
   let seq = 0;
-  const worst = () => (kept.length >= topK ? Math.max(...kept.map((k) => k.cost)) : Infinity);
+  let worstQ = topK >= 1 ? Infinity : -Infinity; // topK 개가 찼을 때 그중 가장 나쁜 비용. 이보다 낮아야 들어온다
+  const worse = (a, b) => a.q > b.q || (a.q === b.q && a.seq > b.seq);
   const chosen = [];
 
-  function keep(ev) {
-    const item = { cost: ev.cost, seq: seq++, ev };
-    if (kept.length < topK) { kept.push(item); return; }
-    // 파이썬 heapreplace 처럼 가장 나쁜 것(같으면 먼저 들어온 것)을 뺀다
-    let w = 0;
-    for (let i = 1; i < kept.length; i++) {
-      if (kept[i].cost > kept[w].cost || (kept[i].cost === kept[w].cost && kept[i].seq < kept[w].seq)) w = i;
+  function keep(ev, q) {
+    const item = { q, seq: seq++, ev };
+    let i;
+    if (kept.length < topK) {
+      for (i = kept.push(item) - 1; i > 0; ) { // 끝에 넣고 위로
+        const up = (i - 1) >> 1;
+        if (!worse(item, kept[up])) break;
+        kept[i] = kept[up];
+        i = up;
+      }
+    } else {
+      for (i = 0; ; ) { // 가장 나쁜 것 자리에 넣고 아래로
+        let down = 2 * i + 1;
+        if (down >= kept.length) break;
+        if (down + 1 < kept.length && worse(kept[down + 1], kept[down])) down++;
+        if (!worse(kept[down], item)) break;
+        kept[i] = kept[down];
+        i = down;
+      }
     }
-    kept[w] = item;
+    kept[i] = item;
+    if (kept.length >= topK) worstQ = kept[0].q;
   }
 
   function backtrack(depth) {
@@ -205,7 +226,8 @@ export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, use
     if (depth === order.length) {
       const ev = evaluate(chosen, travel, home, weights);
       stats.leaves++;
-      if (ev.cost < worst()) keep(ev);
+      const q = costKey(ev.cost);
+      if (q < worstQ) keep(ev, q); // 비용이 같으면 먼저 찾은 것이 남는다
       return;
     }
     const sections = courses[order[depth]].sections;
@@ -216,7 +238,7 @@ export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, use
       chosen.push(s);
       if (useBound && kept.length >= topK) {
         const partial = evaluate(chosen, boundTravel, home, weights);
-        if (partial.cost >= worst()) { stats.prunedBound++; chosen.pop(); continue; }
+        if (costKey(partial.cost) >= worstQ) { stats.prunedBound++; chosen.pop(); continue; }
       }
       backtrack(depth + 1);
       chosen.pop();
@@ -226,7 +248,7 @@ export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, use
   backtrack(0);
   stats.ms = now() - t0;
   if (onProgress) onProgress(1);
-  return { ranked: kept.sort((a, b) => a.cost - b.cost || a.seq - b.seq).map((k) => k.ev), stats };
+  return { ranked: kept.sort((a, b) => a.q - b.q || a.seq - b.seq).map((k) => k.ev), stats };
 }
 
 /** 시간이 겹치지 않는 조합이 하나라도 있는지. 찾으면 바로 멈춘다. */
@@ -268,31 +290,127 @@ export function findConflicts(courses) {
 
 /**
  * 시간이 겹치지 않는 조합 수(결과 제목의 '전체 조합 n개'). 분반은 받은 그대로 센다: 화면이 같은 시간·건물 분반을 묶어서 넘기면
- * search 결과와 같은 단위다. limit 개를 넘거나 budgetMs 안에 다 못 세면 멈추고 exact=false(count 개보다 많다는 뜻).
+ * search 결과와 같은 단위다. 반환 {count, exact}. budgetMs 안에 다 못 세면 exact=false 이고 count 는 그때까지 센 수다(실제는 그보다 많다).
+ * limit 을 주면 그보다 많다는 걸 아는 대로 멈추고 {count: limit, exact: false}(기본은 끝까지 센다).
+ *
+ * 조합을 하나씩 세지 않는다. 요일·시각이 같은 분반(건물만 다른 것)은 한 덩이로 묶어 분반 수를 곱하고, 남은 과목에서 못 고르게 된
+ * 덩이가 같은 가지는 한 번만 센다(앞에서 무엇을 골랐든 남은 과목에는 같은 상태다). 겹침 판정은 conflicts 그대로라 하나씩 센 것과 같은
+ * 수가 나온다. 수는 Number 라 2^53(약 9천조)을 넘으면 어림값이다.
  */
-export function countFeasible(courses, { limit = 10000, budgetMs = 300 } = {}) {
+export function countFeasible(courses, { limit = Infinity, budgetMs = 300 } = {}) {
+  const t0 = now();
   courses = courses.filter((c) => c.sections.length);
   if (!courses.length) return { count: 0, exact: true };
-  const order = courses.map((_, i) => i).sort((i, j) => courses[i].sections.length - courses[j].sections.length);
-  const last = order.length - 1;
-  const t0 = now();
-  const chosen = [];
-  let count = 0, nodes = 0, exact = true;
-  (function rec(depth) {
-    if ((++nodes & 1023) === 0 && now() - t0 > budgetMs) { exact = false; return; }
-    for (const s of courses[order[depth]].sections) {
-      if (!exact) return;
-      if (chosen.some((c) => conflicts(c, s))) continue;
-      if (depth === last) {
-        if (++count > limit) { count = limit; exact = false; return; } // limit 개보다 많다
-        continue;
-      }
-      chosen.push(s);
-      rec(depth + 1);
-      chosen.pop();
+
+  // 과목마다 시간이 같은 분반을 한 덩이로({s: 대표 분반, n: 분반 수}). 덩이가 많은 과목부터 고른다:
+  // 깊이 들어갈수록 남은 덩이가 적어 같은 상태를 다시 만나기 쉽다(실제 자료에서 적은 과목부터 고를 때보다 가지가 훨씬 적다)
+  const groups = courses.map((c) => {
+    const bySig = new Map();
+    for (const s of c.sections) {
+      const sig = s.meetings.map((m) => `${m.day},${m.start},${m.end}`).sort().join(";");
+      const g = bySig.get(sig);
+      if (g) g.n++;
+      else bySig.set(sig, { s, n: 1 });
     }
-  })(0);
-  return { count, exact };
+    return [...bySig.values()];
+  }).sort((a, b) => b.length - a.length);
+  const D = groups.length, last = D - 1;
+
+  // 덩이마다 비트 하나. 뒤에 고르는 과목일수록 낮은 비트라, 깊이 d 에서는 아래 words[d] 워드(남은 과목의 덩이)만 보면 된다
+  const base = new Array(D), words = new Array(D), topMask = new Array(D);
+  for (let d = last, bit = 0; d >= 0; d--) {
+    base[d] = bit;
+    bit += groups[d].length;
+    words[d] = (bit + 31) >>> 5;
+    topMask[d] = bit & 31 ? (1 << (bit & 31)) - 1 : -1;
+  }
+  // conf[d][i]: 깊이 d 의 i 번째 덩이를 고르면 못 고르게 되는 뒤 과목 덩이들
+  const conf = [];
+  for (let d = 0; d < last; d++) {
+    if (now() - t0 >= budgetMs) return { count: 0, exact: false };
+    conf.push(groups[d].map((g) => {
+      const mask = new Uint32Array(words[d + 1]);
+      for (let e = d + 1; e < D; e++) {
+        const ge = groups[e];
+        for (let j = 0; j < ge.length; j++) {
+          if (conflicts(g.s, ge[j].s)) { const bit = base[e] + j; mask[bit >>> 5] |= 1 << (bit & 31); }
+        }
+      }
+      return mask;
+    }));
+  }
+  const blocked = groups.map((_, d) => new Uint32Array(words[d])); // 깊이마다 지금 가지에서 막힌 덩이(남은 과목 것만)
+
+  // 기억: 깊이마다 해시표 하나(형식 배열이라 Map 보다 메모리를 1/3쯤 쓴다). 열쇠 = 막힌 덩이 비트(kw 워드), 값 = 그 아래 조합 수(빈 칸 -1)
+  const table = (kw, size) => ({ kw, size, used: 0, keys: new Uint32Array(size * kw), vals: new Float64Array(size).fill(-1) });
+  const tables = groups.map((_, d) => table(words[d], 64));
+  const MEMO_MAX = 250000; // 적어 둘 상태 수(다 차면 더 적지 않고 다시 센다). 꽉 차도 형식 배열이 20MB 안쪽이다
+  /** 열쇠 key 가 든 칸. 없으면 들어갈 빈 칸 */
+  const slotOf = (t, key) => {
+    const { kw, keys, vals } = t, mask = t.size - 1;
+    let h = 0;
+    for (let w = 0; w < kw; w++) { h = Math.imul(h ^ key[w], 0x9e3779b1); h ^= h >>> 15; }
+    h = Math.imul(h, 0x85ebca6b);
+    for (let slot = (h ^ (h >>> 13)) & mask; ; slot = (slot + 1) & mask) {
+      if (vals[slot] < 0) return slot;
+      let w = 0;
+      while (w < kw && keys[slot * kw + w] === key[w]) w++;
+      if (w === kw) return slot;
+    }
+  };
+  const remember = (t, key, val) => {
+    if (t.used * 2 >= t.size) { // 반이 차면 두 배로 늘려 옮긴다
+      const big = table(t.kw, t.size * 2);
+      for (let s = 0; s < t.size; s++) {
+        if (t.vals[s] < 0) continue;
+        const k = t.keys.subarray(s * t.kw, (s + 1) * t.kw);
+        const to = slotOf(big, k);
+        big.keys.set(k, to * t.kw);
+        big.vals[to] = t.vals[s];
+      }
+      t.size = big.size; t.keys = big.keys; t.vals = big.vals;
+    }
+    const slot = slotOf(t, key);
+    t.keys.set(key, slot * t.kw);
+    t.vals[slot] = val;
+    t.used++;
+  };
+
+  let count = 0, nodes = 0, memoSize = 0, stop = false;
+  const add = (n) => {
+    count += n;
+    if (count > limit) { count = limit; stop = true; } // limit 개보다 많다
+  };
+
+  /** 깊이 d 부터 끝까지 고르는 방법 수. mult = 여기까지 고른 덩이들의 분반 수를 곱한 값 */
+  function rec(d, mult) {
+    if ((nodes++ & 255) === 0 && now() - t0 >= budgetMs) { stop = true; return 0; }
+    const cur = blocked[d], gs = groups[d], b0 = base[d];
+    if (d === last) {
+      let sum = 0;
+      for (let i = 0; i < gs.length; i++) if (!(cur[(b0 + i) >>> 5] & (1 << ((b0 + i) & 31)))) sum += gs[i].n;
+      add(mult * sum);
+      return sum;
+    }
+    const t = tables[d];
+    const seen = t.vals[slotOf(t, cur)];
+    if (seen >= 0) { add(mult * seen); return seen; }
+    const next = blocked[d + 1], nw = next.length, tm = topMask[d + 1], cf = conf[d];
+    let sum = 0;
+    for (let i = 0; i < gs.length; i++) {
+      if (cur[(b0 + i) >>> 5] & (1 << ((b0 + i) & 31))) continue;
+      const c = cf[i];
+      for (let w = 0; w < nw; w++) next[w] = cur[w] | c[w];
+      next[nw - 1] &= tm;
+      sum += gs[i].n * rec(d + 1, mult * gs[i].n);
+      if (stop) return sum; // 다 못 센 가지는 적어 두지 않는다
+    }
+    if (memoSize < MEMO_MAX) { remember(t, cur, sum); memoSize++; }
+    return sum;
+  }
+
+  rec(0, 1);
+  return { count, exact: !stop };
 }
 
 /** 검증용 완전탐색 (search 와 결과가 같아야 한다). */
