@@ -113,7 +113,9 @@
     "906#p1",
     "906#p2",
     "919C#a1",
+    "919C#a2",
     "919D#a1",
+    "919D#a2",
     "921#p2",
     "922#p1",
     "923#p2",
@@ -127,14 +129,14 @@
   },
   "note": "role = entrance_link 의 첫 점이 출입구 노드(graph_patch.apply_patch), slope_travel.py 가 거기서 출발한다",
   "stats": {
-   "doors": 388,
-   "links": 720,
+   "doors": 387,
+   "links": 718,
    "unlinked": 3,
    "barrier_lines": 2174,
    "patch_barriers": 1,
    "buildings": 745,
    "long": 139,
-   "steep": 9,
+   "steep": 8,
    "deep": 48
   }
  },
@@ -9941,88 +9943,6 @@
     "length_m": 0.1,
     "straight_m": 0.1,
     "door_depth_m": 1.6
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.9588551,
-      37.4627419
-     ],
-     [
-      126.9587575,
-      37.4627545
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "919C",
-    "entrances": [
-     "919C#a2",
-     "919D#a2"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 8.7,
-    "straight_m": 8.7,
-    "max_grade": 32,
-    "check": [
-     "steep"
-    ]
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.9588551,
-      37.4627419
-     ],
-     [
-      126.9588383,
-      37.4627487
-     ],
-     [
-      126.9588327,
-      37.4627532
-     ],
-     [
-      126.9587366,
-      37.4629154
-     ],
-     [
-      126.9587365,
-      37.462935
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "919C",
-    "entrances": [
-     "919C#a2",
-     "919D#a2"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 24.5,
-    "straight_m": 23.9,
-    "detour": true,
-    "max_grade": 12
    }
   },
   {
