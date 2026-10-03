@@ -128,8 +128,10 @@ def test_links_file():
         assert p["kind"] in ("footway", "steps") and p["snap"] <= 1 and p["link"] <= 1 and p["length_m"] < 100
         assert p["entrances"] and all("#" in e for e in p["entrances"])
     others = [q for q in sorted((DATA / "graph_patch").glob("*.geojson")) if q.name != LINKS.name]
-    ents, skipped = el.entrance_list(DATA / "building_entrances.csv", others)
-    assert len(ents) > 300
+    skip = el.gp.label_only()  # 번호만 남긴 동(919: 919A~D 가 대신한다)은 출입구를 쓰지 않는다
+    ents, skipped = el.entrance_list(DATA / "building_entrances.csv", others, skip=skip)
+    assert len(ents) > 300 and "919" in skip and not skip & {e["building"] for e in ents}
+    assert not skip & {e.split("#")[0] for f in links for e in f["properties"]["entrances"]}
     for e in ents:
         assert key(e["lon"], e["lat"]) in starts | missing, e
     hand = [f for q in others for f in json.loads(q.read_text(encoding="utf-8"))["features"]
@@ -439,6 +441,89 @@ def test_build_links_barrier_and_clear(tmp_path):
     assert {f["properties"].get("door_clear_m") for f in fc["features"] if f["properties"]["entrances"] == ["P#1"]} == {15}
 
 
+def _sloped(pts, ele, links, steps=()):
+    lon, lat = PROJ.inv([p[0] for p in pts.values()], [p[1] for p in pts.values()])
+    nodes = [{"id": i, "lng": float(a), "lat": float(b), "ele": ele[i]} for i, a, b in zip(pts, lon, lat)]
+    edges, k = [], 0
+    for a, b, d in links:
+        for u, v in ((a, b), (b, a)):
+            k += 1
+            edges.append({"id": k, "from": u, "to": v, "distance": d, "kind": "steps" if (a, b) in steps else "footway",
+                          "walkable": True, "isTunnel": False})
+    return {"nodes": nodes, "edges": edges}
+
+
+def test_faster_route_goes_around_a_hill():
+    """경로 고르기: 최단거리 경로(가운데가 20 m 솟은 언덕을 넘는 200 m)보다 평지로 돌아가는 230 m 가 빠르면 그 길을 쓴다.
+    choose = "shortest" 는 예전처럼 언덕을 넘는다. 평평한 그래프에서는 두 방식이 같다."""
+    pts = {1: (0, 0), 2: (0, 100), 3: (0, 200), 4: (40, 0), 5: (40, 200), 6: (40, 100)}
+    links = [(1, 2, 100.0), (2, 3, 100.0), (1, 4, 15.0), (4, 6, 100.0), (6, 5, 100.0), (5, 3, 15.0)]
+    g = _sloped(pts, {1: 100.0, 2: 120.0, 3: 100.0, 4: 100.0, 5: 100.0, 6: 100.0}, links)
+    ends = {"A": [tuple(_ll(0, 0))], "B": [tuple(_ll(0, 200))]}
+    r = st.Router(g, PROJ)
+    go, back = r.best_paths(ends)[("A", "B")]
+    assert go is back and go[3] == pytest.approx(230) and r.shortest[("A", "B")] == pytest.approx(200)
+    there, here, L = r.round_trip(*go[:3])
+    assert there == pytest.approx(230 / 1.1) and here == pytest.approx(there) and L == pytest.approx(230)
+    short = r.best_paths(ends, choose="shortest")[("A", "B")]
+    assert short[0] is short[1] and short[0][3] == pytest.approx(200)
+    up, down, _ = r.round_trip(*short[0][:3])
+    assert up > there + 60 and down > there + 60  # 언덕길은 어느 방향으로도 1분 넘게 느리다
+    s, z, xy = r.routes(ends)[("A", "B")]
+    assert float(s[-1]) == pytest.approx(230) and float(np.ptp(z)) == pytest.approx(0)
+    picked = r.pick(*(r.access(ends[x])[0] for x in "AB"))  # 한 쌍만 찾아도 같은 경로
+    assert picked[0][1] == go[1] and picked[0][3] == pytest.approx(230)
+    flat = st.Router(_sloped(pts, {i: 100.0 for i in pts}, links), PROJ).best_paths(ends)[("A", "B")]
+    assert flat[0] is flat[1] and flat[0][3] == pytest.approx(200)
+
+
+def test_faster_route_can_differ_by_direction():
+    """갈 때와 올 때 빠른 길이 다르면 방향마다 다른 경로를 쓴다. A → B 로 곧은 길은 완만히 200 m 오른 뒤 25 m 를 가파르게 내려간다
+    (40 %): 갈 때는 평지로 280 m 를 돌아가는 편이 빠르고, 올 때는 가파른 25 m 만 오르면 긴 내리막이라 곧은 길이 빠르다."""
+    g = _sloped({1: (0, 0), 2: (0, 200), 3: (0, 225), 4: (100, 112)}, {1: 100.0, 2: 110.0, 3: 100.0, 4: 100.0},
+                [(1, 2, 200.0), (2, 3, 25.0), (1, 4, 140.0), (4, 3, 140.0)])
+    ends = {"A": [tuple(_ll(0, 0))], "B": [tuple(_ll(0, 225))]}
+    r = st.Router(g, PROJ)
+    go, back = r.best_paths(ends)[("A", "B")]
+    assert go is not back and go[3] == pytest.approx(280) and back[3] == pytest.approx(225)
+    assert r.shortest[("A", "B")] == pytest.approx(225)
+    t_go, t_back = r.round_trip(*go[:3]), r.round_trip(*back[:3])
+    assert t_go[0] < t_back[0] - st.GAIN and t_back[1] < t_go[1]  # 방향마다 제 경로가 빠르다
+    assert r.best_paths(ends, choose="shortest")[("A", "B")][0][3] == pytest.approx(225)
+    # routes() 는 가는 경로를 준다
+    assert float(r.routes(ends)[("A", "B")][0][-1]) == pytest.approx(280)
+
+
+def test_stairs_use_stair_speed():
+    """계단 엣지(kind = steps)는 Tobler 대신 계단 속도식으로 잰다. 20 m 를 오르는 40 m 계단(경사 50 %)과 126 m 비탈길(16 %):
+    계단 속도식이면 계단이 훨씬 빠르고, 계단에도 Tobler 를 쓰면(stairs = False, 예전 방식) 계단이 실제보다 두세 배 느리게 잡혀
+    두 방향 다 비탈길로 돌아간다."""
+    pts = {1: (0, 0), 2: (0, 40), 3: (60, 20), 4: (0, 90)}
+    ramp = math.hypot(60, 20)
+    links = [(1, 2, 40.0), (1, 3, ramp), (3, 2, ramp), (2, 4, 50.0)]
+    g = _sloped(pts, {1: 100.0, 2: 120.0, 3: 110.0, 4: 120.0}, links, steps={(1, 2)})
+    ends = {"A": [tuple(_ll(0, 0))], "B": [tuple(_ll(0, 40))], "C": [tuple(_ll(0, 90))]}
+    r = st.Router(g, PROJ)
+    assert len(r.steps) == 1
+    table = r.best_paths(ends)
+    go, back = table[("A", "B")]
+    assert go is back and go[3] == pytest.approx(40)
+    up, down, L = r.round_trip(*go[:3])
+    assert up == pytest.approx(40 / 1.1 * (1 + st.STAIRS_UP * 0.5)) and down == pytest.approx(40 / 1.1 * (1 + st.STAIRS_DOWN * 0.5))
+    assert r.stairs_spans(*go[:3]) == [(0.0, 40.0)]
+    # 계단 40 m 다음에 평지 50 m: 앞 40 m 만 계단
+    ds, grade, on, s, z = r.sections(*table[("A", "C")][0][:3])
+    assert float(s[-1]) == pytest.approx(90) and float(ds[on].sum()) == pytest.approx(40) and on[:20].all() and not on[20:].any()
+    old = st.Router(g, PROJ, stairs=False)
+    go, back = old.best_paths(ends)[("A", "B")]
+    assert go[3] == pytest.approx(2 * ramp) and back[3] == pytest.approx(2 * ramp) and old.shortest[("A", "B")] == pytest.approx(40)
+    short = old.best_paths(ends, choose="shortest")[("A", "B")][0]
+    slow_up, slow_down, _ = old.round_trip(*short[:3])
+    assert slow_up == pytest.approx(40 / 1.1 * math.exp(1.75)) and slow_down == pytest.approx(40 / 1.1 * math.exp(1.4))
+    assert slow_up > 2.5 * up and slow_down > 2 * down
+    assert float(old.sections(*short[:3])[2].sum()) == 20  # 계단 자리는 그대로 안다(속도식만 다르다)
+
+
 SLOPE = DATA / "magicmap" / "roads_graph_slope.json"
 
 
@@ -446,7 +531,7 @@ SLOPE = DATA / "magicmap" / "roads_graph_slope.json"
 def test_real_routes_do_not_pass_doors():
     """실제 그래프: 경로의 중간 노드에 출입구 노드가 없다(양 끝만). 접속선이 없어 직선으로 잇는 지점은 공사 중인 73동뿐."""
     graph = json.loads(SLOPE.read_text(encoding="utf-8"))
-    ids = ["1", "3", "26", "30", "43-1", "59", "73", "83", "101", "220", "301", "500", "900", "919", "GATE"]
+    ids = ["1", "3", "26", "30", "43-1", "59", "73", "83", "101", "220", "301", "500", "900", "919A", "919C", "GATE"]
     pts = st.load_points(ids, extra=DATA / "dorm_buildings.csv", patch=[DATA / "graph_patch"])
     assert set(pts) == set(ids)
     r = st.Router(graph, PROJ)
@@ -459,3 +544,16 @@ def test_real_routes_do_not_pass_doors():
         assert 0 < total < 3000, (a, b)
         if a != "73" and b != "73":
             assert path[0] in doors and path[-1] in doors, (a, b)
+    # 빠른 경로를 고른 뒤에도 같다: 남의 출입구를 지나가지 않고, 방향마다 최단거리 경로보다 느리지 않으며, 그만큼 더 걷는다
+    best = r.best_paths(pts)
+    assert set(best) == set(paths) and r.shortest == {k: v[3] for k, v in paths.items()}
+    changed = 0
+    for k, (go, back) in best.items():
+        base = r.round_trip(*paths[k][:3])
+        for rec, way in ((go, 0), (back, 1)):
+            assert not doors & set(rec[1][1:-1]), k
+            assert rec[3] >= paths[k][3] - 1e-6, k
+            if rec[1] != paths[k][1]:
+                changed += 1
+                assert r.round_trip(*rec[:3])[way] < base[way] - st.GAIN, k
+    assert changed > 10  # 캠퍼스가 비탈이라 표본 120쌍에서도 여러 쌍이 돌아가는 길을 쓴다

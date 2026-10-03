@@ -1,14 +1,15 @@
 """오르막 실측으로 경사 반영 이동시간을 검증한다. 측정 방법·기록 양식은 docs/field_measurement.md.
 
   python scripts/field_validation.py suggest                         # 잴 만한 구간 후보 (경사로 시간이 많이 느는 강의 건물 쌍)
-  python scripts/field_validation.py plan GATE-302 919-301 63-301    # 구간별 모형 경로·예측 시간 → results/field/plan.*
+  python scripts/field_validation.py plan GATE-302 919A-301 63-301   # 구간별 모형 경로·예측 시간 → results/field/plan.*
   python scripts/field_validation.py plan --routes data/field/routes.csv
   python scripts/field_validation.py check data/field/measurements.csv   # 실측 vs 모형 → results/field/
   python scripts/field_validation.py track data/field/tracks            # 측정 페이지(web/field/) GPS 기록 → 구간 시간 + 경사별 속도
 
 모형 값 (data/route_stats.csv, slope_travel.py 결과)
-  route_slope_min  우리 경로의 경사 반영 시간 (평지 1.1 m/s, Tobler, 30 m 창) — 실측과 같은 길이라 1차 비교 대상
-  route_flat_min   같은 경로의 평지 시간
+  route_slope_min  우리 경로의 경사 반영 시간 (평지 1.1 m/s, Tobler, 30 m 창. 계단 엣지는 계단 속도식) — 실측과 같은 길이라 1차 비교 대상
+  route_flat_min   같은 경로의 평지 시간(route_stats.csv 의 route_flat_min 은 최단거리 경로 기준이라, 더 빠른 길로 돌아가는 쌍은
+                   고른 경로의 길이 route_m ÷ 1.1 m/s 로 다시 낸다: 재는 길과 같은 길의 값이어야 한다)
   minutes          앱이 쓰는 값 (data/travel_slope.csv). 지금은 route_slope_min 과 같다(slope_travel.py --base magicmap 이면 표 × 경사 계수)
   magicmap_min     마법 지도 건물쌍 표(평지). 견줄 값으로만 남긴다
 
@@ -19,6 +20,8 @@
 
 GPS 기록(track): 한 번 걸을 때 경로를 50 m 조각으로 나눠 조각마다 걸린 시간을 재고, 경사별로 평지보다 얼마나
 느려지는지 본다. GPS 점을 모형 경로 위로 옮겨(투영) 앞으로만 가게 맞춘 뒤 조각 경계를 지난 시각을 읽는다.
+계단 엣지 위는 모형이 계단 속도식(slope_travel.stair_speed)으로 재므로, 경사 계수 k 는 계단이 아닌 자리에만 맞추고
+계단 조각(절반 넘게 계단)은 실측 속도를 계단 속도식과 따로 견준다.
 """
 
 from __future__ import annotations
@@ -59,7 +62,10 @@ def _rows(path: Path) -> list[dict]:
 def load_stats() -> dict[tuple[str, str], dict]:
     out = {}
     for r in _rows(DATA / "route_stats.csv"):
-        out[(r["from"], r["to"])] = {k: (v if k in ("from", "to", "check") else float(v or "nan")) for k, v in r.items()}
+        row = {k: (v if k in ("from", "to", "check") else float(v or "nan")) for k, v in r.items()}
+        if row.get("shortest_m", row["route_m"]) < row["route_m"] - 0.5:  # 돌아가는 길을 고른 쌍: 평지 시간도 그 길로
+            row["route_flat_min"] = round(row["route_m"] / 1.1 / 60, 2)
+        out[(r["from"], r["to"])] = row
     return out
 
 
@@ -69,7 +75,8 @@ def load_names() -> dict[str, str]:
 
 
 def route_line(paths: dict, a: str, b: str) -> list[tuple[float, float]] | None:
-    """a → b 경로 좌표 [(lat, lon)]. route_paths.json 에는 한 방향만 있어 반대는 뒤집는다(engine.js routeLine 과 같다)."""
+    """a → b 경로 좌표 [(lat, lon)]. route_paths.json 에 a|b 가 없으면 b|a 를 뒤집는다(engine.js routeLine 과 같다.
+    오는 경로가 가는 경로와 다른 쌍만 두 방향이 다 있다)."""
     p = paths.get(f"{a}|{b}")
     if p:
         return decode_polyline(p)
@@ -115,14 +122,15 @@ def lecture_load() -> dict[str, int]:
 def suggest(top: int, max_minutes: float) -> list[dict]:
     """경사 때문에 시간이 가장 많이 느는 구간. 강좌가 많은 건물 30곳 + 기숙사·정문 사이, 평지 max_minutes 분 이하."""
     stats, names, load = load_stats(), load_names(), lecture_load()
-    hubs = {b for b, _ in sorted(load.items(), key=lambda kv: -kv[1])[:30]} | {"919", "GATE"}
+    hubs = {b for b, _ in sorted(load.items(), key=lambda kv: -kv[1])[:30]} | {"919A", "GATE"}
     rows = []
     for (a, b), r in stats.items():
         if a in hubs and b in hubs and r["route_flat_min"] <= max_minutes and r["net_rise_m"] > 0:
             back = stats.get((b, a), {})
             rows.append({
                 "from": a, "to": b, "from_name": names.get(a, ""), "to_name": names.get(b, ""),
-                "route_m": round(r["route_m"]), "rise_m": round(r["net_rise_m"], 1), "ascent_m": round(r["ascent_m"], 1),
+                "route_m": round(r["route_m"]), "stairs_m": round(r.get("stairs_m", 0.0)),
+                "rise_m": round(r["net_rise_m"], 1), "ascent_m": round(r["ascent_m"], 1),
                 "flat_min": round(r["route_flat_min"], 1), "slope_min": round(r["route_slope_min"], 1),
                 "back_slope_min": round(back.get("route_slope_min", float("nan")), 1),
                 "added_min": round(r["route_slope_min"] - r["route_flat_min"], 1), "factor": round(r["slope_factor"], 3),
@@ -145,8 +153,8 @@ def plan(routes: list[tuple[str, str, str]], out: Path) -> list[dict]:
         rows.append({
             "route": name, "from": a, "to": b, "from_name": names.get(a, ""), "to_name": names.get(b, ""),
             "start_lat": slat, "start_lon": slon, "end_lat": elat, "end_lon": elon,
-            "route_m": round(r["route_m"]), "ascent_m": round(r["ascent_m"], 1), "descent_m": round(r["descent_m"], 1),
-            "net_rise_m": round(r["net_rise_m"], 1),
+            "route_m": round(r["route_m"]), "stairs_m": round(r.get("stairs_m", 0.0)),
+            "ascent_m": round(r["ascent_m"], 1), "descent_m": round(r["descent_m"], 1), "net_rise_m": round(r["net_rise_m"], 1),
             "flat_min": round(r["route_flat_min"], 2), "slope_min": round(r["route_slope_min"], 2),
             "app_min": round(r["minutes"], 2), "magicmap_min": round(r["magicmap_min"], 2),
             "slope_factor": round(r["slope_factor"], 3), "check": r["check"],
@@ -160,10 +168,10 @@ def plan(routes: list[tuple[str, str, str]], out: Path) -> list[dict]:
                                       encoding="utf-8")
     lines = ["# 실측 계획", "", "모형이 쓰는 경로다. 출발점·도착점(출입구)과 길을 이대로 걸어야 예측과 견줄 수 있다. "
              "지도는 `plan.geojson` (geojson.io 등에 끌어다 놓으면 보인다).", "",
-             "| 구간 | 출발 → 도착 | 거리 | 오르막 합 / 높이차 | 평지 | 경사 반영 | 앱 값 | 출발점 |",
-             "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+             "| 구간 | 출발 → 도착 | 거리 | 그 가운데 계단 | 오르막 합 / 높이차 | 평지 | 경사 반영 | 앱 값 | 출발점 |",
+             "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for r in rows:
-        lines.append(f"| {r['route']} | {r['from']}({r['from_name']}) → {r['to']}({r['to_name']}) | {r['route_m']} m | "
+        lines.append(f"| {r['route']} | {r['from']}({r['from_name']}) → {r['to']}({r['to_name']}) | {r['route_m']} m | {r['stairs_m']} m | "
                      f"{r['ascent_m']} m / {r['net_rise_m']:+} m | {r['flat_min']}분 | {r['slope_min']}분 | {r['app_min']}분 | "
                      f"[{r['start_lat']:.5f}, {r['start_lon']:.5f}]({r['start_map']}) |")
     (out / "plan.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -374,8 +382,8 @@ class RouteModel:
         self.router = stv.Router(graph, self.proj, dem=dem)
         index = {n["id"]: k for k, n in enumerate(graph["nodes"])}
         best: dict[tuple[int, int], tuple[float, str]] = {}
-        for e in graph["edges"]:  # Router 와 같이 두 노드 사이 가장 짧은 엣지의 종류
-            if e.get("walkable", True):
+        for e in graph["edges"]:  # Router 와 같이 두 노드 사이 가장 짧은 엣지의 종류(막은 엣지는 뺀다)
+            if e.get("walkable", True) and not e.get("blocked"):
                 u, v = index[e["from"]], index[e["to"]]
                 k = (min(u, v), max(u, v))
                 if u != v and (k not in best or float(e["distance"]) < best[k][0]):
@@ -387,33 +395,39 @@ class RouteModel:
         self.cache: dict[tuple[str, str], dict] = {}
 
     def route(self, a: str, b: str) -> dict:
-        """a → b. route_paths.json 처럼 목록 순서가 앞선 쪽에서 찾고 반대는 뒤집는다(오갈 때 같은 경로)."""
+        """a → b. slope_travel 과 같은 경로: 목록 순서가 앞선 쪽에서 찾은 (가는 경로, 오는 경로) 가운데 그 방향의 것
+        (대부분 같은 경로이고, 반대 방향은 뒤집는다)."""
         if (a, b) not in self.cache:
             for x in (a, b):
                 if x not in self.order:
                     raise ValueError(f"{x}: 모형에 없는 지점입니다")
             if self.order[a] > self.order[b]:
-                r = self.route(b, a)
-                L = r["L"]
-                self.cache[(a, b)] = {"s": L - r["s"][::-1], "z": r["z"][::-1], "xy": r["xy"][::-1],
-                                      "vs": L - r["vs"][::-1], "kinds": r["kinds"][::-1], "L": L}
+                self.route(b, a)
             else:
-                self.cache[(a, b)] = self._route(a, b)
+                go, back = self._routes(a, b)
+                self.cache[(a, b)] = go
+                L = back["L"]
+                self.cache[(b, a)] = {"s": L - back["s"][::-1], "z": back["z"][::-1], "xy": back["xy"][::-1],
+                                      "vs": L - back["vs"][::-1], "kinds": back["kinds"][::-1], "L": L}
         return self.cache[(a, b)]
 
-    def _route(self, a: str, b: str) -> dict:
+    def _routes(self, a: str, b: str) -> tuple[dict, dict]:
         R = self.router
         acc = {}
         for x in (a, b):
             acc[x], _ = R.access(self.points.get(x, []))  # slope_travel 과 같은 규칙(접속선이 있는 출입구만, 없으면 직선)
             if not acc[x]:
                 raise ValueError(f"{x}: 길에 이을 수 없는 지점입니다")
-        dist, pred = R.search([acc[a]])
-        got = R.arrive(dist[0], pred[0], acc[b])
+        got = R.pick(acc[a], acc[b])
         if got is None:
             raise ValueError(f"{a} → {b}: 경로가 없습니다")
-        _, path = got
-        start, stop = acc[a][path[0]], acc[b][path[-1]]
+        go, back = got
+        first = self._describe(go)
+        return first, first if back is go else self._describe(back)
+
+    def _describe(self, rec) -> dict:
+        R = self.router
+        start, path, stop, _ = rec
         s, z = R.profile(start, path, stop)
         xy = R.geometry(start, path, stop)
 
@@ -513,14 +527,30 @@ def overlap(spans: list[tuple[float, float]], a: float, b: float) -> float:
     return sum(max(0.0, min(b, y) - max(a, x)) for x, y in spans)
 
 
-def unit_time(ds: np.ndarray, g: np.ndarray, k: float) -> np.ndarray:
-    """속도 1 m/s(평지)로 걸을 때 조각마다 걸리는 시간. k = 0 이면 평지 모형, 3.5 면 Tobler."""
+def unit_time(ds: np.ndarray, g: np.ndarray, k: float, on: np.ndarray | None = None) -> np.ndarray:
+    """속도 1 m/s(평지)로 걸을 때 조각마다 걸리는 시간. k = 0 이면 평지 모형, 3.5 면 Tobler.
+    on(조각이 계단 위인가)을 주면 그 조각은 k 와 상관없이 계단 속도식(slope_travel.stair_speed)으로 잰다."""
     g = np.clip(g, -1.0, 1.0)
-    return ds / (np.exp(-k * np.abs(g + 0.05)) / math.exp(-k * 0.05))
+    t = ds / (np.exp(-k * np.abs(g + 0.05)) / math.exp(-k * 0.05))
+    if on is not None and np.any(on):
+        import slope_travel as stv
+
+        t = np.where(on, ds / stv.stair_speed(g, 1.0), t)
+    return t
+
+
+def stairs_mask(route: dict, ds: np.ndarray) -> np.ndarray:
+    """경로(RouteModel.route 값)를 ds 조각으로 나눴을 때 조각 가운데가 계단 엣지(kind = steps) 위인가."""
+    mid = np.cumsum(ds) - ds / 2
+    on = np.zeros(len(ds), bool)
+    for j, kind in enumerate(route["kinds"]):
+        if kind == "steps":
+            on |= (mid >= route["vs"][j]) & (mid < route["vs"][j + 1])
+    return on
 
 
 def analyse_walk(w: Walk, model: RouteModel, chunk_m: float = CHUNK_M) -> tuple[dict, list[dict]]:
-    """기록 한 번 → (요약, 조각들). 조각에는 실측 시간과, 경사 계산에 쓸 2 m 단면 조각(ds, 창별 경사)이 붙는다."""
+    """기록 한 번 → (요약, 조각들). 조각에는 실측 시간과, 경사 계산에 쓸 2 m 단면 조각(ds, 창별 경사, 계단 여부)이 붙는다."""
     import slope_travel as stv
 
     r = model.route(w.a, w.b)
@@ -582,6 +612,7 @@ def analyse_walk(w: Walk, model: RouteModel, chunk_m: float = CHUNK_M) -> tuple[
         steps[win] = (ds, g)
     ds0 = steps[WINDOWS[0]][0]
     mid = np.cumsum(ds0) - ds0 / 2
+    on = stairs_mask(r, ds0)  # 모형이 계단 속도식으로 재는 자리
     which = np.searchsorted(edges, mid, side="right") - 1
     stairs = np.zeros(len(edges) - 1)
     for j, kind in enumerate(r["kinds"]):
@@ -604,23 +635,25 @@ def analyse_walk(w: Walk, model: RouteModel, chunk_m: float = CHUNK_M) -> tuple[
             "length_m": round(float(length), 1), "grade_pct": round(100 * (z1 - z0) / float(length), 2),
             "stairs_share": round(float(stairs[c]) / length, 2), "t0": round(t0, 1), "t1": round(t1, 1),
             "measured_s": round(t1 - t0, 2), "speed": round(length / max(t1 - t0, 1e-6), 3),
-            "model_s": round(float(unit_time(*[a[sel] for a in steps[30.0]], K_TOBLER).sum()) / V0, 2),
+            "model_s": round(float(unit_time(*[a[sel] for a in steps[30.0]], K_TOBLER, on[sel]).sum()) / V0, 2),
             "flat_s": round(length / V0, 2), "flag": flag,
-            "_steps": {win: (steps[win][0][sel], steps[win][1][sel]) for win in WINDOWS},
+            "_steps": {win: (steps[win][0][sel], steps[win][1][sel], on[sel]) for win in WINDOWS},
         })
-    slope_s = float(unit_time(*steps[30.0], K_TOBLER).sum()) / V0
+    slope_s = float(unit_time(*steps[30.0], K_TOBLER, on).sum()) / V0
     summary.update(model_slope_min=round(slope_s / 60, 2), model_flat_min=round(L / V0 / 60, 2))
     return summary, chunks
 
 
 def fit_slope(chunks: list[dict]) -> dict:
-    """쓸 수 있는 조각으로 사람별 평지 속도와 경사 계수 k 를 맞춘다. 남는 차이 = log(실측 ÷ 예측) 의 RMS."""
+    """쓸 수 있는 조각으로 사람별 평지 속도와 경사 계수 k 를 맞춘다. 남는 차이 = log(실측 ÷ 예측) 의 RMS.
+    계단 위는 k 와 상관없이 계단 속도식으로 잰다(평지 모형만 계단도 평지로 본다)."""
     use = [c for c in chunks if c["flag"] == "ok" and c["measured_s"] > 0]
     walkers = sorted({c["walker"] for c in use})
     meas = np.array([c["measured_s"] for c in use])
 
-    def residuals(k: float, win: float = 30.0) -> tuple[np.ndarray, dict]:
-        unit = np.array([float(unit_time(*c["_steps"][win], k).sum()) for c in use])  # 1 m/s 평지 속도일 때 시간
+    def residuals(k: float, win: float = 30.0, stairs: bool = True) -> tuple[np.ndarray, dict]:
+        unit = np.array([float(unit_time(c["_steps"][win][0], c["_steps"][win][1], k,  # 1 m/s 평지 속도일 때 시간
+                                         c["_steps"][win][2] if stairs else None).sum()) for c in use])
         v = {}
         res = np.empty(len(use))
         for wk in walkers:
@@ -640,7 +673,7 @@ def fit_slope(chunks: list[dict]) -> dict:
     res_t, v_t = residuals(K_TOBLER)
     out = {
         "chunks": len(use), "walkers": walkers, "k_hat": k_hat,
-        "rms_flat": rms(residuals(0.0)[0]), "rms_tobler": rms(res_t), "rms_fit": rms(residuals(k_hat)[0]),
+        "rms_flat": rms(residuals(0.0, stairs=False)[0]), "rms_tobler": rms(res_t), "rms_fit": rms(residuals(k_hat)[0]),
         "walker_v0": {wk: round(v, 3) for wk, v in v_t.items()},
         "windows": {f"{win:g}": rms(residuals(K_TOBLER, win)[0]) for win in WINDOWS},
     }
@@ -652,6 +685,7 @@ def fit_slope(chunks: list[dict]) -> dict:
     for c in use:
         c["speed_ratio"] = round(c["speed"] / flat_v[c["walker"]], 3)
     tob = lambda g, k=K_TOBLER: math.exp(-k * abs(g / 100 + 0.05)) / math.exp(-k * 0.05)  # noqa: E731
+    model = lambda cs: round(statistics.median(c["flat_s"] / c["model_s"] for c in cs), 3)  # noqa: E731  모형이 본 속도(평지 = 1)
     rows = []
     for lo, hi in zip(GRADE_BINS[:-1], GRADE_BINS[1:]):
         cs = [c for c in use if lo <= c["grade_pct"] < hi and c["stairs_share"] < 0.5]
@@ -659,14 +693,14 @@ def fit_slope(chunks: list[dict]) -> dict:
             g = statistics.median(c["grade_pct"] for c in cs)
             rows.append({"bin": f"{'' if lo == -math.inf else f'{lo:g}'}~{'' if hi == math.inf else f'{hi:g}'}",
                          "n": len(cs), "grade_pct": round(g, 1),
-                         "measured": round(statistics.median(c["speed_ratio"] for c in cs), 3),
+                         "measured": round(statistics.median(c["speed_ratio"] for c in cs), 3), "model": model(cs),
                          "tobler": round(tob(g), 3), "fit": round(tob(g, k_hat), 3)})
     for name, sign in (("계단 오르막", 1), ("계단 내리막", -1)):
         cs = [c for c in use if c["stairs_share"] >= 0.5 and sign * c["grade_pct"] > 0]
         if cs:
             g = statistics.median(c["grade_pct"] for c in cs)
             rows.append({"bin": name, "n": len(cs), "grade_pct": round(g, 1),
-                         "measured": round(statistics.median(c["speed_ratio"] for c in cs), 3),
+                         "measured": round(statistics.median(c["speed_ratio"] for c in cs), 3), "model": model(cs),
                          "tobler": round(tob(g), 3), "fit": round(tob(g, k_hat), 3)})
     out["flat_speed"] = {wk: round(v, 3) for wk, v in flat_v.items()}
     out["bins"] = rows
@@ -777,12 +811,14 @@ def write_gps_readme(path: Path, items: list[str], s: dict, walks: list[dict], f
         lines += ["", "### 경사별 걷는 속도", "",
                   f"조각 {s['chunk_m']:g} m, 쓸 수 있는 조각 {s['chunks']}개(멈춤·끊김·다른 길 제외). "
                   "속도는 그 사람의 평지 속도를 1로 둔 값(1보다 작으면 평지보다 느리다).", "",
-                  f"| 경사 (%) | 조각 | 경사 중앙값 | 실측 | Tobler (k {K_TOBLER:g}) | 실측에 맞춘 식 (k {s['k_hat']:g}) |",
-                  "| --- | --- | --- | --- | --- | --- |"]
+                  f"| 경사 (%) | 조각 | 경사 중앙값 | 실측 | 모형 | Tobler (k {K_TOBLER:g}) | 실측에 맞춘 식 (k {s['k_hat']:g}) |",
+                  "| --- | --- | --- | --- | --- | --- | --- |"]
         for b in s["bins"]:
-            lines.append(f"| {b['bin']} | {b['n']} | {b['grade_pct']:+.1f} | {b['measured']} | {b['tobler']} | {b['fit']} |")
+            lines.append(f"| {b['bin']} | {b['n']} | {b['grade_pct']:+.1f} | {b['measured']} | {b['model']} | {b['tobler']} | {b['fit']} |")
         lines += ["",
-                  f"- 경사 계수 k 를 실측에 맞추면 {s['k_hat']:g} (Tobler {K_TOBLER:g}, 평지 모형 0).",
+                  "- '모형' 은 앱이 쓰는 값(30 m 창 경사, 계단 엣지 위는 계단 속도식·나머지는 Tobler)으로 잰 그 조각들의 속도 중앙값이다. "
+                  "계단 조각(절반 넘게 계단)은 이 칸과 실측을 견준다: Tobler 칸은 계단에도 Tobler 를 썼을 때의 값.",
+                  f"- 경사 계수 k 를 실측에 맞추면 {s['k_hat']:g} (Tobler {K_TOBLER:g}, 평지 모형 0). 계단 위는 빼고 맞춘다.",
                   f"- 남는 차이(사람별 속도를 맞춘 뒤 log 시간의 RMS, 작을수록 잘 맞음): 평지 모형 {s['rms_flat']}, "
                   f"Tobler {s['rms_tobler']}, 맞춘 k {s['rms_fit']}.",
                   "- 경사 창 길이별(Tobler): " + ", ".join(f"{k} m {v}" for k, v in s["windows"].items()) + " (모형 기본 30 m).",
@@ -808,6 +844,9 @@ def draw_grade(out: Path, chunks: list[dict], fit: dict) -> list[str]:
     ax.axhline(1.0, color=AXIS, linewidth=1.2, label="평지 모형")
     ax.plot(g, tob(K_TOBLER), color=INK2, linewidth=1.2, linestyle="--", label=f"Tobler (k {K_TOBLER:g})")
     ax.plot(g, tob(fit["k_hat"]), color=C1, linewidth=1.8, label=f"실측에 맞춘 식 (k {fit['k_hat']:g})")
+    import slope_travel as stv
+
+    ax.plot(g, stv.stair_speed(g / 100, 1.0), color=C2, linewidth=1.2, linestyle=":", label="계단 속도식")
     road = [c for c in use if c["stairs_share"] < 0.5]
     steps = [c for c in use if c["stairs_share"] >= 0.5]
     ax.scatter([c["grade_pct"] for c in road], [c["speed_ratio"] for c in road], s=18, color=C1, alpha=0.55,
@@ -883,7 +922,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--top", type=int, default=15)
     p.add_argument("--max-minutes", type=float, default=15, help="평지 기준 이 시간(분) 이하 구간만")
     p = sub.add_parser("plan", help="구간별 모형 경로·예측")
-    p.add_argument("pairs", nargs="*", help="출발-도착 (예: GATE-302, R1:919-301, 220-1>301)")
+    p.add_argument("pairs", nargs="*", help="출발-도착 (예: GATE-302, R1:919A-301, 220-1>301)")
     p.add_argument("--routes", default="", help="route,from,to[,note] CSV")
     p.add_argument("-o", "--output", default=str(OUT))
     p = sub.add_parser("check", help="실측 vs 모형")
@@ -903,9 +942,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "suggest":
         rows = suggest(args.top, args.max_minutes)
-        print(f"{'출발':>6} → {'도착':<6} {'거리':>6} {'높이차':>7} {'평지':>6} {'경사':>6} {'반대':>6} {'+분':>5}  이름")
+        print(f"{'출발':>6} → {'도착':<6} {'거리':>6} {'계단':>5} {'높이차':>7} {'평지':>6} {'경사':>6} {'반대':>6} {'+분':>5}  이름")
         for r in rows:
-            print(f"{r['from']:>6} → {r['to']:<6} {r['route_m']:>5}m {r['rise_m']:>+6}m {r['flat_min']:>5}분 "
+            print(f"{r['from']:>6} → {r['to']:<6} {r['route_m']:>5}m {r['stairs_m']:>4}m {r['rise_m']:>+6}m {r['flat_min']:>5}분 "
                   f"{r['slope_min']:>5}분 {r['back_slope_min']:>5}분 {r['added_min']:>+5}  {r['from_name']} → {r['to_name']}"
                   + (f"  ({r['check']})" if r["check"] else ""))
         return 0

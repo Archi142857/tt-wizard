@@ -10,7 +10,7 @@
 1. 분반–건물 분산  분반이 둘 이상인 학부 과목 중 분반이 서로 다른 건물에서 열리는 비율, 분반 건물 사이
                     최대 이동시간. 지난 학기 편람(data/raw/history/)으로 학기별 비율도 낸다.
 2. 가상 묶음        학과·학년 전공 과목 + 수강인원이 많은 교양으로 한 학기 과목 묶음을 만들고, 그 학생이
-                    들을 수 있는 분반(비고의 ® 수강 제한)만 후보로 둔다. 집 = 기숙사(919), 정문(GATE)
+                    들을 수 있는 분반(비고의 ® 수강 제한)만 후보로 둔다. 집 = 기숙사(919A동), 정문(GATE)
                     - 프로그램(1위) vs 무작위(시간이 겹치지 않는 조합 중 균등하게 하나)
                     - TSP 하한 대비, 경사를 무시하고(평지 행렬로) 고른 조합의 손해, 탐색 시간(파이썬·웹 엔진)
 3. 실제 시간표      --real CSV: person,semester,college,department,course,section
@@ -53,7 +53,8 @@ from restrictions import Student, Units, can_take  # noqa: E402
 
 DATA = ROOT / "data"
 OUT = ROOT / "results" / "experiments"
-HOMES = {"919": "기숙사", "GATE": "정문"}
+DORM = "919A"  # 기숙사 출발·도착을 대표하는 동(웹 화면이 처음 고르는 동과 같다. 2026-10-03 까지는 마법 지도 표의 919 한 점)
+HOMES = {DORM: "기숙사", "GATE": "정문"}
 WEEKS = 15  # 한 학기 수업 주 수 (환산용)
 TOP_K = 5  # 웹 화면과 같은 값 (탐색 시간 비교용)
 ENUM_CAP = 50_000  # 시간이 겹치지 않는 조합을 이 수까지 모두 센다. 넘으면 표본으로
@@ -503,7 +504,7 @@ def stress_rows(sections: list[Section], meta: dict, travel: dict[str, TravelMat
     """부하 시험: 수강인원이 가장 많은 교양 k개(대학 글쓰기·수학·물리 …)를 모든 분반 그대로 담았을 때의 탐색 시간.
 
     웹 화면은 수강 제한을 모르므로 분반을 끄지 않으면 이 상태로 찾는다(이공계 1학년 기초 과목을 한꺼번에 담은 경우).
-    웹 엔진은 k 전부, 파이썬은 오래 걸려 k ≤ py_max 만 잰다. 집 = 기숙사(919).
+    웹 엔진은 k 전부, 파이썬은 오래 걸려 k ≤ py_max 만 잰다. 집 = 기숙사(DORM).
     """
     by_course: dict[str, list[Section]] = {}
     for s in sections:
@@ -520,11 +521,11 @@ def stress_rows(sections: list[Section], meta: dict, travel: dict[str, TravelMat
                "n_combinations_grouped": math.prod(len(c.sections) for c in grouped), "py_ms": "", "py_leaves": ""}
         if k <= py_max:
             t0 = time.perf_counter()
-            res = search(grouped, travel["slope"], "919", top_k=TOP_K)
+            res = search(grouped, travel["slope"], DORM, top_k=TOP_K)
             row.update(py_ms=round((time.perf_counter() - t0) * 1000, 1), py_leaves=res.stats.leaves,
                        opt_cost=round(res.ranked[0].cost, 1) if res.ranked else "")
         rows.append(row)
-        cases.append(js_case(grouped, "919"))
+        cases.append(js_case(grouped, DORM))
     for row, t in zip(rows, js_times(cases) or []):
         row.update(js_ms=round(t["ms"], 1), js_leaves=t["leaves"])
         print(f"  교양 {row['k']}개: 조합 {row['n_combinations_grouped']:.1e}, 웹 엔진 {row['js_ms']:,.0f} ms"
@@ -689,13 +690,13 @@ def write_readme(path: Path, args, sem: str, summary: list[dict], spread: list[d
                       f"{pct(lo['ratio_located'])}({lo['semester']}) ~ {pct(hi['ratio_located'])}({hi['semester']}). "
                       "`spread_by_semester.csv`."]
     lines += ["", "## 2. 가상 묶음: 프로그램 vs 무작위", "",
-              "| 항목 | 기숙사(919) | 정문(GATE) | 단위 |", "| --- | --- | --- | --- |"]
+              f"| 항목 | 기숙사({DORM}) | 정문(GATE) | 단위 |", "| --- | --- | --- | --- |"]
     metrics = list(dict.fromkeys(r["metric"] for r in summary))
     for m in metrics:
         v = {r["home"]: r for r in summary if r["metric"] == m}
-        unit = v["919"]["unit"]
+        unit = v[DORM]["unit"]
         fmt = (lambda x: pct(x)) if unit == "비율" else (lambda x: f"{x:,}" if isinstance(x, (int, float)) else x)
-        lines.append(f"| {m} | {fmt(v['919']['value'])} | {fmt(v['GATE']['value']) if 'GATE' in v else ''} | "
+        lines.append(f"| {m} | {fmt(v[DORM]['value'])} | {fmt(v['GATE']['value']) if 'GATE' in v else ''} | "
                      f"{'' if unit == '비율' else unit} |")
     if stress:
         lines += ["", "## 2b. 부하 시험: 수강인원이 가장 많은 교양 k개를 모든 분반 그대로", "",
@@ -823,7 +824,7 @@ def figures(out: Path, spread_rows_: list[dict], spread_sum: list[dict], semeste
         save(fig, out, "fig2_semesters", done)
         plt.close(fig)
 
-    dorm = [r for r in bundles if r["home"] == "919"]
+    dorm = [r for r in bundles if r["home"] == DORM]
     if dorm:
         # 3. 절약 분포
         sav = [r["saving"] for r in dorm]
@@ -888,7 +889,7 @@ def figures(out: Path, spread_rows_: list[dict], spread_sum: list[dict], semeste
         plt.close(fig)
 
     if real:
-        rs = [r for r in real if r["home"] == "919"] or real
+        rs = [r for r in real if r["home"] == DORM] or real
         fig, ax = plt.subplots(figsize=(6.5, 0.5 * len(rs) + 1.4))
         ys = list(range(len(rs)))[::-1]
         for y, r in zip(ys, rs):
@@ -964,7 +965,7 @@ def main(argv: list[str] | None = None) -> int:
     summary = bundle_summary(b_rows)
     write_csv(out / "summary.csv", summary)
     for r in summary:
-        if r["home"] == "919":
+        if r["home"] == DORM:
             print(f"  {r['metric']}: {r['value']} {r['unit']}")
 
     stress = []

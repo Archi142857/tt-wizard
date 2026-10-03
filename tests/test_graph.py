@@ -124,6 +124,23 @@ def test_tobler_and_window():
     assert np.abs(g).max() == pytest.approx(2.0 / 30.0, abs=1e-6)
 
 
+def test_stair_speed():
+    """계단 속도식: 평지 시간의 (1 + 2.2 × 경사)배(오를 때), (1 + 1.6 × |경사|)배(내려갈 때). 경사 0 이면 평지 속도."""
+    assert st.stair_speed(0.0) == pytest.approx(1.1)
+    assert st.stair_speed(0.5) == pytest.approx(1.1 / 2.1) and st.stair_speed(-0.5) == pytest.approx(1.1 / 1.8)
+    assert st.stair_speed(0.3) > st.tobler(0.3) * 1.5 and st.stair_speed(-0.4) > st.tobler(-0.4) * 1.5  # 가파른 계단: Tobler 는 훨씬 느리다
+    assert st.stair_speed(-0.05) < 1.1 < st.tobler(-0.05)  # 계단은 내려갈 때도 평지보다 느리다
+    # 근거: Fujiyama & Tyler (2004) 젊은 집단·보통 걸음. 평지 1.40 m/s, 계단 기울기(°)별 수평 속도(오름, 내림)
+    for deg, up, down in ((38.8, 0.48, 0.59), (35.0, 0.56, 0.65), (30.5, 0.63, 0.74), (24.6, 0.76, 0.87)):
+        g = math.tan(math.radians(deg))
+        assert float(st.stair_speed(g, 1.40)) == pytest.approx(up, rel=0.09)
+        assert float(st.stair_speed(-g, 1.40)) == pytest.approx(down, rel=0.09)
+    # pace: 1 m 를 걷는 시간. 계단인 자리만 계단 속도식
+    t = st.pace(np.array([0.2, 0.2, -0.2]), np.array([False, True, True]))
+    assert t[0] == pytest.approx(1 / float(st.tobler(0.2))) and t[1] == pytest.approx(1.44 / 1.1) and t[2] == pytest.approx(1.32 / 1.1)
+    assert float(st.pace(0.2)) == pytest.approx(t[0]) and float(st.pace(0.2, True, 1.0)) == pytest.approx(1.44)
+
+
 def _write_csv(path, header, rows):
     with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
@@ -506,6 +523,135 @@ def test_base_route_and_back(tmp_path):
     assert read(flat)[("A", "B")]["source"] == "route" and float(read(out)[("A", "B")]["minutes"]) == pytest.approx(up, rel=1e-3)
 
 
+def test_slope_travel_picks_faster_route(tmp_path):
+    """경로 고르기(기본 --choose fastest): 방향마다 최단거리 경로보다 6초 넘게 빠른 경로가 있으면 그 경로의 시간을 쓴다.
+    A → B 로 곧은 길(225 m)은 200 m 를 완만히 오른 뒤 25 m 를 가파르게(40 %) 내려가고, 돌아가는 길은 평지 280 m 다:
+    갈 때는 돌아가는 길, 올 때는 곧은 길이 빠르다. 평지 시간(travel.csv, route_flat_min)은 방향과 상관없이 최단거리 경로 기준이고,
+    지도용 경로는 오는 경로가 다를 때만 B|A 를 따로 적는다. --choose shortest 는 예전 방식(오갈 때 같은 최단거리 경로)."""
+    pts = {1: (0, 0), 2: (0, 200), 3: (0, 225), 4: (100, 112)}
+    ele = {1: 100.0, 2: 110.0, 3: 100.0, 4: 100.0}
+    lon, lat = PROJ.inv([p[0] for p in pts.values()], [p[1] for p in pts.values()])
+    nodes = [{"id": i, "lng": float(a), "lat": float(b), "ele": ele[i]} for i, a, b in zip(pts, lon, lat)]
+    edges, k = [], 0
+    for a, b, d in [(1, 2, 200.0), (2, 3, 25.0), (1, 4, 140.0), (4, 3, 140.0)]:
+        for u, v in ((a, b), (b, a)):
+            k += 1
+            edges.append({"id": k, "from": u, "to": v, "distance": d, "kind": "footway", "walkable": True, "isTunnel": False, "surface": "ground"})
+    graph = tmp_path / "graph.json"
+    graph.write_text(json.dumps({"nodes": nodes, "edges": edges}), encoding="utf-8")
+
+    def ll(x, y):
+        a, b = PROJ.inv(x, y)
+        return float(np.ravel(b)[0]), float(np.ravel(a)[0])
+
+    _write_csv(tmp_path / "ent.csv", ["building", "lat", "lon"], [("A", *ll(0, 0)), ("B", *ll(0, 225))])
+    _write_csv(tmp_path / "pairs.csv", ["from", "to", "distance_m", "time_s"], [("A", "B", 225, 225 / 1.1), ("B", "A", 225, 225 / 1.1)])
+    out, stats, paths, flat = tmp_path / "travel_slope.csv", tmp_path / "stats.csv", tmp_path / "paths.json", tmp_path / "travel.csv"
+    args = ["--graph", str(graph), "--pairs", str(tmp_path / "pairs.csv"), "--dem", str(tmp_path / "no_dem"),
+            "--entrances", str(tmp_path / "ent.csv"), "--elevation", str(tmp_path / "none.csv"), "--points", str(tmp_path / "none.csv"),
+            "-o", str(out), "--stats", str(stats), "--paths", str(paths), "--extra", "", "--flat", str(flat), "--patch"]
+
+    def read():
+        rows = {(r["from"], r["to"]): r for r in csv.DictReader(open(stats, encoding="utf-8-sig"))}
+        return rows, json.loads(paths.read_text(encoding="utf-8"))["paths"], {(r["from"], r["to"]): r for r in csv.DictReader(open(flat, encoding="utf-8"))}
+
+    assert st.main(args + ["--choose", "shortest"]) == 0
+    old, shapes, f = read()
+    assert [old[k]["route_m"] for k in (("A", "B"), ("B", "A"))] == ["225", "225"] and set(shapes) == {"A|B"}
+    assert st.main(args) == 0
+    new, shapes, f = read()
+    ab, ba = new[("A", "B")], new[("B", "A")]
+    assert (ab["route_m"], ab["shortest_m"], ba["route_m"], ba["shortest_m"]) == ("280", "225", "225", "225")
+    assert float(ab["minutes"]) == pytest.approx(280 / 1.1 / 60, abs=0.006) and ab["minutes"] == ab["route_slope_min"]
+    assert float(ab["minutes"]) < float(old[("A", "B")]["minutes"]) - st.GAIN / 60 and ba["minutes"] == old[("B", "A")]["minutes"]
+    assert float(ab["ascent_m"]) == 0 and float(ba["ascent_m"]) == pytest.approx(10, abs=1.0)  # 창 경사로 잰 값이라 끝에서 조금 깎인다
+    # 평지 시간은 두 방향 다 최단거리 경로(225 m). 경사 계수 = 고른 경로의 시간 ÷ 그 평지 시간
+    for r in (ab, ba):
+        assert float(r["route_flat_min"]) == pytest.approx(225 / 1.1 / 60, abs=0.006) and f[(r["from"], r["to"])]["minutes"] == r["route_flat_min"]
+        assert float(r["slope_factor"]) == pytest.approx(float(r["minutes"]) / float(r["route_flat_min"]), abs=0.005)
+    # 지도용 경로: 갈 때는 (100, 112) 로 돌아가고, 올 때는 곧은 길이라 B|A 가 따로 있다
+    assert set(shapes) == {"A|B", "B|A"}
+    assert st.decode_polyline(shapes["A|B"])[1] == pytest.approx(ll(100, 112), abs=2e-5) and len(st.decode_polyline(shapes["B|A"])) == 2
+    assert st.decode_polyline(shapes["B|A"])[0] == pytest.approx(ll(0, 225), abs=2e-5)
+
+
+def test_slope_travel_stairs(tmp_path):
+    """한결같이 20 % 로 오르는 150 m 길의 가운데 50 m 가 계단(kind = steps)이다. 계단 구간은 계단 속도식, 나머지는 Tobler 로 잰다.
+    route_stats.csv 의 stairs_m 은 고른 경로에서 계단 엣지 위를 걷는 길이. --stairs tobler 는 예전 방식(계단도 Tobler)."""
+    pts = {1: (0, 0), 2: (0, 50), 3: (0, 100), 4: (0, 150)}
+    lon, lat = PROJ.inv([p[0] for p in pts.values()], [p[1] for p in pts.values()])
+    nodes = [{"id": i, "lng": float(a), "lat": float(b), "ele": 100 + 0.2 * pts[i][1]} for i, a, b in zip(pts, lon, lat)]
+    edges, k = [], 0
+    for a, b in [(1, 2), (2, 3), (3, 4)]:
+        for u, v in ((a, b), (b, a)):
+            k += 1
+            edges.append({"id": k, "from": u, "to": v, "distance": 50.0, "kind": "steps" if a == 2 else "footway", "walkable": True,
+                          "isTunnel": False, "surface": "ground"})
+    graph = tmp_path / "graph.json"
+    graph.write_text(json.dumps({"nodes": nodes, "edges": edges}), encoding="utf-8")
+
+    def ll(x, y):
+        a, b = PROJ.inv(x, y)
+        return float(np.ravel(b)[0]), float(np.ravel(a)[0])
+
+    _write_csv(tmp_path / "ent.csv", ["building", "lat", "lon"], [("A", *ll(0, 0)), ("B", *ll(0, 150))])
+    _write_csv(tmp_path / "pairs.csv", ["from", "to", "distance_m", "time_s"], [("A", "B", 150, 150 / 1.1), ("B", "A", 150, 150 / 1.1)])
+    out, stats = tmp_path / "travel_slope.csv", tmp_path / "stats.csv"
+    args = ["--graph", str(graph), "--pairs", str(tmp_path / "pairs.csv"), "--dem", str(tmp_path / "no_dem"),
+            "--entrances", str(tmp_path / "ent.csv"), "--elevation", str(tmp_path / "none.csv"), "--points", str(tmp_path / "none.csv"),
+            "-o", str(out), "--stats", str(stats), "--paths", str(tmp_path / "paths.json"), "--extra", "", "--flat", "", "--patch"]
+
+    def read():
+        return {(r["from"], r["to"]): r for r in csv.DictReader(open(stats, encoding="utf-8-sig"))}
+
+    assert st.main(args) == 0
+    rows = read()
+    up = (100 * math.exp(0.7) + 50 * (1 + st.STAIRS_UP * 0.2)) / 1.1 / 60
+    down = (100 * math.exp(0.35) + 50 * (1 + st.STAIRS_DOWN * 0.2)) / 1.1 / 60
+    assert float(rows[("A", "B")]["minutes"]) == pytest.approx(up, abs=0.006) and float(rows[("B", "A")]["minutes"]) == pytest.approx(down, abs=0.006)
+    assert rows[("A", "B")]["stairs_m"] == "50" and rows[("B", "A")]["stairs_m"] == "50" and rows[("A", "B")]["route_m"] == "150"
+    assert st.main(args + ["--stairs", "tobler"]) == 0
+    rows = read()
+    assert float(rows[("A", "B")]["minutes"]) == pytest.approx(150 * math.exp(0.7) / 1.1 / 60, abs=0.006)
+    assert float(rows[("B", "A")]["minutes"]) == pytest.approx(150 * math.exp(0.35) / 1.1 / 60, abs=0.006)
+    assert float(rows[("A", "B")]["minutes"]) > up + 0.2 and rows[("A", "B")]["stairs_m"] == "50"
+
+
+def test_label_only_dorm_is_dropped(tmp_path):
+    """기숙사 동 목록에서 travel = N 인 동은 마법 지도 표에 있어도 지점과 출입구에서 빠지고, 그 동을 나눈 동(travel = Y)이 대신한다
+    (919 는 표에 한 점이지만 건물은 919A~D 네 동이다). 동 번호 순서는 919 < 919A < 919B < 920."""
+    gp = pytest.importorskip("graph_patch")
+    assert sorted(["919B", "920", "GATE", "919", "43-2", "919A"], key=be.building_key) == ["43-2", "919", "919A", "919B", "920", "GATE"]
+    pts = {1: (0, 0), 2: (0, 200), 3: (100, 200)}
+    lon, lat = PROJ.inv([p[0] for p in pts.values()], [p[1] for p in pts.values()])
+    nodes = [{"id": i, "lng": float(a), "lat": float(b), "ele": 100.0} for i, a, b in zip(pts, lon, lat)]
+    edges = [{"id": k + 1, "from": u, "to": v, "distance": d, "kind": "footway", "walkable": True, "isTunnel": False, "surface": "ground"}
+             for k, (u, v, d) in enumerate(((1, 2, 200.0), (2, 1, 200.0), (2, 3, 100.0), (3, 2, 100.0)))]
+    graph = tmp_path / "graph.json"
+    graph.write_text(json.dumps({"nodes": nodes, "edges": edges}), encoding="utf-8")
+
+    def ll(x, y):
+        a, b = PROJ.inv(x, y)
+        return float(np.ravel(b)[0]), float(np.ravel(a)[0])
+
+    _write_csv(tmp_path / "ent.csv", ["building", "lat", "lon"], [("919", *ll(0, 0)), ("B", *ll(0, 200))])
+    _write_csv(tmp_path / "pairs.csv", ["from", "to", "distance_m", "time_s"], [("919", "B", 200, 200 / 1.1), ("B", "919", 200, 200 / 1.1)])
+    _write_csv(tmp_path / "dorms.csv", ["building", "name", "kind", "lat", "lon", "travel"],
+               [("919", "묶음", "학부", *ll(0, 0), "N"), ("919A", "북쪽 동", "학부", *ll(100, 200), "Y")])
+    assert gp.label_only(tmp_path / "dorms.csv") == {"919"} and st.extra_ids(tmp_path / "dorms.csv") == ["919A"]
+    out, stats, paths = tmp_path / "travel_slope.csv", tmp_path / "stats.csv", tmp_path / "paths.json"
+    assert st.main(["--graph", str(graph), "--pairs", str(tmp_path / "pairs.csv"), "--dem", str(tmp_path / "no_dem"),
+                    "--entrances", str(tmp_path / "ent.csv"), "--elevation", str(tmp_path / "none.csv"), "--points", str(tmp_path / "none.csv"),
+                    "-o", str(out), "--stats", str(stats), "--paths", str(paths), "--extra", str(tmp_path / "dorms.csv"),
+                    "--flat", str(tmp_path / "travel.csv"), "--patch"]) == 0
+    rows = {(r["from"], r["to"]): r for r in csv.DictReader(open(out, encoding="utf-8"))}
+    assert set(rows) == {("919A", "B"), ("B", "919A")} and float(rows[("B", "919A")]["minutes"]) == pytest.approx(100 / 1.1 / 60, abs=0.01)
+    assert json.loads(paths.read_text(encoding="utf-8"))["ids"] == ["919A", "B"]
+    el = pytest.importorskip("entrance_links")
+    ents, _ = el.entrance_list(tmp_path / "ent.csv", [], skip=gp.label_only(tmp_path / "dorms.csv"))
+    assert {e["building"] for e in ents} == {"B"} and len(el.entrance_list(tmp_path / "ent.csv", [])[0]) == 2
+
+
 def test_load_points_alias(tmp_path):
     """제 출입구 → 제 좌표 → (둘 다 없을 때만) 대신 쓸 건물(ALIASES) 순. 71-1동은 이제 좌표·출입구가 있어 71동을 대신 쓰지 않는다."""
     _write_csv(tmp_path / "ent.csv", ["building", "lat", "lon"], [("71", 37.4670, 126.9520)])
@@ -542,4 +688,5 @@ def test_travel_matrices_follow_our_routes():
         # 같은 경로라 경사 반영 ÷ 평지 = 경사 계수(반올림 오차 안)
         if float(r["route_flat_min"]) > 1:
             assert float(r["minutes"]) / float(r["route_flat_min"]) == pytest.approx(float(r["slope_factor"]), abs=0.02), k
-    assert table == 11772  # 마법 지도 표의 쌍은 견줄 값(magicmap_min)으로 남아 있다
+    assert table == 108 * 107  # 마법 지도 표의 쌍은 견줄 값(magicmap_min)으로 남아 있다(표 109곳에서 919 를 뺀 108곳: 919A~D 로 나눠 낸다)
+    assert not any("919" in k for k in stats) and {"919A", "919B", "919C", "919D"} <= {a for a, _ in stats}

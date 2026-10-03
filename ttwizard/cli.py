@@ -4,7 +4,7 @@
   python -m ttwizard parse data/raw/2026-2.xls -o data/lectures.json
   python -m ttwizard find  --lectures data/lectures.json 생화학
   python -m ttwizard search --lectures data/lectures.json \
-        --courses M1234.000100,M2345.000200 --home 919 --top 5 --json data/results.json
+        --courses M1234.000100,M2345.000200 --home 919A --top 5 --json data/results.json
 """
 
 from __future__ import annotations
@@ -142,7 +142,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--lectures", default="data/lectures.json")
     s.add_argument("--courses", required=True, help="교과목번호를 쉼표로")
     s.add_argument("--exclude", default="", help="뺄 분반 키 (교과목번호-강좌번호)를 쉼표로")
-    s.add_argument("--home", default="919", help="출발/도착 건물 id (기숙사 919, 정문 GATE 등)")
+    s.add_argument("--home", default="919A", help="출발/도착 건물 id (기숙사 동 919A·906 등, 정문 GATE)")
     s.add_argument("--buildings", default="data/buildings.csv")
     s.add_argument("--travel", default="data/travel.csv")
     s.add_argument("--top", type=int, default=5)

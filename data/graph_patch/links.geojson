@@ -35,6 +35,8 @@
     "207",
     "21",
     "223",
+    "25-1",
+    "27",
     "28",
     "29",
     "3",
@@ -76,6 +78,10 @@
     "905",
     "906",
     "918",
+    "919A",
+    "919B",
+    "919C",
+    "919D",
     "921",
     "922",
     "923",
@@ -92,6 +98,8 @@
     "GATE"
    ],
    "curated": [
+    "25-1#a2",
+    "27#3",
     "30#3",
     "59-1#2",
     "82#2",
@@ -104,6 +112,8 @@
     "904#p1",
     "906#p1",
     "906#p2",
+    "919C#a1",
+    "919D#a1",
     "921#p2",
     "922#p1",
     "923#p2",
@@ -117,15 +127,15 @@
   },
   "note": "role = entrance_link 의 첫 점이 출입구 노드(graph_patch.apply_patch), slope_travel.py 가 거기서 출발한다",
   "stats": {
-   "doors": 387,
-   "links": 712,
+   "doors": 388,
+   "links": 720,
    "unlinked": 3,
    "barrier_lines": 2174,
    "patch_barriers": 1,
    "buildings": 745,
-   "long": 137,
-   "steep": 8,
-   "deep": 45
+   "long": 139,
+   "steep": 9,
+   "deep": 48
   }
  },
  "features": [
@@ -2180,6 +2190,47 @@
       37.458363
      ],
      [
+      126.9523957,
+      37.4583653
+     ],
+     [
+      126.9523675,
+      37.4583427
+     ],
+     [
+      126.952359,
+      37.4583336
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "20",
+    "entrances": [
+     "20#2"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 9.3,
+    "straight_m": 8.4,
+    "detour": true,
+    "max_grade": 7
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.952446,
+      37.458363
+     ],
+     [
       126.9523577,
       37.4584408
      ]
@@ -2200,38 +2251,6 @@
     "length_m": 11.6,
     "straight_m": 11.6,
     "max_grade": 12
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.952446,
-      37.458363
-     ],
-     [
-      126.9522709,
-      37.4583675
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "20",
-    "entrances": [
-     "20#2"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 15.5,
-    "straight_m": 15.5,
-    "max_grade": 10
    }
   },
   {
@@ -2295,6 +2314,37 @@
     "length_m": 0.2,
     "straight_m": 0.2,
     "door_depth_m": 1.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9523493,
+      37.4582981
+     ],
+     [
+      126.9523589,
+      37.4583336
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "21",
+    "entrances": [
+     "21#a1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 4.0,
+    "straight_m": 4.0
    }
   },
   {
@@ -2399,6 +2449,275 @@
     "straight_m": 18.6,
     "detour": true,
     "max_grade": 12
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.949675,
+      37.458954
+     ],
+     [
+      126.9496849,
+      37.4590273
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "25-1",
+    "entrances": [
+     "25-1#1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 8.2,
+    "straight_m": 8.2,
+    "max_grade": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.949675,
+      37.458954
+     ],
+     [
+      126.9498757,
+      37.45894
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "25-1",
+    "entrances": [
+     "25-1#1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 17.8,
+    "straight_m": 17.8,
+    "max_grade": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.949675,
+      37.458954
+     ],
+     [
+      126.9496661,
+      37.4589644
+     ],
+     [
+      126.9496605,
+      37.4589689
+     ],
+     [
+      126.9494624,
+      37.4590608
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "25-1",
+    "entrances": [
+     "25-1#1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 22.4,
+    "straight_m": 22.2,
+    "detour": true,
+    "max_grade": 5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.949397,
+      37.4590315
+     ],
+     [
+      126.9494595,
+      37.4590545
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "25-1",
+    "entrances": [
+     "25-1#a1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 6.1,
+    "straight_m": 6.1,
+    "max_grade": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950034,
+      37.458329
+     ],
+     [
+      126.9498058,
+      37.4582129
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "27",
+    "entrances": [
+     "27#1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 24.0,
+    "straight_m": 24.0,
+    "max_grade": 1,
+    "door_depth_m": 1.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950034,
+      37.458329
+     ],
+     [
+      126.9495749,
+      37.4583312
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "27",
+    "entrances": [
+     "27#1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 40.6,
+    "straight_m": 40.6,
+    "max_grade": 3,
+    "door_depth_m": 1.0,
+    "check": [
+     "long"
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950211,
+      37.458182
+     ],
+     [
+      126.9502112,
+      37.4581823
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "27",
+    "entrances": [
+     "27#2"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 0.0,
+    "straight_m": 0.0,
+    "door_depth_m": 0.2
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.949845,
+      37.457704
+     ],
+     [
+      126.9498446,
+      37.4576804
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "27",
+    "entrances": [
+     "27#4"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 2.6,
+    "straight_m": 2.6
    }
   },
   {
@@ -2714,8 +3033,16 @@
       37.4566533
      ],
      [
-      126.9502205,
-      37.4566529
+      126.9506382,
+      37.4566533
+     ],
+     [
+      126.9506325,
+      37.4566488
+     ],
+     [
+      126.9505544,
+      37.45642
      ]
     ]
    },
@@ -2731,8 +3058,126 @@
     "costFactor": 1,
     "snap": 0.5,
     "link": 1.0,
-    "length_m": 55.0,
-    "straight_m": 50.0,
+    "length_m": 45.1,
+    "straight_m": 26.1,
+    "detour": true,
+    "max_grade": 8,
+    "door_depth_m": 1.4,
+    "check": [
+     "long"
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950777,
+      37.456574
+     ],
+     [
+      126.9507568,
+      37.4565903
+     ],
+     [
+      126.9507342,
+      37.4566488
+     ],
+     [
+      126.9507286,
+      37.4566533
+     ],
+     [
+      126.9506382,
+      37.4566533
+     ],
+     [
+      126.9506325,
+      37.4566488
+     ],
+     [
+      126.9506551,
+      37.4563695
+     ],
+     [
+      126.9506663,
+      37.4563573
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "30",
+    "entrances": [
+     "30#1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 51.5,
+    "straight_m": 26.0,
+    "detour": true,
+    "max_grade": 8,
+    "door_depth_m": 1.4,
+    "check": [
+     "long"
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950777,
+      37.456574
+     ],
+     [
+      126.9507568,
+      37.4565903
+     ],
+     [
+      126.9507342,
+      37.4566488
+     ],
+     [
+      126.9507286,
+      37.4566533
+     ],
+     [
+      126.9506382,
+      37.4566533
+     ],
+     [
+      126.9506325,
+      37.4566488
+     ],
+     [
+      126.9504239,
+      37.4564069
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "30",
+    "entrances": [
+     "30#1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 51.3,
+    "straight_m": 36.3,
     "detour": true,
     "max_grade": 8,
     "door_depth_m": 1.4,
@@ -2788,6 +3233,142 @@
     "straight_m": 50.5,
     "detour": true,
     "max_grade": 9,
+    "door_depth_m": 7.6,
+    "check": [
+     "long",
+     "deep"
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950916,
+      37.456524
+     ],
+     [
+      126.9507908,
+      37.4565137
+     ],
+     [
+      126.9507738,
+      37.4565092
+     ],
+     [
+      126.9507681,
+      37.4565137
+     ],
+     [
+      126.9507342,
+      37.4566488
+     ],
+     [
+      126.9507286,
+      37.4566533
+     ],
+     [
+      126.9506382,
+      37.4566533
+     ],
+     [
+      126.9506325,
+      37.4566488
+     ],
+     [
+      126.9505544,
+      37.45642
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "30",
+    "entrances": [
+     "30#2"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 64.5,
+    "straight_m": 34.0,
+    "detour": true,
+    "max_grade": 7,
+    "door_depth_m": 7.6,
+    "check": [
+     "long",
+     "deep"
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950916,
+      37.456524
+     ],
+     [
+      126.9507908,
+      37.4565137
+     ],
+     [
+      126.9507738,
+      37.4565092
+     ],
+     [
+      126.9507681,
+      37.4565137
+     ],
+     [
+      126.9507342,
+      37.4566488
+     ],
+     [
+      126.9507286,
+      37.4566533
+     ],
+     [
+      126.9506382,
+      37.4566533
+     ],
+     [
+      126.9506325,
+      37.4566488
+     ],
+     [
+      126.9506551,
+      37.4563695
+     ],
+     [
+      126.9506663,
+      37.4563573
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "30",
+    "entrances": [
+     "30#2"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 70.9,
+    "straight_m": 28.8,
+    "detour": true,
+    "max_grade": 7,
     "door_depth_m": 7.6,
     "check": [
      "long",
@@ -3112,8 +3693,8 @@
       37.456133
      ],
      [
-      126.9503231,
-      37.4561247
+      126.9503261,
+      37.4561287
      ]
     ]
    },
@@ -3129,8 +3710,8 @@
     "costFactor": 1,
     "snap": 0.5,
     "link": 1.0,
-    "length_m": 10.3,
-    "straight_m": 10.3,
+    "length_m": 10.5,
+    "straight_m": 10.5,
     "max_grade": 5
    }
   },
@@ -3236,44 +3817,12 @@
     "type": "LineString",
     "coordinates": [
      [
-      126.9502763,
-      37.4562789
-     ],
-     [
-      126.9502713,
-      37.4563068
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "32",
-    "entrances": [
-     "32#a2",
-     "33#a1"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 3.1,
-    "straight_m": 3.1
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
       126.950242,
       37.456137
      ],
      [
-      126.9503231,
-      37.4561247
+      126.9503261,
+      37.4561287
      ]
     ]
    },
@@ -3289,8 +3838,8 @@
     "costFactor": 1,
     "snap": 0.5,
     "link": 1.0,
-    "length_m": 7.3,
-    "straight_m": 7.3,
+    "length_m": 7.5,
+    "straight_m": 7.5,
     "max_grade": 5
    }
   },
@@ -3368,12 +3917,8 @@
       37.456165
      ],
      [
-      126.9507173,
-      37.4561488
-     ],
-     [
-      126.9508279,
-      37.4561096
+      126.9506947,
+      37.4561159
      ]
     ]
    },
@@ -3389,10 +3934,8 @@
     "costFactor": 1,
     "snap": 0.5,
     "link": 1.0,
-    "length_m": 13.5,
-    "straight_m": 13.4,
-    "detour": true,
-    "max_grade": 7,
+    "length_m": 5.5,
+    "straight_m": 5.5,
     "door_depth_m": 0.1
    }
   },
@@ -3646,8 +4189,8 @@
       37.456048
      ],
      [
-      126.9508279,
-      37.4561096
+      126.9507058,
+      37.4561162
      ]
     ]
    },
@@ -3663,9 +4206,73 @@
     "costFactor": 1,
     "snap": 0.5,
     "link": 1.0,
-    "length_m": 12.9,
-    "straight_m": 12.9,
+    "length_m": 7.6,
+    "straight_m": 7.6,
+    "max_grade": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950704,
+      37.456048
+     ],
+     [
+      126.9508355,
+      37.4561106
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "37",
+    "entrances": [
+     "37#1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 13.5,
+    "straight_m": 13.5,
     "max_grade": 8
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.950704,
+      37.456048
+     ],
+     [
+      126.9505756,
+      37.4561154
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "37",
+    "entrances": [
+     "37#1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "steps",
+    "costFactor": 1.2,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 13.6,
+    "straight_m": 13.6,
+    "max_grade": 6
    }
   },
   {
@@ -3869,6 +4476,50 @@
     "length_m": 24.2,
     "straight_m": 24.2,
     "max_grade": 16
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9506177,
+      37.4559501
+     ],
+     [
+      126.9505138,
+      37.4559956
+     ],
+     [
+      126.9504234,
+      37.4560677
+     ],
+     [
+      126.9504231,
+      37.456101
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "37",
+    "entrances": [
+     "37#a1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 25.5,
+    "straight_m": 24.0,
+    "detour": true,
+    "max_grade": 12,
+    "check": [
+     "long"
+    ]
    }
   },
   {
@@ -8924,6 +9575,42 @@
     "type": "LineString",
     "coordinates": [
      [
+      126.9487041,
+      37.458772
+     ],
+     [
+      126.9487651,
+      37.4590135
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "500",
+    "entrances": [
+     "500#a2"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 27.3,
+    "straight_m": 27.3,
+    "max_grade": 3,
+    "door_depth_m": 0.1,
+    "check": [
+     "long"
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
       126.9580922,
       37.4616165
      ],
@@ -9156,6 +9843,186 @@
     "link": 1.0,
     "length_m": 2.7,
     "straight_m": 2.7
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9582957,
+      37.4634105
+     ],
+     [
+      126.9582924,
+      37.4633874
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "919A",
+    "entrances": [
+     "919A#a1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 2.6,
+    "straight_m": 2.6,
+    "door_depth_m": 10.3,
+    "check": [
+     "deep"
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9583183,
+      37.4630762
+     ],
+     [
+      126.958318,
+      37.4630761
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "919B",
+    "entrances": [
+     "919B#a1"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 0.0,
+    "straight_m": 0.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9586212,
+      37.463096
+     ],
+     [
+      126.9586217,
+      37.4630954
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "919B",
+    "entrances": [
+     "919B#a2"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 0.1,
+    "straight_m": 0.1,
+    "door_depth_m": 1.6
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9588551,
+      37.4627419
+     ],
+     [
+      126.9587575,
+      37.4627545
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "919C",
+    "entrances": [
+     "919C#a2",
+     "919D#a2"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 8.7,
+    "straight_m": 8.7,
+    "max_grade": 32,
+    "check": [
+     "steep"
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      126.9588551,
+      37.4627419
+     ],
+     [
+      126.9588383,
+      37.4627487
+     ],
+     [
+      126.9588327,
+      37.4627532
+     ],
+     [
+      126.9587366,
+      37.4629154
+     ],
+     [
+      126.9587365,
+      37.462935
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "919C",
+    "entrances": [
+     "919C#a2",
+     "919D#a2"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 24.5,
+    "straight_m": 23.9,
+    "detour": true,
+    "max_grade": 12
    }
   },
   {
@@ -15637,6 +16504,38 @@
     "type": "LineString",
     "coordinates": [
      [
+      126.94978,
+      37.458369
+     ],
+     [
+      126.9498058,
+      37.4582129
+     ]
+    ]
+   },
+   "properties": {
+    "type": "path",
+    "role": "entrance_link",
+    "building": "25",
+    "entrances": [
+     "25#3"
+    ],
+    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
+    "kind": "footway",
+    "costFactor": 1,
+    "snap": 0.5,
+    "link": 1.0,
+    "length_m": 17.5,
+    "straight_m": 17.5,
+    "max_grade": 6
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
       126.950257,
       37.459067
      ],
@@ -15749,111 +16648,6 @@
     "type": "LineString",
     "coordinates": [
      [
-      126.949675,
-      37.458954
-     ],
-     [
-      126.9496849,
-      37.4590273
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "25-1",
-    "entrances": [
-     "25-1#1"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 8.2,
-    "straight_m": 8.2,
-    "max_grade": 4
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.949675,
-      37.458954
-     ],
-     [
-      126.9498757,
-      37.45894
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "25-1",
-    "entrances": [
-     "25-1#1"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 17.8,
-    "straight_m": 17.8,
-    "max_grade": 4
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.949675,
-      37.458954
-     ],
-     [
-      126.9496661,
-      37.4589644
-     ],
-     [
-      126.9496605,
-      37.4589689
-     ],
-     [
-      126.9494624,
-      37.4590608
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "25-1",
-    "entrances": [
-     "25-1#1"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 22.4,
-    "straight_m": 22.2,
-    "detour": true,
-    "max_grade": 5
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
       126.950185,
       37.458815
      ],
@@ -15913,322 +16707,6 @@
     "length_m": 30.5,
     "straight_m": 30.5,
     "max_grade": 1,
-    "check": [
-     "long"
-    ]
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.950034,
-      37.458329
-     ],
-     [
-      126.9498054,
-      37.458213
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "27",
-    "entrances": [
-     "27#1"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "steps",
-    "costFactor": 1.2,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 24.0,
-    "straight_m": 24.0,
-    "max_grade": 1,
-    "door_depth_m": 1.0
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.950034,
-      37.458329
-     ],
-     [
-      126.9495749,
-      37.4583312
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "27",
-    "entrances": [
-     "27#1"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 40.6,
-    "straight_m": 40.6,
-    "max_grade": 3,
-    "door_depth_m": 1.0,
-    "check": [
-     "long"
-    ]
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.950211,
-      37.458182
-     ],
-     [
-      126.9502112,
-      37.4581823
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "27",
-    "entrances": [
-     "27#2"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 0.0,
-    "straight_m": 0.0,
-    "door_depth_m": 0.2
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.949833,
-      37.457949
-     ],
-     [
-      126.9498058,
-      37.4582129
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "27",
-    "entrances": [
-     "27#3"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "steps",
-    "costFactor": 1.2,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 29.4,
-    "straight_m": 29.4,
-    "max_grade": 10,
-    "door_depth_m": 0.2,
-    "check": [
-     "long"
-    ]
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.949833,
-      37.457949
-     ],
-     [
-      126.9495593,
-      37.4582997
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "27",
-    "entrances": [
-     "27#3"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "steps",
-    "costFactor": 1.2,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 45.8,
-    "straight_m": 45.8,
-    "max_grade": 10,
-    "door_depth_m": 0.2,
-    "check": [
-     "long"
-    ]
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.949845,
-      37.457704
-     ],
-     [
-      126.9500173,
-      37.4576243
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "27",
-    "entrances": [
-     "27#4"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 17.6,
-    "straight_m": 17.6,
-    "max_grade": 6
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.949845,
-      37.457704
-     ],
-     [
-      126.9499543,
-      37.4576715
-     ],
-     [
-      126.9500109,
-      37.457667
-     ],
-     [
-      126.9500531,
-      37.4576934
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "27",
-    "entrances": [
-     "27#4"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 20.1,
-    "straight_m": 18.4,
-    "detour": true,
-    "max_grade": 5
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.949845,
-      37.457704
-     ],
-     [
-      126.949847,
-      37.4574401
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "27",
-    "entrances": [
-     "27#4"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 29.3,
-    "straight_m": 29.3,
-    "max_grade": 18,
-    "check": [
-     "long"
-    ]
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.949845,
-      37.457704
-     ],
-     [
-      126.949944,
-      37.4574732
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "27",
-    "entrances": [
-     "27#4"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "steps",
-    "costFactor": 1.2,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 27.1,
-    "straight_m": 27.1,
-    "max_grade": 19,
     "check": [
      "long"
     ]
@@ -23191,8 +23669,8 @@
       37.458196
      ],
      [
-      126.9525933,
-      37.4581958
+      126.9525941,
+      37.4581975
      ]
     ]
    },
@@ -25171,68 +25649,6 @@
     "link": 1.0,
     "length_m": 1.3,
     "straight_m": 1.3
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.95862,
-      37.46311
-     ],
-     [
-      126.958619,
-      37.4631092
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "919",
-    "entrances": [
-     "919#1"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 0.1,
-    "straight_m": 0.1
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      126.958318,
-      37.463074
-     ],
-     [
-      126.958318,
-      37.4630761
-     ]
-    ]
-   },
-   "properties": {
-    "type": "path",
-    "role": "entrance_link",
-    "building": "919",
-    "entrances": [
-     "919#2"
-    ],
-    "source": "자동 접속선(scripts/entrance_links.py, 수치지형도 1:1,000 건물·장애물 회피)",
-    "kind": "footway",
-    "costFactor": 1,
-    "snap": 0.5,
-    "link": 1.0,
-    "length_m": 0.2,
-    "straight_m": 0.2
    }
   },
   {

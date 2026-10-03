@@ -628,7 +628,8 @@ def load_manual(path: Path, proj: LocalProj) -> dict[str, list[Cand]]:
 # ---------------------------------------------------------------- 건물
 
 def building_key(b: str):
-    m = re.fullmatch(r"(\d+)(?:-(\d+))?", b)
+    """동 번호 순: 9 < 43 < 43-2 < 43-10 < 301, 919 < 919A < 919B < 920. 번호가 아닌 것(GATE)은 맨 뒤."""
+    m = re.fullmatch(r"(\d+)[A-Z]?(?:-(\d+))?", b)
     return (0, int(m.group(1)), int(m.group(2) or 0), b) if m else (1, 0, 0, b)
 
 

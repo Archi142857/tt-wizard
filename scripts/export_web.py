@@ -36,7 +36,9 @@ from ttwizard.models import Meeting, merge_duplicate_meetings  # noqa: E402
 
 DATA = ROOT / "data"
 OUT = ROOT / "web" / "data"
-HOMES = [("919", "기숙사"), ("GATE", "정문")]
+# 출발·도착 조건의 차례(화면에 이 차례로 나온다: 정문 · 기숙사 · 다른 건물). 기숙사 항목의 동은 화면이 처음 고르는 동이다.
+# 같은 이름이 둘이면 자료에 있는 첫 것만 쓴다: 919A 가 없는 자료(data/sample)는 예전처럼 919 한 점
+HOMES = [("GATE", "정문"), ("919A", "기숙사"), ("919", "기숙사")]
 STAND_IN = {"71-1": "71"}  # 좌표가 없는 지점 → 지도에 대신 찍을 건물(slope_travel.ALIASES 와 같게. 71-1동은 이제 좌표가 있어 쓰이지 않는다)
 SKIP_CLASSIFICATION = {"논문"}  # 논문연구 등: 수업 시간이 없어 시간표와 무관
 
@@ -95,10 +97,11 @@ def export_campus(data: Path) -> dict:
         return [[0 if a == b else (round(table[(a, b)], 2) if (a, b) in table else None) for b in ids] for a in ids]
 
     # 이름은 캠퍼스맵 목록을 먼저, 좌표는 알고리즘이 쓰는 buildings.csv 를 가장 앞세운다(없는 쌍의 추정에 쓰는 좌표).
-    # 마법 지도용 목록은 GATE 처럼 다른 데 없는 지점(근사 좌표)만, 기숙사 동 목록은 캠퍼스맵에 없는 동(901동, 919-A~D)만 채운다
+    # 마법 지도용 목록은 GATE 처럼 다른 데 없는 지점(근사 좌표)만, 기숙사 동 목록은 좌표는 캠퍼스맵에 없는 동(901동, 919A~D)만 채우고
+    # 이름은 가장 앞선다(확인해 고친 이름: 캠퍼스맵은 학부생활관인 906동을 대학원 생활관으로 적는다)
     files = ["campus_buildings.csv", "buildings_elevation.csv", "buildings.csv", "buildings_for_magicmap.csv", "dorm_buildings.csv"]
     names, coords = {}, {}
-    for path in files:
+    for path in ["dorm_buildings.csv"] + files[:-1]:
         for r in _rows(data / path):
             if r.get("name"):
                 names.setdefault(r["building"].strip(), re.sub(r"\s*\(.*\)$", "", r["name"].strip()))
@@ -112,13 +115,18 @@ def export_campus(data: Path) -> dict:
     buildings = {b: [names.get(b, ""), *coords[b]] if b in coords else [names.get(b, ""), None, None]
                  for b in sorted(set(names) | set(coords) | set(ids))}
     state = json.loads((data / "sync_state.json").read_text(encoding="utf-8")) if (data / "sync_state.json").exists() else {}
+    homes = {}
+    for b, label in HOMES:
+        if b in buildings:
+            homes.setdefault(label, b)
     return {
         "ids": ids,
         "flat": dense(flat),
         "slope": dense(slope),
         "buildings": buildings,
-        "homes": [[b, label] for b, label in HOMES if b in buildings],
-        # 기숙사 동 [동, 종류(학부·대학원·글로벌·가족·BK)]. ids 에 있으면 이동시간이 있고, 919-A~D 처럼 없으면 지도 번호만
+        "homes": [[b, label] for label, b in homes.items()],
+        # 기숙사 동 [동, 종류(학부·대학원·글로벌·가족·BK)]. ids 에 있으면 이동시간이 있다. 919 는 ids 에 없다: 919A~D 네 동이 대신하고,
+        # 이 줄은 화면이 919 를 건물 번호로 그리지 않게 남긴다(캠퍼스맵 목록에는 919 한 점이 있다)
         "dorms": [[r["building"].strip(), (r.get("kind") or "").strip()] for r in _rows(data / "dorm_buildings.csv")
                   if r["building"].strip() in buildings],
         "estimate": {"walk_kmh": 4.0, "detour": 1.35, "default_minutes": 15.0},  # ttwizard/travel.py 와 같은 값

@@ -62,9 +62,12 @@ python scripts/field_validation.py track data/field/tracks --dem data/dem   # �
   (이때는 짧은 멈춤을 못 잡는다). 구간 시간(`data/field/measurements_gps.csv`, `check` 입력)은 멈춘 시간을 뺀 값이고,
   전체 걸린 시간은 `gps_walks.csv` 의 `total_s` 다. 그다음은 '분석 (check)' 과 같다.
 - **경사별 속도.** 경로를 50 m 조각으로 나눠 조각마다 걸린 시간을 잰다(멈춤·끊김이 있는 조각은 뺀다).
-  사람마다 평지 속도를 1로 두고 조각 경사별로 실측 속도를 Tobler 식(k = 3.5)과 견준다. 계단 조각(절반 넘게 계단)은 따로 본다.
+  사람마다 평지 속도를 1로 두고 조각 경사별로 실측 속도를 Tobler 식(k = 3.5)과 견준다. 계단 조각(절반 넘게 계단)은 따로 모아
+  모형의 계단 속도식(`docs/travel_time_method.md` '방법' 7)과 견준다. R2 가 그 구간이다: 모형 시간은 오름 8.0분·내림 7.0분이고,
+  계단에도 Tobler 를 쓰면 8.7분·6.5분이다.
 - **경사 계수 맞추기.** 속도 식 v = v0 · exp(−k |g + 0.05|) / exp(−0.05 k) 에서 k 를 0~8 사이에서 고르고 사람마다 v0 를
-  맞춰, log(실측 ÷ 예측) 제곱합이 가장 작은 k 를 찾는다. k = 0 이면 평지 모형, 3.5 면 Tobler. 경사를 재는 창 길이
+  맞춰, log(실측 ÷ 예측) 제곱합이 가장 작은 k 를 찾는다. k = 0 이면 평지 모형, 3.5 면 Tobler. 계단 엣지 위는 k 와 상관없이
+  계단 속도식으로 둔다(k 는 계단이 아닌 길에만 맞춘다). 경사를 재는 창 길이
   (10·20·30·50 m)별로 남는 차이도 낸다.
 - 결과: `results/field/README.md` 의 'GPS 기록' 절, `gps_walks.csv`(기록별), `gps_chunks.csv`(조각별), `gps_summary.json`,
   `fig_field_grade`(경사별 속도). 위치(위도·경도) 원자료는 결과에 남기지 않는다. `data/field/tracks/` 는 git 에 올리지 않는다.
@@ -97,7 +100,7 @@ python scripts/field_validation.py track data/field/tracks --dem data/dem   # �
 | 열 | 뜻 | 예 |
 | --- | --- | --- |
 | `route` | 구간 이름 | `R1` |
-| `from`, `to` | 출발·도착 동 번호 (앱과 같은 표기. 정문 `GATE`, 기숙사 `919`) | `GATE`, `302` |
+| `from`, `to` | 출발·도착 동 번호 (앱과 같은 표기. 정문 `GATE`, 기숙사 동 `919A`·`906` 등) | `GATE`, `302` |
 | `note` | 메모 | `정문→공대 오르막` |
 
 `data/field/measurements.csv` — 측정 한 번이 한 줄 (`measurements_template.csv` 를 복사)

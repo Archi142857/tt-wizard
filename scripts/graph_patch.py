@@ -113,6 +113,11 @@ def patch_entrances(paths) -> dict[str, list[tuple[float, float]]]:
     return dict(out)
 
 
+def label_only(path: Path = DORMS) -> set[str]:
+    """기숙사 동 목록에서 travel = N 인 동: 지도에 번호만 남기고 이동시간·출입구는 쓰지 않는다(919 → 919A~D 네 동이 대신한다)."""
+    return {r["building"].strip() for r in _rows(path) if (r.get("travel") or "").strip().upper() == "N"}
+
+
 def reported_entrances(paths) -> dict[str, list[tuple[float, float]]]:
     """replace = true 인 출입구(사용자 제보·손으로 그린 패치)만 → {동: [(lon, lat)]}. building_entrances.csv 보다 우선한다."""
     out = defaultdict(list)
@@ -435,7 +440,7 @@ def dorm_footprints(ids: set[str], path: Path = OSM_BUILDINGS) -> dict:
         key = "946" if name == "BK국제관" else None
         m = re.fullmatch(r"(?:글로벌학생생활관\()?(\d{3})([A-D])?\)?", name)
         if m:
-            key = m.group(1) + (f"-{m.group(2)}" if m.group(2) else "")
+            key = m.group(1) + (m.group(2) or "")  # OSM 이름 919A → 919A
         if key in ids and key not in out:
             out[key] = shape(f["geometry"])
     return out

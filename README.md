@@ -42,10 +42,10 @@ python scripts/slope_travel.py
 # 4) 과목 찾기 → 탐색 (--travel 을 빼면 평지 행렬 data/travel.csv)
 python -m ttwizard find --lectures data/lectures.json 생화학
 python -m ttwizard search --lectures data/lectures.json \
-    --courses M1101.000100,M1102.000100,L0444.000100 --home 919 --top 5 --travel data/travel_slope.csv --json data/results.json
+    --courses F11.101,4190.308,F32.102 --home 919A --top 5 --travel data/travel_slope.csv --json data/results.json
 ```
 
-`--home` 은 출발/도착 건물 id (기숙사 `919`, 정문 `GATE` 등, `data/buildings.csv` 에 있어야 함).
+`--home` 은 출발/도착 지점 id (기숙사 동 `919A`·`906` 등, 정문 `GATE`. 이동시간 행렬에 있는 지점).
 
 ## 웹 화면
 
@@ -145,16 +145,20 @@ python scripts/graph_slopes.py               # 그래프(+ 보강)에 노드 고
 python scripts/slope_travel.py               # 출입구 사이 경로 → 평지 data/travel.csv, 경사 반영(방향별) data/travel_slope.csv, data/route_stats.csv
 ```
 
-지점은 마법 지도 표의 109곳에 기숙사 동(`data/dorm_buildings.csv`: 900~906·915~918·921~926·931~935·946동. 919-A~D 는 지도 번호만)을 더한 132곳이다.
+지점은 마법 지도 표의 109곳에서 919(기숙사 한 점)를 뺀 108곳에 기숙사 동 27곳(`data/dorm_buildings.csv` 의 travel = Y: 900~906·915~918·919A~D·921~926·931~935·946동)을 더한 135곳이다.
+919동은 네 동(919A~D)이라 동마다 따로 낸다(목록의 919 는 travel = N: 표에 있어도 지점에서 뺀다).
 
 받은 그래프는 고치지 않고, 더할 길·실제로 없는 엣지·출입구는 `data/graph_patch/` 에 둔다(출처·형식·고치는 법은 그 폴더 README).
-`campus.geojson` 은 관악캠 전체를 카카오 로드뷰·스카이뷰와 국토지리정보원 1:1,000 수치지형도로 점검한 결과(2026-10-02: 출입구 확인·더하기, 빠진 보도·계단·횡단보도,
-건물을 뚫는 엣지·공사 구역 막기), `gwanaksa.geojson` 은 관악학생생활관 둘레를 수치지형도로 그린 길, `dorm.geojson` 은 `graph_patch.py` 가
+`campus.geojson` 은 관악캠 전체를 카카오 로드뷰·스카이뷰와 국토지리정보원 1:1,000 수치지형도로 점검한 결과(2026-10-02·03: 출입구 확인·더하기, 빠진 보도·계단·횡단보도·
+건물 밑 통로, 건물을 뚫는 엣지·공사 구역 막기), `gwanaksa.geojson` 은 관악학생생활관 둘레를 수치지형도로 그린 길, `dorm.geojson` 은 `graph_patch.py` 가
 OSM 으로 만드는 그 밖의 기숙사 둘레 길, `links.geojson` 은 `entrance_links.py` 가 만드는 출입구 접속선이다. 받은 그래프의 끊긴 갈림목(엣지 위에 찍힌 노드)도 이때 잇는다.
 
-이동시간은 우리 출입구에서 그래프 위 최단 경로를 찾아(다른 건물의 출입구는 지나가지 않는다) 잰다. 평지는 경로 길이 ÷ 1.1 m/s,
-경사 반영은 30 m 창으로 잰 경사에 Tobler 보행 함수를 적용한 시간이다. 2026-10-02 까지는 마법 지도 건물쌍 표 시간 × 경사 계수였는데,
-표가 끊긴 그래프에서 계산돼 우리 경로와 1분 넘게 다른 쌍이 2,488개라 우리 경로 시간으로 바꿨다(`--base magicmap` 으로 예전 값을 낼 수 있다).
+이동시간은 우리 출입구에서 그래프 위 경로를 찾아(다른 건물의 출입구는 지나가지 않는다) 잰다. 평지는 최단거리 경로의 길이 ÷ 1.1 m/s,
+경사 반영은 30 m 창으로 잰 경사에 Tobler 보행 함수를 적용한 시간이다. 계단 엣지(`kind: steps`) 위는 계단 보행 실측(Fujiyama & Tyler 2004)에 맞춘
+계단 속도식으로 잰다(Tobler 는 계단을 실제보다 훨씬 느리게 본다. `--stairs tobler` 는 계단도 Tobler). 경사 반영 시간은 방향마다 가장 빠른 경로의 값이다: 최단거리 경로와
+경사 반영 시간으로 찾은 경로 가운데 6초 넘게 빠른 쪽을 쓴다(가파른 비탈보다 조금 돌아가는 길이 빠른 쌍. `--choose shortest` 는 최단거리 경로만).
+2026-10-02 까지는 마법 지도 건물쌍 표 시간 × 경사 계수였는데, 표가 끊긴 그래프에서 계산돼 우리 경로와 1분 넘게 다른 쌍이 2,504개라
+우리 경로 시간으로 바꿨다(`--base magicmap` 으로 예전 값을 낼 수 있다).
 방법·결과·한계는 `docs/travel_time_method.md`.
 
 현장에서 확인한 출입구는 `data/entrances_manual.csv`(`building,lat,lon,floor,kind,note`)에 적으면 그 건물은 자동 후보 대신 그것을 쓴다.

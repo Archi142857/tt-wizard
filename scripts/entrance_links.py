@@ -12,6 +12,7 @@
   data/building_entrances.csv           출입구(층 추정·OSM 출처). 패치에 replace = true 출입구(손으로 확인한 것)가 있는 동은 그것만 쓰고,
                                          csv 에 없는 기숙사 동은 패치의 자동 출입구(dorm.geojson). 손으로 그린 접속선이 이미 있는
                                          출입구는 건너뛴다
+  data/dorm_buildings.csv               travel = N 인 동(919: 919A~D 네 동이 대신한다)은 출입구를 쓰지 않는다
   data/topo/*/N1A_B0010000              1:1,000 수치지형도 건물. 무벽건물(캐노피·자전거보관대·버스 쉼터)은 지나갈 수 있다
   data/topo/*/N1L_B0020000 등           장애물 선(BARRIERS): 담장·철책·판자담(문주 제외), 옹벽·석축, 절토, 가드펜스, 제방, 벼랑바위
   data/topo/*/N1A_C0390000              계단(면). 접속선이 지나가면 kind = steps
@@ -130,8 +131,9 @@ def base_graph(graph_path: Path, patch_files) -> dict:
     return graph
 
 
-def entrance_list(entrances: Path, patch_files) -> tuple[list[dict], dict]:
+def entrance_list(entrances: Path, patch_files, skip=()) -> tuple[list[dict], dict]:
     """접속선을 만들 출입구 [{building, no, lon, lat}] (같은 자리는 하나로 합치기 전), 건너뛴 출입구 정보.
+    skip: 출입구를 쓰지 않는 동(기숙사 동 목록의 travel = N. 919 는 919A~D 가 대신한다).
 
     동마다 출입구는 slope_travel.load_points 와 같은 차례로 고른다: 패치의 replace = true 출입구(손으로 확인한 것. 번호 = no, 없으면 r1, r2 …)가
     있으면 그것만, 없으면 building_entrances.csv, 그것도 없으면 패치의 자동 출입구(기숙사 동. 번호 p1, p2 …).
@@ -143,7 +145,8 @@ def entrance_list(entrances: Path, patch_files) -> tuple[list[dict], dict]:
         p, g = f.get("properties") or {}, f.get("geometry") or {}
         if p.get("role") == "entrance_link" and g.get("type") == "LineString":
             curated.append(tuple(map(float, g["coordinates"][0][:2])))
-    rows = [r for r in gp._rows(entrances) if r.get("lat") and r.get("lon")]
+    skip = set(skip)
+    rows = [r for r in gp._rows(entrances) if r.get("lat") and r.get("lon") and r["building"] not in skip]
     have_csv = {r["building"] for r in rows}
     out, skipped = [], {"reported": sorted(reported), "curated": []}
     opts = {}  # replace 출입구 (동, lon, lat) → 번호(no)와 접속선 조건(max_links·slack·clear)
@@ -154,6 +157,8 @@ def entrance_list(entrances: Path, patch_files) -> tuple[list[dict], dict]:
             if o:
                 opts[(str(p["building"]), *map(float, g["coordinates"][:2]))] = o
     for b, pts in reported.items():
+        if b in skip:
+            continue
         for i, (lon, lat) in enumerate(pts):
             o = opts.get((b, float(lon), float(lat)), {})
             out.append({"building": b, "lon": float(lon), "lat": float(lat), **o, "no": str(o.get("no") or f"r{i + 1}")})
@@ -164,7 +169,7 @@ def entrance_list(entrances: Path, patch_files) -> tuple[list[dict], dict]:
         out.append({"building": b, "no": str(r.get("entrance_no") or ""), "lon": float(r["lon"]), "lat": float(r["lat"])})
     k = defaultdict(int)
     for b, pts in gp.patch_entrances(patch_files).items():  # 패치의 자동 출입구(기숙사 동): csv 에 없는 동만
-        if b in reported or b in have_csv:
+        if b in reported or b in have_csv or b in skip:
             continue
         for lon, lat in pts:
             k[b] += 1
@@ -270,7 +275,7 @@ def pull(grid: Grid, block: np.ndarray, pts, clear: set):
 # ---------------------------------------------------------------- 만들기
 
 def build(graph_path: Path = gp.GRAPH, entrances: Path = gp.ENTRANCES, topo: Path = TOPO, dem_dir: Path = DATA / "dem",
-          patch_files=None, out_path: Path = OUT) -> dict:
+          patch_files=None, out_path: Path = OUT, dorms: Path = gp.DORMS) -> dict:
     from shapely.geometry import LineString, Point, shape
     from shapely.ops import transform as shapely_transform
     from shapely.strtree import STRtree
@@ -279,7 +284,7 @@ def build(graph_path: Path = gp.GRAPH, entrances: Path = gp.ENTRANCES, topo: Pat
     if patch_files is None:
         patch_files = [p for p in sorted(gp.PATCH_DIR.glob("*.geojson")) if p.resolve() != Path(out_path).resolve()]
     graph = base_graph(graph_path, patch_files)
-    ents, skipped = entrance_list(entrances, patch_files)
+    ents, skipped = entrance_list(entrances, patch_files, skip=gp.label_only(dorms))
 
     # 같은 자리 출입구는 하나로
     doors = []

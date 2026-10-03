@@ -46,7 +46,7 @@ def test_check_recovers_walking_speed(tmp_path):
     """경사 모형대로, 사람마다 다른 속도로 걸었다고 치면: 속도를 되찾고 보정 뒤 남는 차이가 0이다."""
     stats = fv.load_stats()
     rows = []
-    for a, b in (("GATE", "302"), ("302", "GATE"), ("919", "301"), ("301", "919")):
+    for a, b in (("GATE", "302"), ("302", "GATE"), ("919A", "301"), ("301", "919A")):
         for walker, v0 in (("A", 1.3), ("B", 1.0)):
             sec = stats[(a, b)]["route_slope_min"] * fv.V0 / v0 * 60
             rows.append({"route": f"{a}-{b}", "from": a, "to": b, "walker": walker, "trial": 1, "time": f"{sec:.3f}"})
@@ -79,13 +79,14 @@ def model():
 
 
 def simulate(model, rng, walk, walker, device, a, b, v, k, start, stop_at=None, stop_s=0.0, sigma=3.0, offset=0.0):
-    """경사 모형(창 30 m, 계수 k)대로 평지 속도 v 로 걷는 사람의 GPS 기록(측정 페이지 CSV 행). 오차는 상관시간 15초."""
+    """경사 모형(창 30 m, 계수 k. 계단 엣지 위는 계단 속도식)대로 평지 속도 v 로 걷는 사람의 GPS 기록(측정 페이지 CSV 행).
+    오차는 상관시간 15초."""
     import slope_travel as stv
 
     r = model.route(a, b)
     ds, g = stv.window_grades(r["s"], r["z"], 30.0)
     S = np.concatenate([[0.0], np.cumsum(ds)])
-    C = np.concatenate([[0.0], np.cumsum(fv.unit_time(ds, g, k))]) / v
+    C = np.concatenate([[0.0], np.cumsum(fv.unit_time(ds, g, k, fv.stairs_mask(r, ds)))]) / v
     t0 = None
     if stop_at is not None:
         t0 = float(np.interp(stop_at, S, C))

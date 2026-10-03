@@ -2,7 +2,6 @@
 
 import csv
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -26,8 +25,10 @@ LABELS = [r["building"] for r in DORMS if r["travel"] == "N"]
 
 def test_dorm_list():
     ids = [r["building"] for r in DORMS]
-    assert len(ids) == len(set(ids)) and {"900", "901", "906", "919", "921", "926", "931", "946"} <= set(TRAVEL)
-    assert set(LABELS) == {"919-A", "919-B", "919-C", "919-D"}  # 919 의 네 동은 지도 번호만(이동시간은 919)
+    assert len(ids) == len(set(ids)) and {"900", "901", "906", "919A", "919B", "919C", "919D", "921", "926", "931", "946"} <= set(TRAVEL)
+    assert set(LABELS) == {"919"}  # 919 는 네 동(919A~D)의 묶음이라 이동시간을 내지 않는다(캠퍼스맵·마법 지도 표에는 한 점)
+    by = {r["building"]: r for r in DORMS}
+    assert {by[b]["kind"] for b in ("906", "919C", "919D")} == {"학부"}  # LnL 동 = 학부생활관
     for r in DORMS:
         lat, lon = float(r["lat"]), float(r["lon"])
         assert 37.459 < lat < 37.468 and 126.956 < lon < 126.961, r  # 관악학생생활관·가족생활관 둘레
@@ -35,8 +36,8 @@ def test_dorm_list():
 
 
 def test_dorm_travel_times():
-    """이동시간을 내는 동마다 마법 지도 표의 모든 지점과 오가는 시간이 평지·경사 둘 다 있다."""
-    magic = {r["from"] for r in _rows(DATA / "magicmap" / "building_pair_times.csv")}
+    """이동시간을 내는 동마다 마법 지도 표의 모든 지점과 오가는 시간이 평지·경사 둘 다 있다. 표에 있어도 travel = N 인 919 는 빠진다."""
+    magic = {r["from"] for r in _rows(DATA / "magicmap" / "building_pair_times.csv")} - set(LABELS)
     for name, source in (("travel.csv", None), ("travel_slope.csv", "slope")):
         t = {(r["from"], r["to"]): r for r in _rows(DATA / name)}
         for d in TRAVEL:
@@ -51,7 +52,7 @@ def test_dorm_travel_times():
         for label in LABELS:
             assert not any(label in k for k in t), label
     paths = json.loads((DATA / "route_paths.json").read_text(encoding="utf-8"))
-    assert set(TRAVEL) <= set(paths["ids"])
+    assert set(TRAVEL) <= set(paths["ids"]) and not set(LABELS) & set(paths["ids"])
     extra = set(TRAVEL) - magic
     assert not [k for k in paths["paths"] if set(k.split("|")) <= extra]  # 기숙사 동끼리는 그리지 않는다
     assert all(f"{d}|301" in paths["paths"] or f"301|{d}" in paths["paths"] for d in TRAVEL)
@@ -61,7 +62,7 @@ PATCHES = sorted((DATA / "graph_patch").glob("*.geojson"))
 
 
 def test_graph_patch():
-    """패치: 이동시간을 내는 동마다 출입구가 있고(919 는 building_entrances.csv), 경사 그래프에 더한 노드·엣지는
+    """패치: 이동시간을 내는 동마다 출입구가 있고, 번호만 남긴 동(919)은 출입구 노드가 없다. 경사 그래프에 더한 노드·엣지는
     src = ttwizard, 받은 것은 그대로. 막은 엣지(block)는 받은 그래프의 노드 번호로만 적는다(더한 노드는 다시 만들 때마다 번호가 바뀐다)."""
     received = json.loads((DATA / "magicmap" / "roads_graph_updated.json").read_text(encoding="utf-8-sig"))
     received_ids = {n["id"] for n in received["nodes"]}
@@ -94,7 +95,7 @@ def test_graph_patch():
     assert "patch" in slope["meta"]
     # 출입구 접속선의 건물 쪽 끝은 출입구 노드(동 번호). 기숙사 동마다 있고, 출입구 노드는 모두 그래프 본체에 이어진다
     doors = {n["building"] for n in added_n if n.get("entrance")}
-    assert set(TRAVEL) <= doors
+    assert set(TRAVEL) <= doors and not set(LABELS) & doors
     adj = {}
     for e in slope["edges"]:
         if e.get("walkable", True):
@@ -186,10 +187,16 @@ def test_campus_export_has_dorms():
     for d in TRAVEL:
         assert d in campus["ids"] and campus["buildings"][d][1] is not None, d
     dorms = dict(campus["dorms"])
-    assert set(dorms) == set(TRAVEL) | set(LABELS) and dorms["919"] == "학부" and dorms["931"] == "가족"
-    for label in LABELS:  # 지도 번호만: 좌표는 있고 이동시간 지점은 아니다
+    assert set(dorms) == set(TRAVEL) | set(LABELS) and dorms["919A"] == "학부" and dorms["931"] == "가족"
+    for label in LABELS:  # 화면이 건물 번호로 그리지 않게 기숙사 동 목록에는 남는다: 좌표는 있고 이동시간 지점은 아니다
         name, lat, lon = campus["buildings"][label]
-        assert lat and lon and label not in campus["ids"] and re.fullmatch(r"919-[A-D]", label)
+        assert lat and lon and label not in campus["ids"] and label == "919"
+    assert campus["homes"] == [["GATE", "정문"], ["919A", "기숙사"]]  # 화면 차례: 정문 · 기숙사 · 다른 건물. 기숙사는 처음 919A동
+    assert campus["buildings"]["906"][0] == "(관악사)학부 생활관"  # 이름은 기숙사 동 목록이 캠퍼스맵 목록(대학원 생활관)보다 앞선다
+    four = [campus["ids"].index(b) for b in ("919A", "919B", "919C", "919D")]
+    assert four == sorted(four) and four[-1] - four[0] == 3  # 번호순으로 나란히
+    gate = campus["ids"].index("GATE")
+    assert len({campus["slope"][i][gate] for i in four}) > 1  # 네 동의 시간이 따로 있다
     assert campus["buildings"]["901"][1] == pytest.approx(37.461958, abs=1e-6)
     i, j = campus["ids"].index("906"), campus["ids"].index("301")
     assert campus["slope"][i][j] > campus["flat"][i][j] > 15  # 906동 → 301동: 오르막이라 경사 반영이 더 길다
