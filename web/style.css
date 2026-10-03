@@ -116,8 +116,8 @@
   --width-result: 1080px;
   --width-sheet: 560px;
   --width-pane: 360px;
-  --pane-h: 356px;
-  --pane-h-wide: 460px;
+  --pane-h: calc(19.75rem + 40px);
+  --pane-h-wide: calc(26.25rem + 40px);
   --tt-hour-min: 32px;
   --bp-stack: 360px;
   --bp-medium: 600px;
@@ -136,8 +136,10 @@
   --font-sans: Pretendard, "Pretendard Variable", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 
   /* 화면 전용: 시간표 격자 높이(app.js 가 블록 줄 수를 정할 때 읽는다), 폰 가장자리(노치·홈 막대).
-     바탕 지도 색 map-*(app.js 가 캔버스에 그릴 때 읽는다)·width-pane·bp-two-pane 은 10/2 디자인 토큰이 되어 위 토큰 블록에 있다 */
-  --tt-h: 316px;
+     바탕 지도 색 map-*(app.js 가 캔버스에 그릴 때 읽는다)·width-pane·bp-two-pane 은 10/2 디자인 토큰이 되어 위 토큰 블록에 있다.
+     격자 높이는 rem 이다(10/3 디자인: 칸 높이가 기기 글자 크기를 따라간다. pane-h = 격자 + 위아래 40px). px 로 두면 글자를 키울 때
+     번호표·출처 표기만 커져 지도가 줄어든다(글자 200%·폭 320 에서 지도 152px, 끝 핀이 출처 표기 밑) */
+  --tt-h: 19.75rem;
   --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
   --gutter-left: max(var(--space-5), var(--safe-area-inset-left, env(safe-area-inset-left, 0px)));
@@ -556,15 +558,17 @@ dialog.sheet.is-dragging { transition: none; }
 .daytabs button[aria-selected="true"] { background: var(--accent); color: var(--on-color); }
 
 /* ---------------------------------------------------------------- 시간표 | 지도 */
-/* 한 시간은 tt-hour-min(32px) 이상(10/2 디자인): 축이 길어(저녁 수업) 시간표가 기본 높이(--tt-h)보다 길어지면 app.js(sizeTimetable)가 늘어난
-   만큼을 --tt-extra 로 준다. 시간 눈금·격자·두 칸이 같이 길어지고, 위아래로 쌓는 좁은 폭에서는 시간표 칸만 길어진다 */
+/* 칸 높이 pane-h 는 기기 글자 크기를 따라간다(10/3 디자인): 시간표 격자 --tt-h(19.75rem = 316px, 840px부터 26.25rem = 420px) + 위아래 40px.
+   한 시간은 tt-hour-min(32px) 이상(10/2 디자인): 축이 길어(저녁 수업) 시간표가 기본 높이(--tt-h)보다 길어지면 app.js(sizeTimetable)가 늘어난
+   만큼을 --tt-extra 로 준다. 시간 눈금·격자·두 칸이 같이 길어지고, 위아래로 쌓였을 때는 시간표 칸만 길어진다 */
 .panes { display: flex; gap: var(--space-2); height: calc(var(--pane-h) + var(--tt-extra, 0px)); margin-top: var(--space-3); }
 .panes > .card { flex: 1 1 0; min-width: 0; padding: var(--space-3); }
 .panes.is-fading > .card { animation: tt-fade var(--dur-fade) var(--ease-standard); }
 @keyframes tt-fade { from { opacity: .35; } }
 .tt { display: flex; gap: var(--space-2); }
 .tt-hours { position: relative; flex-shrink: 0; width: 1.125rem; height: calc(var(--tt-h) + var(--tt-extra, 0px)); margin-top: var(--space-2); }
-.tt-hours span { position: absolute; right: 0; transform: translateY(-8px); font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text3); }
+/* 눈금 글자는 글자 크기와 상관없이 그 시각의 선에 세로 가운데(px 로 8px 올리면 글자 200%에서 8px 아래로 처진다) */
+.tt-hours span { position: absolute; right: 0; transform: translateY(-50%); font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--text3); }
 .tt-grid { position: relative; flex: 1; min-width: 0; height: calc(var(--tt-h) + var(--tt-extra, 0px)); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
 .tt-line { position: absolute; left: 0; right: 0; height: 1px; background: var(--line); }
 /* 수업 칸: 교과구분 연한 색 바탕(app.js 가 칠한다), 과목명 t-block(어느 칸이나 14px), 강의실 t-label(늘 보인다). 칸 높이에 맞춰 과목명 줄 수(--lines)를 정한다 */
@@ -649,12 +653,29 @@ dialog.sheet.is-dragging { transition: none; }
 .day-summary { display: flex; align-items: center; gap: var(--space-2); min-height: 22px; margin: var(--space-3) var(--space-1) 0; font-size: 0.875rem; line-height: 1.25rem;
   color: var(--text2); }
 .day-summary b { color: var(--text); font-weight: 500; }
-@media (max-width: 22.4375em) { .panes { flex-direction: column; height: auto; } .panes > .card { flex: none; height: var(--pane-h); } .panes > .card.tt { height: calc(var(--pane-h) + var(--tt-extra, 0px)); } }
 @media (min-width: 52.5em) {
-  :root { --tt-h: 420px; }
+  :root { --tt-h: 26.25rem; }
   .panes { height: calc(var(--pane-h-wide) + var(--tt-extra, 0px)); }
   .panes .legend { grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); }
   .panes .legend li.line { grid-column: auto; }
+}
+/* 쌓기(10/3 디자인): 본문 폭이 19.9375rem(글자 100%에서 화면 폭 359px) 아래면 위아래로. 미디어 쿼리 em 은 브라우저 기본 글자 크기만 따라오고
+   루트 글자 크기(iOS 앱의 -apple-system-body, 글자 크기 시험)는 못 따라와서 컨테이너 쿼리 rem 으로 쓴다: 폰 390 은 글자 110%부터 쌓인다
+   (나란한 채로 글자만 커지면 과목명·번호표가 두세 글자에서 잘리고 출처 표기가 지도 밖으로 나온다).
+   위의 넓은 화면 규칙 뒤에 둔다(쌓였을 때 height: auto 가 이기게). 쌓인 칸의 높이는 그때의 격자 높이(--tt-h) + 위아래 40px.
+   지도 칸을 번호표만큼 늘리지 않는다(요일마다 카드 높이가 달라진다) */
+#day-panel { container-type: inline-size; }
+@container (max-width: 19.9375rem) {
+  .panes { flex-direction: column; height: auto; }
+  .panes > .card { flex: none; height: calc(var(--tt-h) + 40px); }
+  .panes > .card.tt { height: calc(var(--tt-h) + 40px + var(--tt-extra, 0px)); }
+}
+@supports not (container-type: inline-size) { /* 컨테이너 쿼리가 없는 옛 브라우저는 예전처럼 화면 폭으로 쌓는다 */
+  @media (max-width: 22.4375em) {
+    .panes { flex-direction: column; height: auto; }
+    .panes > .card { flex: none; height: calc(var(--tt-h) + 40px); }
+    .panes > .card.tt { height: calc(var(--tt-h) + 40px + var(--tt-extra, 0px)); }
+  }
 }
 
 /* 전체 화면 지도 */

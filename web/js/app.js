@@ -48,7 +48,7 @@ const state = {
   // 담은 과목 [{id, excluded: Set<분반 키>, name, cls, credit, dept}]. 이름 등은 자료에서 사라진 과목을 보이려고 함께 저장한다
   picks: [],
   overrides: {}, // 분반 키 → {rooms: {수업 번호: 건물}, times: [[요일, 시작, 끝, 건물]]} 강의실·시간 미정을 직접 넣은 것
-  home: "919", homeOther: "", homeDorm: "", mode: "slope",
+  home: "", homeOther: "", homeDorm: "", mode: "slope", // 출발·도착의 처음 값은 자료(campus.homes)의 첫 항목이다(지금은 정문)
   errors: { noSections: new Set(), overlap: new Set(), general: null }, // 주요 버튼을 누른 뒤의 오류
   result: null, rank: 0, day: 0, ranksShown: RANKS_STEP, reveal: false,
 };
@@ -130,7 +130,8 @@ function buildingLabel(b) {
   if (b === "GATE") return "정문";
   return `${b}동`;
 }
-// 기숙사 동(update40 자료): campus.json 의 dorms = [[동, 종류]]. 919-A~D 처럼 ids 에 없는 동은 좌표만 있다(이동은 919)
+// 기숙사 동(update40 자료): campus.json 의 dorms = [[동, 종류]]. ids 에 없는 동은 이동시간 지점이 아니라 고를 수도, 지도 번호로 쓸 수도 없다:
+// 10/3(update44)부터 919 가 그렇다(919A~D 네 동으로 나뉘었고, 919 는 화면이 건물 번호로 그리지 않게 dorms 에만 남는다)
 const DORM_NAME = { 학부: "학부생활관", 대학원: "대학원생활관", 글로벌: "글로벌생활관", 가족: "가족생활관", BK: "BK국제관" }; // 지도에 쓰는 이름(자료의 건물 이름 대신 종류로)
 const dormKind = (b) => ((state.campus?.dorms || []).find(([id]) => id === b) || [])[1] || "";
 const isDorm = (b) => !!dormKind(b);
@@ -207,8 +208,8 @@ function meetingGroups(meetings) {
 
 const natKey = (b) => b.split(/(\d+)/).map((x) => (/^\d+$/.test(x) ? x.padStart(5, "0") : x)).join("");
 let buildingOpts = null, dormOpts = null;
-/** 고를 수 있는 기숙사 동: 이동시간 지점(ids)인 동을 번호순으로, 번호만(사는 사람은 번호로 찾는다). [[동, '919동']]
- *  919-A~D 는 빠진다(919 한 항목). 옛 자료(dorms 없음)면 빈 목록이라 예전처럼 기숙사 = 919 하나이고 선택칸이 없다. */
+/** 고를 수 있는 기숙사 동: 이동시간 지점(ids)인 동을 번호순으로, 번호만(사는 사람은 번호로 찾는다). [[동, '919A동']]
+ *  919동은 919A~D 네 동이 따로다(10/3 자료). 옛 자료(dorms 없음)면 빈 목록이라 예전처럼 기숙사 = 919 하나이고 선택칸이 없다. */
 function dormOptions() {
   if (!dormOpts) {
     const ids = new Set(state.campus.ids);
@@ -258,11 +259,20 @@ async function start() {
     state.current = (index && index.current) || (campus.meta || {}).semester || "";
     state.semesters = index && index.list && index.list.length ? index.list : [[state.current, "courses.json"]];
     migrateStore(state.current);
+    // 출발·도착: 지난번 값, 처음에는 자료의 첫 출발 후보(homes 차례가 곧 세그먼트 차례다: 정문 · 기숙사. 차례와 처음 값을 여기에 따로 적지 않는다)
     const homes = (campus.homes || []).map(([b]) => b);
-    const saved = store.get("home", homes[0] || "919");
-    state.home = homes.includes(saved) || campus.ids.includes(saved) ? saved : homes[0] || campus.ids[0];
+    const known = (b) => homes.includes(b) || campus.ids.includes(b);
+    const saved = store.get("home", ""), savedDorm = store.get("homeDorm", "");
+    // 저장된 값이 지금 자료에 없는 기숙사 동이면(919 → 919A~D, 10/3 update44) 기숙사를 고른 채 처음 동(homes 의 기숙사 동, 919A)으로 옮긴다.
+    // 정문으로 떨어뜨리면 그 사람의 걷는 시간이 다 달라진다. 묻지도 않는다(10/3 디자인: 선택칸에 동이 보여 한 번에 바꾼다).
+    // 없는 기숙사 동 = 기숙사 동 목록(dorms)에는 남아 있거나(919) 기숙사 동으로 골라 두었던 값인데 이동시간 지점(ids)이 아닌 것
+    const dormHome = homes.find(isDorm) || "";
+    const lostDorm = (b) => !!b && !!dormHome && !known(b) && (isDorm(b) || b === savedDorm);
     state.homeOther = store.get("homeOther", "");
-    state.homeDorm = store.get("homeDorm", "");
+    state.homeDorm = lostDorm(savedDorm) ? dormHome : savedDorm;
+    state.home = known(saved) ? saved : lostDorm(saved) ? dormHome : homes[0] || campus.ids[0];
+    if (lostDorm(saved)) store.set("home", state.home);
+    if (lostDorm(savedDorm)) store.set("homeDorm", state.homeDorm);
     state.mode = campus.slope ? store.get("mode", "slope") : "flat";
     renderSettings();
     // 지난번에 보던 학기로 연다. 그사이 새 학기가 올라왔으면 새 학기로
@@ -1138,7 +1148,7 @@ function syncHomeSelect() {
 function renderSettings() {
   const homes = state.campus.homes || [];
   const seg = homeSeg(state.home);
-  // 출발 후보의 기숙사(919)가 기숙사 동 묶음의 세그먼트다: 기숙사 | 정문 | 다른 건물
+  // 세그먼트는 자료의 출발 후보 차례 그대로(10/3: 정문 | 기숙사) + 다른 건물. 출발 후보의 기숙사(919A)가 기숙사 동 묶음의 세그먼트다
   $("home-seg").replaceChildren(
     ...homes.map(([b, label]) => { const v = isDorm(b) ? "dorm" : b; return segItem("home", v, label, v === seg); }),
     segItem("home", "other", "다른 건물", seg === "other"));
@@ -1166,7 +1176,7 @@ function setHome(b) {
 $("home-seg").addEventListener("change", (e) => {
   const v = e.target.value;
   if (v === "dorm") {
-    const first = (state.campus.homes || []).map(([b]) => b).find(isDorm); // 처음에는 919동
+    const first = (state.campus.homes || []).map(([b]) => b).find(isDorm); // 처음에는 자료의 기숙사 출발 후보(919A동)
     setHome(dormOptions().some(([b]) => b === state.homeDorm) ? state.homeDorm : first);
   } else if (v === "other") {
     const opts = buildingOptions().map(([b]) => b);
@@ -1446,13 +1456,33 @@ function lateText(legs, withDays) {
   return `${[...byDays].map(([k, ms]) => `${k} ${ms.map((m) => `${m}분`).join("·")}`).join("·")} 늦음`;
 }
 
-/** 다 못 센 조합 수(실제는 그보다 많다)의 어림수: 10000 → '1만 개', 3456 → '3천 개', 456 → '400개'. */
-const roughCount = (n) => (n >= 10000 ? `${Math.floor(n / 10000)}만 개` : n >= 1000 ? `${Math.floor(n / 1000)}천 개` : `${n >= 100 ? Math.floor(n / 100) * 100 : n}개`);
+/** 전체 조합 수: 1만 아래는 쉼표('1,234개'), 1만부터는 만 단위 소수 한 자리('2.4만 개', '5.3만 개'), 딱 떨어지면 소수 없이('2만 개').
+ *  1억부터는 억 단위('1.2억 개'). 1천(0.1만) 자리에서 반올림한다(10/3 사용자). */
+function countLabel(n) {
+  if (n < 10000) return `${n.toLocaleString("ko-KR")}개`;
+  const one = (x) => x.toLocaleString("ko-KR", { maximumFractionDigits: 1 }); // 2.4 → '2.4', 2 → '2', 1421.3 → '1,421.3'
+  const man = Math.round(n / 1000) / 10;
+  return man < 10000 ? `${one(man)}만 개` : `${one(Math.round(n / 1e7) / 10)}억 개`;
+}
+
+/** 다 못 센 조합 수(실제는 그보다 많다)의 어림수: 앞자리 하나만 남기고 내린다(뒤에 '가 넘는'이 붙으니 올리면 틀린 말이 된다).
+ *  456 → '400개', 3456 → '3천 개', 10000 → '1만 개', 345678 → '30만 개', 1900000 → '100만 개', 23000000 → '2천만 개', 120000000 → '1억 개'.
+ *  어디까지 세었는지는 기기 속도에 따라 달라서(시간 제한) 소수 자리까지 쓰지 않는다. */
+function roughCount(n) {
+  if (n < 100) return `${n}개`;
+  const lead = 10 ** (String(Math.floor(n)).length - 1);
+  const v = Math.floor(n / lead) * lead;
+  if (v < 1000) return `${v}개`;
+  if (v < 10000) return `${v / 1000}천 개`;
+  const unit = v < 1e8 ? [1e4, "만"] : [1e8, "억"];
+  const k = Math.round(v / unit[0]); // 1~9000
+  return `${k < 1000 ? k : `${k / 1000}천`}${unit[1]} 개`;
+}
 
 /**
  * 목록 제목: 희미한 '(전체 조합 1,234개 중)' + '걷는 시간이 짧은 20개를 찾았어요'. 찾은 것이 전부면 '전체 조합 4개를 찾았어요' 하나.
- * total 은 워커가 센 겹치지 않는 조합 수(같은 시간·건물 분반은 하나라 찾은 수와 단위가 같다). exact=false 면 그보다 많다는 뜻이라
- * 어림수로 '(1만 개가 넘는 조합 중)'. total 이 없으면(예전 워커) 희미한 부분 없이.
+ * total 은 워커가 센 겹치지 않는 조합 수(같은 시간·건물 분반은 하나라 찾은 수와 단위가 같다). 1만부터는 '(전체 조합 2.4만 개 중)'.
+ * exact=false 면 그보다 많다는 뜻이라 어림수로 '(1만 개가 넘는 조합 중)'. total 이 없으면(예전 워커) 희미한 부분 없이.
  */
 function rankTitle(R) {
   const m = R.ranked.length, t = R.total;
@@ -1460,7 +1490,7 @@ function rankTitle(R) {
   const found = h("span", { class: "rank-found" }, `걷는 시간이 짧은 ${m}개를 찾았어요`);
   if (!t) return [found];
   const n = Math.max(t.count, m);
-  const all = t.exact ? `전체 조합 ${n.toLocaleString("ko-KR")}개` : `${roughCount(n)}가 넘는 조합`;
+  const all = t.exact ? `전체 조합 ${countLabel(n)}` : `${roughCount(n)}가 넘는 조합`;
   return [h("span", { class: "rank-total" }, `(${all} 중)`), " ", found];
 }
 
@@ -1536,15 +1566,18 @@ const remPx = () => parseFloat(getComputedStyle(document.documentElement).fontSi
 
 /** 시간표 높이(px). 한 시간은 tt-hour-min(32px, 글자 크기 설정만큼 더) 이상이다(10/2 사용자: "75분 수업에서 폰트 줄이는 건 용납을
  *  못하겠다. 통일성이 떨어지는 것 같음"): 75분 칸(40px - 사이 2px)에 과목명 한 줄(14px)과 강의실 줄이 늘 들어가고, 50분 칸(약 25px)에도
- *  과목명이 14px 그대로 한 줄 들어간다. 기본 높이(--tt-h: 폰 316px, 840px부터 420px)로 모자라면(저녁 수업으로 축이 긴 결과) 시간표가
- *  그만큼 길어지고, 늘어난 만큼을 .panes 의 --tt-extra 로 주어 옆의 지도 칸도 같이 길어진다(style.css).
+ *  과목명이 14px 그대로 한 줄 들어간다. 기본 높이(--tt-h: 폰 19.75rem = 316px, 840px부터 26.25rem = 420px)로 모자라면(저녁 수업으로 축이 긴 결과)
+ *  시간표가 그만큼 길어지고, 늘어난 만큼을 .panes 의 --tt-extra 로 주어 옆의 지도 칸도 같이 길어진다(style.css).
+ *  기본 높이도 글자 크기를 따라간다(10/3 디자인: --tt-h 는 rem. px 로 두면 글자를 키울 때 번호표·출처만 커져 지도가 줄어든다).
  *  축은 결과 전체(hourRange)라서 요일·후보를 바꿔도 높이가 그대로다. */
 function sizeTimetable() {
   const cs = getComputedStyle(document.documentElement);
-  const base = parseFloat(cs.getPropertyValue("--tt-h")) || 316;
+  const rem = remPx();
+  const tth = cs.getPropertyValue("--tt-h").trim(); // '19.75rem'
+  const base = Math.round(parseFloat(tth) * (tth.endsWith("rem") ? rem : 1) * 100) / 100 || 316;
   const hourMin = parseFloat(cs.getPropertyValue("--tt-hour-min")) || 32;
   const [h0, h1] = state.result.axis;
-  const px = Math.max(base, Math.ceil((h1 - h0) * hourMin * (remPx() / 16)));
+  const px = Math.max(base, Math.ceil((h1 - h0) * hourMin * (rem / 16)));
   $("panes").style.setProperty("--tt-extra", `${px - base}px`);
   return px;
 }
@@ -1967,7 +2000,8 @@ const BaseMap = typeof L === "undefined" ? null : L.Renderer.extend({
 });
 
 /** 건물 번호 목록(번호만인 건물 먼저, 짧은 번호 먼저): 수업이 없는 날 모든 건물 번호를 겹치지 않게 놓을 때 이 순서로.
- *  기숙사(10/2 디자인): 919동은 번호를 919 하나만 쓴다(자료에 좌표만 있는 919-A~D 는 따로 쓰지 않는다. 넷을 다 쓰면 겹쳐서 일부만 남는다).
+ *  기숙사(10/3 디자인·자료): 919동은 네 동을 따로 쓴다(919A·919B·919C·919D, 이동시간 지점). 이동시간 지점이 아닌 기숙사 동(919 한 점)은
+ *  번호로 쓰지 않는다. 붙어 있는 동이라 낮은 배율에서는 겹치는 번호가 숨고 확대하면 다 보인다.
  *  기숙사 동의 이름은 자료의 건물 이름('(관악사)학부 생활관') 대신 종류로 쓴다(학부생활관). */
 let buildingMarks = null;
 function allBuildingMarks() {
@@ -2101,6 +2135,12 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
   for (const lg of legLines) lg.tag = !lg.home && lg.text && legLines.some((o) => o !== lg && !o.home && o.text && sameRoad(lg, o)) ? lg.num : 0;
   renderLegend(mp, legs, homeLines.length > 0); // 번호표를 먼저 채워야 지도 칸 높이가 정해진다
   mp.el.setAttribute("aria-label", `${DAY_KO[day]}요일 지도`);
+  // 맞추는 동안 끌 수 있는 범위(maxBounds)를 풀었다가 맞춘 뒤 다시 건다(10/3 디자인 세션이 찾은 것). 걸어 둔 채 칸 크기나 최소 배율이 바뀌면
+  // Leaflet 이 moveend 마다 0.25초 애니메이션으로 범위 안에 옮기는데(_panInsideMaxBounds), 그 애니메이션이 뒤이은 setView·fitBounds 와 엉킨다:
+  // 남은 만큼 밀리거나(수업 없는 날 ⌂ 가 가운데에서 11~39px 벗어났다), 최소 배율이 올라간 날은 맞춘 뒤에 최소 배율로 되돌아간다
+  // (폰 320·태블릿 768 에서 수업 없는 날이 캠퍼스 전체로 열려 ⌂ 가 위에서 잘렸다). 그래서 같은 요일은 어디서 넘어와도 같은 자리·같은 배율이다
+  const limit = map.options.maxBounds;
+  if (limit) map.setMaxBounds(null);
   map.invalidateSize();
   applyMinZoom(map);
   mp.lines.clearLayers();
@@ -2130,22 +2170,28 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
     const bounds = L.latLngBounds(pts), fit = { ...pad, maxZoom: 17, animate: false };
     map.fitBounds(bounds, fit);
     // 묶인 핀(2·3·4·5·6)은 한 핀보다 넓다. 가장자리 밖으로 잘리면 그만큼 더 비우고 다시 맞춘다(묶음은 배율마다 달라서 몇 번 본다).
+    // 맨 아래 핀이 오른쪽 아래 저작권 표기 밑에 걸려도 그만큼 아래를 더 비운다(아래 여백은 선 끝 기준이라 핀 반지름만큼 모자랄 수 있다).
     // 배율이 그대로면 더 비운 폭의 반만큼만 옮겨지므로 둘째부터는 두 배로 비운다
     for (let i = 0; i < 4; i++) {
       const w = map.getSize().x;
-      let l = 0, r = 0;
-      for (const pin of groupStops(map, stops)) {
-        const x = map.latLngToContainerPoint(pin.at).x;
-        l = Math.max(l, 4 + pin.w / 2 - x);
-        r = Math.max(r, x + pin.w / 2 + 4 - w);
+      const host = mp.el.getBoundingClientRect(), ar = attr ? attr.getBoundingClientRect() : null;
+      const attrLeft = ar && ar.width ? ar.left - host.left : Infinity, attrTop = ar && ar.width ? ar.top - host.top : Infinity;
+      let l = 0, r = 0, under = 0;
+      const pins = groupStops(map, stops).map((pin) => [map.latLngToContainerPoint(pin.at), pin.w]);
+      if (homeAt) pins.push([map.latLngToContainerPoint(homeAt), 24]);
+      for (const [pt, pw] of pins) {
+        l = Math.max(l, 4 + pw / 2 - pt.x);
+        r = Math.max(r, pt.x + pw / 2 + 4 - w);
+        if (pt.x + pw / 2 > attrLeft && pt.y + 12 - attrTop > 0.5) under = Math.max(under, pt.y + 12 + 2 - attrTop); // 걸렸을 때만, 2px 띄운다
       }
-      if (l < 1 && r < 1) break;
+      if (l < 1 && r < 1 && under < 1) break;
       const more = (v) => (v < 1 ? 0 : Math.ceil(v) * (i ? 2 : 1));
       fit.paddingTopLeft = [fit.paddingTopLeft[0] + more(l), fit.paddingTopLeft[1]];
-      fit.paddingBottomRight = [fit.paddingBottomRight[0] + more(r), fit.paddingBottomRight[1]];
+      fit.paddingBottomRight = [fit.paddingBottomRight[0] + more(r), fit.paddingBottomRight[1] + more(under)];
       map.fitBounds(bounds, fit);
     }
-  } else if (pts.length) map.setView(pts[0], 16, { animate: false });
+  } else if (pts.length) map.setView(pts[0], 16, { animate: false }); // 수업 없는 날: 출발·도착 자리를 가운데에, 배율 16
+  if (limit) { map.panInsideBounds(limit, { animate: false }); map.setMaxBounds(limit); } // 범위 밖이면 애니메이션 없이 안으로 옮긴 뒤 다시 건다
   mp.data = { stops, legs: legLines, homeAt, homeLines };
   drawReturn(mp);
   placeMarks(mp);
@@ -2208,16 +2254,32 @@ const mapTextW = (() => {
 /** 건물 번호(.blabel b, 12px 700)와 이름(span, 12px 500) 가운데 넓은 쪽 + 테두리 여유. */
 const blabelW = (text, name) => Math.max(mapTextW(700, text), name ? mapTextW(500, name) : 0) + 4;
 
-/** 수업이 있는 날 핀 옆 건물 번호: 글, (많이 확대하면) 이름, 폭, 자리. 핀 오른쪽이 기본이고 오른쪽 가장자리에 걸리면 왼쪽,
- *  왼쪽도 걸리면(폰의 좁은 지도에서 넓게 묶인 핀 2·3·4·5·6) 핀 아래에 둔다(dx: 가장자리에 걸리지 않게 옆으로 민 만큼). */
-function pinTag(map, pin, withName) {
+/** 지도 오른쪽 위 버튼(크게 보기, 마우스·전체 화면 지도의 확대·축소)의 상자, 지도 칸 좌표 [x0, y0, x1, y1]. */
+function mapButtonBoxes(mp) {
+  const host = mp.el.getBoundingClientRect(), out = [];
+  for (const el of mp.el.parentElement.querySelectorAll(".map-expand > span, .leaflet-control-zoom")) {
+    const r = el.getBoundingClientRect();
+    if (r.width) out.push([r.left - host.left - 2, r.top - host.top - 2, r.right - host.left + 2, r.bottom - host.top + 2]);
+  }
+  return out;
+}
+
+/** 수업이 있는 날 핀 옆 건물 번호: 글, (많이 확대하면) 이름, 폭, 자리. 핀 오른쪽이 기본이고 오른쪽 가장자리나 오른쪽 위 버튼에 걸리면 왼쪽,
+ *  왼쪽도 가장자리에 걸리거나(폰의 좁은 지도에서 넓게 묶인 핀 2·3·4·5·6) 다른 핀을 덮으면 핀 아래에 둔다(dx: 가장자리에 걸리지 않게 옆으로 민 만큼). */
+function pinTag(mp, pin, withName) {
+  const { map } = mp;
   const text = pin.bs.map((b) => (b === "GATE" ? "정문" : b)).join("·");
   const name = withName ? pin.bs.map(buildingName).filter(Boolean).join("·") : "";
-  const x = map.latLngToContainerPoint(pin.at).x, lw = blabelW(text, name), W = map.getSize().x, hw = pin.w / 2;
-  let side = x + hw + 3 + lw > W - 4 ? "left" : "right", dx = 0;
-  if (side === "left" && x - hw - 3 - lw < 4 && x - hw >= 0 && x + hw <= W) { // 핀이 화면 안에 있을 때만(지도를 끌어 핀이 나가면 번호도 따라 나간다)
-    side = "below";
-    dx = Math.max(4 + lw / 2 - x, Math.min(0, W - 4 - lw / 2 - x));
+  const pt = map.latLngToContainerPoint(pin.at), x = pt.x, lw = blabelW(text, name), W = map.getSize().x, hw = pin.w / 2, hh = name ? 15 : 9;
+  const right = [x + hw + 3, pt.y - hh, x + hw + 3 + lw, pt.y + hh], left = [x - hw - 3 - lw, pt.y - hh, x - hw - 3, pt.y + hh];
+  let side = right[2] > W - 4 || mapButtonBoxes(mp).some((b) => boxHit(right, b)) ? "left" : "right", dx = 0;
+  if (side === "left" && x - hw >= 0 && x + hw <= W) { // 핀이 화면 안에 있을 때만(지도를 끌어 핀이 나가면 번호도 따라 나간다)
+    const others = (mp.pins || []).filter((q) => q !== pin).map((q) => [map.latLngToContainerPoint(q.at), q.w / 2]);
+    if (mp.data && mp.data.homeAt) others.push([map.latLngToContainerPoint(mp.data.homeAt), 12]);
+    if (left[0] < 4 || others.some(([q, w]) => boxHit(left, [q.x - w - 1, q.y - 13, q.x + w + 1, q.y + 13]))) {
+      side = "below";
+      dx = Math.max(4 + lw / 2 - x, Math.min(0, W - 4 - lw / 2 - x));
+    }
   }
   return { text, name, lw, side, dx };
 }
@@ -2261,7 +2323,7 @@ function placeLegLabels(mp) {
   const pins = [], avoid = [];
   if (data.homeAt) { const p = map.latLngToLayerPoint(data.homeAt); pins.push([p.x - 14, p.y - 14, p.x + 14, p.y + 14]); }
   for (const pin of mp.pins || []) {
-    const p = map.latLngToLayerPoint(pin.at), hw = pin.w / 2, t = pinTag(map, pin, withName), hh = t.name ? 15 : 9;
+    const p = map.latLngToLayerPoint(pin.at), hw = pin.w / 2, t = pinTag(mp, pin, withName), hh = t.name ? 15 : 9;
     pins.push([p.x - hw - 2, p.y - 14, p.x + hw + 2, p.y + 14]);
     avoid.push(t.side === "below" ? [p.x + t.dx - t.lw / 2 - 2, p.y + 12, p.x + t.dx + t.lw / 2 + 2, p.y + 16 + 2 * hh]
       : t.side === "left" ? [p.x - hw - 5 - t.lw, p.y - hh, p.x - hw, p.y + hh] : [p.x + hw, p.y - hh, p.x + hw + 5 + t.lw, p.y + hh]);
@@ -2381,7 +2443,7 @@ function placeLabels(mp) {
   const size = map.getSize();
   if (data.stops.length) {
     for (const pin of mp.pins || []) {
-      const { text, name, side, dx } = pinTag(map, pin, withName); // 오른쪽 가장자리에 걸리면 핀 왼쪽, 왼쪽도 걸리면 핀 아래
+      const { text, name, side, dx } = pinTag(mp, pin, withName); // 오른쪽 가장자리·버튼에 걸리면 핀 왼쪽, 왼쪽도 걸리면 핀 아래
       L.marker(pin.at, { interactive: false, keyboard: false, zIndexOffset: 50,
         icon: icon(`<div class="blabel day${side === "right" ? "" : " " + side}" style="--pin-half:${pin.w / 2}px;--dx:${dx}px" aria-hidden="true"><b>${esc(text)}</b>${name ? `<span>${esc(name)}</span>` : ""}</div>`) }).addTo(names);
     }
