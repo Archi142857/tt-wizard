@@ -2113,7 +2113,9 @@ function drawReturn(mp) {
 // 들어간 문과 나오는 문이 다른 건물(16동은 문 사이 155m)에서 다음 구간이 다시 핀과 떨어지고 번호가 건물 밖 길 위에 서서다
 // 점은 그 선의 굵기 그대로(수업 가는 길 4px, 출발·도착 자리로 가는 길 3px), 점 사이 3px. 테두리는 card 1px: 건물 위에서 route 점이
 // 2.5:1(라이트)이라 3:1 에 못 미치는데, 선처럼 2px 를 두르면 흰 띠가 이어져 구슬 꿴 줄처럼 무거워진다. 테두리는 맨 아래 칸에 그려 어느 선도 덮지 않는다
-const STUB = { route: { weight: 4, dashArray: "0.1 7" }, home: { weight: 3, dashArray: "0.1 6" } }, STUB_CASE = 1;
+// 한 핀에 닿는 점선은 선 끝이 서로 10px 안이면 하나만 긋는다(수업 가는 길 먼저. 10/3 디자인): 같은 문으로 들어가고 나오는 건물에서는 실선의 끝과
+// 7px 비킨 파선의 시작이 나란해서, 둘 다 그으면 두 색 점이 겹친 채 핀까지 간다. 문이 다르면 둘 다 긋는다
+const STUB = { route: { weight: 4, dashArray: "0.1 7" }, home: { weight: 3, dashArray: "0.1 6" } }, STUB_CASE = 1, STUB_NEAR = 10;
 
 /** 건물 b 의 핀이 지금 서 있는 자리: 다른 수업 핀과 묶였으면 그 묶음 자리(placeMarks), 출발·도착 건물이면 ⌂. 핀이 없으면 null */
 function pinSpot(mp, b) {
@@ -2134,16 +2136,32 @@ function legStubs(mp, lg) {
   return out;
 }
 
-function drawStubs(mp) {
-  mp.stubs.clearLayers();
-  for (const lg of mp.data.legs) {
-    const dots = lg.home ? STUB.home : STUB.route;
-    for (const seg of legStubs(mp, lg)) {
-      const opt = { ...dots, lineCap: "round", interactive: false, ofHome: lg.home };
-      L.polyline(seg, { ...opt, weight: dots.weight + 2 * STUB_CASE, pane: "ttw-stub", className: "map-stub-case" }).addTo(mp.stubs);
-      L.polyline(seg, { ...opt, pane: lg.home ? "ttw-back" : "overlayPane", className: lg.home ? "map-stub-home" : "map-stub" }).addTo(mp.stubs);
+/** 그릴 점선을 구간 순서대로: [구간 0 의 [[선 끝, 핀 자리], …], 구간 1 의 …]. 같은 핀에 닿고 선 끝이 STUB_NEAR 안인 것은 하나만 남긴다
+ *  (수업 가는 길이 먼저, 그다음은 앞 구간) */
+function dayStubs(mp) {
+  const { map } = mp, legs = mp.data.legs, out = legs.map(() => []), kept = [];
+  const order = legs.map((_, i) => i).sort((a, b) => Number(legs[a].home) - Number(legs[b].home)); // 안정 정렬: 같은 갈래는 구간 순서 그대로
+  for (const i of order) {
+    for (const s of legStubs(mp, legs[i])) {
+      const p = map.latLngToLayerPoint(s[0]), pin = s[1];
+      if (kept.some((k) => (k.pin === pin || (k.pin[0] === pin[0] && k.pin[1] === pin[1])) && Math.hypot(k.p.x - p.x, k.p.y - p.y) <= STUB_NEAR)) continue;
+      kept.push({ pin, p });
+      out[i].push(s);
     }
   }
+  return out;
+}
+
+function drawStubs(mp) {
+  mp.stubs.clearLayers();
+  dayStubs(mp).forEach((stubs, i) => {
+    const home = mp.data.legs[i].home, dots = home ? STUB.home : STUB.route;
+    for (const seg of stubs) {
+      const opt = { ...dots, lineCap: "round", interactive: false, ofHome: home };
+      L.polyline(seg, { ...opt, weight: dots.weight + 2 * STUB_CASE, pane: "ttw-stub", className: "map-stub-case" }).addTo(mp.stubs);
+      L.polyline(seg, { ...opt, pane: home ? "ttw-back" : "overlayPane", className: home ? "map-stub-home" : "map-stub" }).addTo(mp.stubs);
+    }
+  });
 }
 
 /** 지도 아래 번호표: 수업 순서 번호와 건물, 출발·도착, 점선(마지막 수업 뒤 출발·도착 자리로 가는 길)이 있으면 그 견본.
@@ -2394,9 +2412,10 @@ function placeLegLabels(mp) {
   // 구간 선(layer 좌표). 출발·도착 자리로 가는 길은 그려진 대로 오른쪽으로 비킨 선
   const lines = data.legs.map((lg) => (lg.home ? offsetPoints(map, lg.line, RETURN_OFFSET) : lg.line.map((ll) => map.latLngToLayerPoint(ll))));
   const seg = (a, b) => [a, b, Math.min(a.x, b.x), Math.min(a.y, b.y), Math.max(a.x, b.x), Math.max(a.y, b.y)];
-  // 선 끝과 핀을 잇는 점선도 그 구간의 선으로 친다(다른 구간 라벨이 그 위에 서지 않게). 라벨 후보 자리는 길 위(lines)에서만 고른다
+  // 선 끝과 핀을 잇는 점선(그려진 것만)도 그 구간의 선으로 친다(다른 구간 라벨이 그 위에 서지 않게). 라벨 후보 자리는 길 위(lines)에서만 고른다
+  const stubs = dayStubs(mp);
   const segs = lines.map((pts, i) => pts.slice(1).map((b, k) => seg(pts[k], b))
-    .concat(legStubs(mp, data.legs[i]).map(([a, b]) => seg(map.latLngToLayerPoint(a), map.latLngToLayerPoint(b)))));
+    .concat(stubs[i].map(([a, b]) => seg(map.latLngToLayerPoint(a), map.latLngToLayerPoint(b)))));
   const isHome = data.legs.map((lg) => lg.home);
   const CAP = 32; // 이보다 먼 선은 볼 필요가 없다
   /** 상자 r 에서 i 아닌 구간 선까지 가장 가까운 거리: [모든 선, 수업 가는 길(실선)만]. */
