@@ -1456,27 +1456,39 @@ function lateText(legs, withDays) {
   return `${[...byDays].map(([k, ms]) => `${k} ${ms.map((m) => `${m}분`).join("·")}`).join("·")} 늦음`;
 }
 
+// 조합 수의 단위: 만 → 억 → 조 → 경(수는 Number 라 9천조쯤부터는 어림값이다)
+const COUNT_UNITS = [[1e4, "만"], [1e8, "억"], [1e12, "조"], [1e16, "경"]];
+
 /** 전체 조합 수: 1만 아래는 쉼표('1,234개'), 1만부터는 만 단위 소수 한 자리('2.4만 개', '5.3만 개'), 딱 떨어지면 소수 없이('2만 개').
- *  1억부터는 억 단위('1.2억 개'). 1천(0.1만) 자리에서 반올림한다(10/3 사용자). */
+ *  단위 앞 수가 100 이상이면 소수 없이('142만 개', '1,421만 개'. '1,421.3만 개'는 자리가 넘친다). 1억부터는 억, 1조부터는 조('1.2억 개').
+ *  반올림한다(10/3 사용자: 만이 넘어가는 순간부터 2.4만, 5.3만처럼. 딱 떨어지면 2만 개). */
 function countLabel(n) {
   if (n < 10000) return `${n.toLocaleString("ko-KR")}개`;
-  const one = (x) => x.toLocaleString("ko-KR", { maximumFractionDigits: 1 }); // 2.4 → '2.4', 2 → '2', 1421.3 → '1,421.3'
-  const man = Math.round(n / 1000) / 10;
-  return man < 10000 ? `${one(man)}만 개` : `${one(Math.round(n / 1e7) / 10)}억 개`;
+  const num = (x) => x.toLocaleString("ko-KR", { maximumFractionDigits: 1 }); // 2.4 → '2.4', 2 → '2', 1421 → '1,421'
+  for (let i = 0; i < COUNT_UNITS.length; i++) {
+    const [u, name] = COUNT_UNITS[i];
+    const one = Math.round(n / (u / 10)) / 10; // 소수 한 자리
+    if (one < 100) return `${num(one)}${name} 개`;
+    const whole = Math.round(n / u);
+    if (whole < 10000 || i === COUNT_UNITS.length - 1) return `${num(whole)}${name} 개`; // 반올림해 1만이 되면 다음 단위로('1억 개')
+  }
+  return "";
 }
 
 /** 다 못 센 조합 수(실제는 그보다 많다)의 어림수: 앞자리 하나만 남기고 내린다(뒤에 '가 넘는'이 붙으니 올리면 틀린 말이 된다).
- *  456 → '400개', 3456 → '3천 개', 10000 → '1만 개', 345678 → '30만 개', 1900000 → '100만 개', 23000000 → '2천만 개', 120000000 → '1억 개'.
- *  어디까지 세었는지는 기기 속도에 따라 달라서(시간 제한) 소수 자리까지 쓰지 않는다. */
+ *  456 → '400개', 3456 → '3천 개', 10000 → '1만 개', 345678 → '30만 개', 1900000 → '100만 개', 23000000 → '2천만 개', 120000000 → '1억 개',
+ *  3.4조 → '3조 개'. 어디까지 세었는지는 기기 속도에 따라 달라서(시간 제한) 소수 자리까지 쓰지 않는다. */
 function roughCount(n) {
   if (n < 100) return `${n}개`;
-  const lead = 10 ** (String(Math.floor(n)).length - 1);
+  let lead = 1;
+  while (lead * 10 <= n) lead *= 10;
   const v = Math.floor(n / lead) * lead;
   if (v < 1000) return `${v}개`;
   if (v < 10000) return `${v / 1000}천 개`;
-  const unit = v < 1e8 ? [1e4, "만"] : [1e8, "억"];
-  const k = Math.round(v / unit[0]); // 1~9000
-  return `${k < 1000 ? k : `${k / 1000}천`}${unit[1]} 개`;
+  let [u, name] = COUNT_UNITS[0];
+  for (const [u2, name2] of COUNT_UNITS) if (v >= u2) [u, name] = [u2, name2];
+  const k = Math.round(v / u); // 1~9000(경은 그 위로도)
+  return `${k < 1000 ? k : k < 10000 ? `${k / 1000}천` : k.toLocaleString("ko-KR")}${name} 개`;
 }
 
 /**
@@ -2033,19 +2045,21 @@ function makeMap(el, full) {
   if (buttons) L.control.zoom({ position: "topright", zoomInTitle: "확대", zoomOutTitle: "축소" }).addTo(map);
   el.setAttribute("role", "region");
   el.setAttribute("aria-label", "지도");
-  // 바탕 지도(타일 자리 200), 수업 뒤 출발·도착 자리로 가는 길은 경로선(overlayPane, 400) 아래 칸: 겹치는 길에서 경로를 덮지 않게
+  // 바탕 지도(타일 자리 200), 수업 뒤 출발·도착 자리로 가는 길은 경로선(overlayPane, 400) 아래 칸: 겹치는 길에서 경로를 덮지 않게.
+  // 선 끝과 핀을 잇는 점선의 테두리는 그보다도 아래 칸(어느 선도 덮지 않게)
   const basePane = map.createPane("ttw-base");
   basePane.style.zIndex = "200";
   basePane.style.pointerEvents = "none";
+  map.createPane("ttw-stub").style.zIndex = "385";
   map.createPane("ttw-back").style.zIndex = "390";
   const base = new BaseMap().addTo(map);
   map.setView(campusBounds.getCenter(), 15, { animate: false });
   const legend = el.closest(".mapcard").querySelector(".legend");
-  const mp = { map, el, base, full, buttons, legend, back: L.layerGroup().addTo(map), lines: L.layerGroup().addTo(map), marks: L.layerGroup().addTo(map),
-    legLabels: L.layerGroup().addTo(map), names: L.layerGroup().addTo(map), data: null };
-  // 배율이 바뀌면 붙어 보이는 번호를 다시 묶고, 옆으로 비킨 선을 그 배율의 화소 간격으로 다시 그린다.
+  const mp = { map, el, base, full, buttons, legend, back: L.layerGroup().addTo(map), lines: L.layerGroup().addTo(map), stubs: L.layerGroup().addTo(map),
+    marks: L.layerGroup().addTo(map), legLabels: L.layerGroup().addTo(map), names: L.layerGroup().addTo(map), data: null };
+  // 배율이 바뀌면 붙어 보이는 번호를 다시 묶고, 옆으로 비킨 선을 그 배율의 화소 간격으로 다시 그린다(선 끝과 핀을 잇는 점선도 그 자리로).
   // 구간 라벨과 건물 번호는 옮길 때마다(화면 가장자리·버튼에 걸리지 않게). 배율이 바뀌면 zoomend 다음에 moveend 가 온다
-  map.on("zoomend", () => { if (mp.data) { placeMarks(mp); drawReturn(mp); } });
+  map.on("zoomend", () => { if (mp.data) { placeMarks(mp); drawReturn(mp); drawStubs(mp); } });
   map.on("moveend", () => { if (mp.data) { placeLegLabels(mp); placeLabels(mp); } });
   loadBasemap();
   return mp;
@@ -2085,10 +2099,50 @@ function offsetLine(map, line, px) {
 
 function drawReturn(mp) {
   mp.back.clearLayers();
-  for (const line of mp.data.homeLines || []) {
-    const off = offsetLine(mp.map, line, RETURN_OFFSET);
+  for (const lg of mp.data.legs) {
+    if (!lg.home) continue;
+    const off = offsetLine(mp.map, lg.line, RETURN_OFFSET);
     L.polyline(off, { pane: "ttw-back", className: "map-route-home-case", weight: 7, dashArray: RETURN_DASH, lineCap: "butt", lineJoin: "round", interactive: false }).addTo(mp.back);
     L.polyline(off, { pane: "ttw-back", className: "map-route-home", weight: 3, dashArray: RETURN_DASH, lineCap: "butt", lineJoin: "round", interactive: false }).addTo(mp.back);
+  }
+}
+
+// 선 끝과 핀을 잇는 점선(10/3 사용자: 경로와 번호가 떨어져 있어 이상하다). 경로 자료는 건물 문 앞에서 끝나고 핀은 건물 자리(번호를 쓰는 자리)에
+// 서서, 둘 사이가 보통 20~50m(가장 먼 301동은 100m) 벌어진다. 그 사이를 구간 선과 같은 색 점선으로 잇는다(지도 앱의 '길 끝에서 목적지까지').
+// 실선을 핀까지 늘이지 않는 것은 건물을 가로지르는 길처럼 읽혀서고(일곱에 하나는 핀이 선 건물 면 밖을 많이 지난다), 핀을 문 앞으로 옮기지 않는 것은
+// 들어간 문과 나오는 문이 다른 건물(16동은 문 사이 155m)에서 다음 구간이 다시 핀과 떨어지고 번호가 건물 밖 길 위에 서서다
+// 점은 그 선의 굵기 그대로(수업 가는 길 4px, 출발·도착 자리로 가는 길 3px), 점 사이 3px. 테두리는 card 1px: 건물 위에서 route 점이
+// 2.5:1(라이트)이라 3:1 에 못 미치는데, 선처럼 2px 를 두르면 흰 띠가 이어져 구슬 꿴 줄처럼 무거워진다. 테두리는 맨 아래 칸에 그려 어느 선도 덮지 않는다
+const STUB = { route: { weight: 4, dashArray: "0.1 7" }, home: { weight: 3, dashArray: "0.1 6" } }, STUB_CASE = 1;
+
+/** 건물 b 의 핀이 지금 서 있는 자리: 다른 수업 핀과 묶였으면 그 묶음 자리(placeMarks), 출발·도착 건물이면 ⌂. 핀이 없으면 null */
+function pinSpot(mp, b) {
+  const pin = (mp.pins || []).find((q) => q.bs.includes(b));
+  return pin ? pin.at : b === mp.data.home ? mp.data.homeAt : null;
+}
+
+/** 구간 lg 의 그려진 선 양 끝에서 핀까지: [[선 끝, 핀 자리], …]. 출발·도착 자리로 가는 길은 옆으로 비킨 선의 끝에서. 2px 안쪽이면 없다 */
+function legStubs(mp, lg) {
+  const { map } = mp;
+  const line = lg.home ? offsetLine(map, lg.line, RETURN_OFFSET) : lg.line, out = [];
+  for (const [end, b] of [[line[0], lg.ends[0]], [line[line.length - 1], lg.ends[1]]]) {
+    const pin = pinSpot(mp, b);
+    if (!pin) continue;
+    const p = map.latLngToLayerPoint(end), q = map.latLngToLayerPoint(pin);
+    if (Math.hypot(p.x - q.x, p.y - q.y) >= 2) out.push([end, pin]); // 선 끝에서 시작해야 점 간격이 선 끝에 맞는다
+  }
+  return out;
+}
+
+function drawStubs(mp) {
+  mp.stubs.clearLayers();
+  for (const lg of mp.data.legs) {
+    const dots = lg.home ? STUB.home : STUB.route;
+    for (const seg of legStubs(mp, lg)) {
+      const opt = { ...dots, lineCap: "round", interactive: false, ofHome: lg.home };
+      L.polyline(seg, { ...opt, weight: dots.weight + 2 * STUB_CASE, pane: "ttw-stub", className: "map-stub-case" }).addTo(mp.stubs);
+      L.polyline(seg, { ...opt, pane: lg.home ? "ttw-back" : "overlayPane", className: lg.home ? "map-stub-home" : "map-stub" }).addTo(mp.stubs);
+    }
   }
 }
 
@@ -2192,9 +2246,10 @@ function renderMap(mp, ev, day, { reveal = false } = {}) {
     }
   } else if (pts.length) map.setView(pts[0], 16, { animate: false }); // 수업 없는 날: 출발·도착 자리를 가운데에, 배율 16
   if (limit) { map.panInsideBounds(limit, { animate: false }); map.setMaxBounds(limit); } // 범위 밖이면 애니메이션 없이 안으로 옮긴 뒤 다시 건다
-  mp.data = { stops, legs: legLines, homeAt, homeLines };
+  mp.data = { stops, legs: legLines, homeAt, home: R.home }; // home: 결과가 지워진 뒤(입력 화면에서 과목을 바꾼 뒤)에도 지도가 옮겨지면 다시 그린다
   drawReturn(mp);
   placeMarks(mp);
+  drawStubs(mp); // 핀 자리(묶음)가 정해진 뒤에
   placeLegLabels(mp);
   placeLabels(mp);
   if (reveal && !reduceMotion.matches) revealRoute(mp, drawn);
@@ -2226,7 +2281,7 @@ function placeMarks(mp) {
   const merged = groupStops(map, data.stops);
   if (data.homeAt) {
     L.marker(data.homeAt, { keyboard: false, interactive: false,
-      icon: L.divIcon({ className: "", html: `<div class="pin home" role="img" aria-label="${esc(placeLabel(state.result.home))}">${HOME_PIN}</div>`, iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(marks);
+      icon: L.divIcon({ className: "", html: `<div class="pin home" role="img" aria-label="${esc(placeLabel(data.home))}">${HOME_PIN}</div>`, iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(marks);
   }
   for (const st of merged) {
     const name = [st.label, ...new Set(st.names), st.bs.map(buildingLabel).join("·")].join(", "); // 1, 동물생화학 2, 26동
@@ -2338,10 +2393,10 @@ function placeLegLabels(mp) {
   const view = [o.x + 4, o.y + 4, o.x + size.x - 4, o.y + size.y - 4];
   // 구간 선(layer 좌표). 출발·도착 자리로 가는 길은 그려진 대로 오른쪽으로 비킨 선
   const lines = data.legs.map((lg) => (lg.home ? offsetPoints(map, lg.line, RETURN_OFFSET) : lg.line.map((ll) => map.latLngToLayerPoint(ll))));
-  const segs = lines.map((pts) => pts.slice(1).map((b, k) => {
-    const a = pts[k];
-    return [a, b, Math.min(a.x, b.x), Math.min(a.y, b.y), Math.max(a.x, b.x), Math.max(a.y, b.y)];
-  }));
+  const seg = (a, b) => [a, b, Math.min(a.x, b.x), Math.min(a.y, b.y), Math.max(a.x, b.x), Math.max(a.y, b.y)];
+  // 선 끝과 핀을 잇는 점선도 그 구간의 선으로 친다(다른 구간 라벨이 그 위에 서지 않게). 라벨 후보 자리는 길 위(lines)에서만 고른다
+  const segs = lines.map((pts, i) => pts.slice(1).map((b, k) => seg(pts[k], b))
+    .concat(legStubs(mp, data.legs[i]).map(([a, b]) => seg(map.latLngToLayerPoint(a), map.latLngToLayerPoint(b)))));
   const isHome = data.legs.map((lg) => lg.home);
   const CAP = 32; // 이보다 먼 선은 볼 필요가 없다
   /** 상자 r 에서 i 아닌 구간 선까지 가장 가까운 거리: [모든 선, 수업 가는 길(실선)만]. */
@@ -2479,6 +2534,11 @@ function revealRoute(mp, drawn) {
   const pins = [...mp.el.querySelectorAll(".pin:not(.home)")];
   pins.forEach((p, i) => p.animate([{ opacity: 0, transform: "scale(.6)" }, { opacity: 1, transform: "none" }],
     { duration: 200, delay: (i * 400) / Math.max(1, pins.length), easing, fill: "backwards" }));
+  // 실선 끝과 핀을 잇는 점선은 실선이 다 그려진 뒤에 나타난다(파선 쪽 점선은 파선처럼 처음부터 있다)
+  mp.stubs.eachLayer((pl) => {
+    const path = !pl.options.ofHome && pl.getElement && pl.getElement();
+    if (path && path.animate) path.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, delay: 400, easing, fill: "backwards" });
+  });
 }
 
 function renderFullMap() {
