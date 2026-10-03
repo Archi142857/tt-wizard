@@ -92,6 +92,9 @@ def test_native_shim():
     assert r["slow"]["first"] == "bundle" and r["slow"]["waitedMs"] == 3000 and '"late"' in r["slow"]["savedLate"]
     assert r["back"] == {"closed": True, "kept": True, "historyBack": 1, "minimized": 1}
     assert r["basemap"] == {"from": "bundle", "remoteCalls": 0}  # 바탕 지도는 앱에 넣은 것만
+    # 안드로이드 상태 바 글자색: 기기 테마가 바뀌거나 앱으로 돌아오면 DEFAULT 를 다시 요청, 이벤트 테마 중에는 그대로, iOS·플러그인 없음은 듣지 않는다
+    assert r["bars"] == {"listening": [1, 1], "start": 0, "afterChange": ["DEFAULT"], "withTheme": 1,
+                         "afterThemeOff": ["DEFAULT", "DEFAULT"], "ios": 0, "noPlugin": 0, "threw": False}
 
 
 def test_native_projects_match_config():

@@ -8,6 +8,7 @@
 //    바탕 지도(data/basemap.json)는 크고 거의 안 바뀌어서 앱에 넣은 것만 쓴다(새 판은 앱 업데이트로 온다).
 // 2) 안드로이드 뒤로 가기: 열린 시트(<dialog>)를 닫고(cancel 이벤트), 아니면 이전 화면, 첫 화면이면 앱을 내린다.
 // 3) <html data-platform="android|ios">
+// 4) 안드로이드 상태 바 글자색: 앱을 켜 둔 채 기기가 라이트·다크로 바뀌면 다시 맞춘다(아래 '상태 바 글자색').
 (function () {
   "use strict";
   var cap = window.Capacitor;
@@ -145,6 +146,32 @@
       }
       if (typeof App.minimizeApp === "function") App.minimizeApp();
       else if (typeof App.exitApp === "function") App.exitApp();
+    });
+  }
+
+  // ------------------------------------------------------------ 상태 바 글자색 (안드로이드)
+
+  // SystemBars 플러그인(Capacitor 8.5.2)은 'DEFAULT' 를 받은 순간의 기기 테마로 바꿔(LIGHT·DARK) 기억하고, 기기 설정이 바뀔 때는 그 기억한 값을
+  // 다시 입힌다. 그래서 앱을 켜 둔 채 기기가 다크로 바뀌면 화면은 어두워지는데 시계·아이콘은 어두운 글자로 남는다(반대도 같다).
+  // 기기 테마가 바뀔 때와 앱으로 돌아올 때 'DEFAULT' 를 다시 요청해 그때의 테마로 맞춘다. 이벤트 테마가 켜져 있으면(<html data-theme>)
+  // 화면(app.js)이 정한 글자색이 기억돼 있으니 건드리지 않는다. iOS 는 기본값이 기기 테마를 스스로 따라가서 필요 없다.
+  var bars = plugins.SystemBars;
+  var scheme = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  if (platform === "android" && bars && typeof bars.setStyle === "function" && scheme) {
+    var syncBars = function () {
+      if (document.documentElement.hasAttribute("data-theme")) return;
+      try {
+        var done = bars.setStyle({ style: "DEFAULT" });
+        if (done && typeof done.catch === "function") done.catch(function () {});
+      } catch (e) {
+        // 플러그인이 던지면 그대로 둔다
+      }
+    };
+    if (typeof scheme.addEventListener === "function") scheme.addEventListener("change", syncBars);
+    else if (typeof scheme.addListener === "function") scheme.addListener(syncBars);
+    // 다른 앱에 가 있는 동안 바뀐 것은 돌아올 때 맞춘다(app.js 보다 먼저 듣는다: 그사이 이벤트 테마가 시작됐으면 app.js 가 이어서 제 글자색을 요청한다)
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") syncBars();
     });
   }
 

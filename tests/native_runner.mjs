@@ -1,5 +1,6 @@
 // tests/test_app.py 가 부른다: 앱 연결 스크립트(app/src/native.js)를 가짜 Capacitor·브라우저 위에서 돌리고 결과를 JSON으로 출력한다.
-// 자료 받기(네트워크 → 받아 둔 것 → 앱에 넣은 것, 늦은 응답 저장), 바탕 지도(앱에 넣은 것만), 자료가 아닌 요청, 안드로이드 뒤로 가기, 웹에서는 아무것도 안 함.
+// 자료 받기(네트워크 → 받아 둔 것 → 앱에 넣은 것, 늦은 응답 저장), 바탕 지도(앱에 넣은 것만), 자료가 아닌 요청, 안드로이드 뒤로 가기,
+// 안드로이드 상태 바 글자색(기기 테마가 바뀔 때), 웹에서는 아무것도 안 함.
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
@@ -21,8 +22,10 @@ function fakeIndexedDB() {
   };
 }
 
-function setup({ native = true, http = null, online = true } = {}) {
-  const calls = { local: [], remote: [], back: 0, minimized: 0 };
+function setup({ native = true, http = null, online = true, platform = "android", bars = true } = {}) {
+  const calls = { local: [], remote: [], back: 0, minimized: 0, bars: [] };
+  const scheme = []; // 기기 테마(prefers-color-scheme)가 바뀔 때 부를 것들
+  const visible = []; // 앱으로 돌아올 때(visibilitychange) 부를 것들
   const listeners = {};
   const dialogs = [];
   const idb = fakeIndexedDB();
@@ -35,19 +38,23 @@ function setup({ native = true, http = null, online = true } = {}) {
     fetch: localFetch,
     Capacitor: native ? {
       isNativePlatform: () => true,
-      getPlatform: () => "android",
+      getPlatform: () => platform,
       Plugins: {
         App: { addListener: (ev, fn) => { listeners[ev] = fn; }, minimizeApp: () => { calls.minimized += 1; } },
+        ...(bars ? { SystemBars: { setStyle: (opts) => { calls.bars.push(opts.style); return Promise.resolve(); } } } : {}),
         ...(http ? { CapacitorHttp: { get: (opts) => { calls.remote.push(opts.url); return http(opts.url); } } } : {}),
       },
     } : undefined,
+    matchMedia: (query) => ({ matches: false, addEventListener: (ev, fn) => { if (ev === "change" && /prefers-color-scheme/.test(query)) scheme.push(fn); } }),
   };
   const attrs = {};
   const context = {
     window: win,
     document: {
       baseURI: "https://localhost/",
-      documentElement: { setAttribute: (k, v) => { attrs[k] = v; } },
+      documentElement: { setAttribute: (k, v) => { attrs[k] = v; }, hasAttribute: (k) => k in attrs },
+      visibilityState: "visible",
+      addEventListener: (ev, fn) => { if (ev === "visibilitychange") visible.push(fn); },
       querySelectorAll: (sel) => (sel === "dialog[open]" ? dialogs.filter((d) => d.open) : []),
     },
     location: { origin: "https://localhost" },
@@ -58,7 +65,7 @@ function setup({ native = true, http = null, online = true } = {}) {
   };
   vm.createContext(context);
   vm.runInContext(SRC, context);
-  return { win, calls, listeners, dialogs, idb, attrs };
+  return { win, calls, listeners, dialogs, idb, attrs, scheme, visible };
 }
 
 const read = async (res) => ({ source: res.headers.get("X-TTW-Source"), body: await res.json() });
@@ -144,6 +151,29 @@ const out = {};
   const s = setup({ http: async () => ({ status: 200, data: '{"from":"remote"}' }) });
   const r = await read(await s.win.fetch("data/basemap.json"));
   out.basemap = { from: r.body.from, remoteCalls: s.calls.remote.length };
+}
+
+// 8) 안드로이드 상태 바 글자색: 기기 테마가 바뀌거나 앱으로 돌아오면 'DEFAULT' 를 다시 요청한다. 이벤트 테마가 켜져 있으면(<html data-theme>)
+//    건드리지 않는다. iOS 에서는 듣지 않고, 플러그인이 없거나 던져도 멈추지 않는다
+{
+  const s = setup();
+  const start = s.calls.bars.length; // 켤 때는 부르지 않는다(처음 값은 capacitor.config.json 의 style)
+  s.scheme.forEach((fn) => fn({ matches: true }));
+  const afterChange = [...s.calls.bars];
+  s.attrs["data-theme"] = "xmas";
+  s.scheme.forEach((fn) => fn({ matches: false }));
+  s.visible.forEach((fn) => fn());
+  const withTheme = s.calls.bars.length;
+  delete s.attrs["data-theme"];
+  s.visible.forEach((fn) => fn());
+  const ios = setup({ platform: "ios" });
+  const none = setup({ bars: false });
+  const throwing = setup();
+  throwing.win.Capacitor.Plugins.SystemBars.setStyle = () => { throw new Error("no"); };
+  let threw = false;
+  try { throwing.scheme.forEach((fn) => fn({ matches: true })); } catch { threw = true; }
+  out.bars = { listening: [s.scheme.length, s.visible.length], start, afterChange, withTheme, afterThemeOff: [...s.calls.bars],
+    ios: ios.scheme.length + ios.visible.length, noPlugin: none.scheme.length + none.visible.length, threw };
 }
 
 console.log(JSON.stringify(out));

@@ -76,6 +76,10 @@ Xcode 26 이상. 위와 같고 마지막 두 줄만 `npx cap sync ios`, `npx cap
 - **안드로이드 뒤로 가기**: 열린 시트(`<dialog>`)를 닫고(`cancel` 이벤트, 화면이 막으면 그대로), 아니면 이전 화면(웹 방문 기록),
   첫 화면이면 앱을 내린다(`minimizeApp`, 다시 열면 그대로). iOS 는 가장자리 스와이프로 뒤로(`MainViewController`).
 - `<html data-platform="android|ios">` 를 붙인다. `window.TTW_APP` 에 빌드·주소·플랫폼.
+- **안드로이드 상태 바 글자색**: 기본은 기기 테마를 따른다(`capacitor.config.json` 의 `SystemBars.style: "DEFAULT"`). 그런데 SystemBars 플러그인(8.5.2)은
+  `DEFAULT` 를 받은 순간의 기기 테마로 바꿔 기억하고 기기 설정이 바뀔 때 그 값을 다시 입혀서, 앱을 켜 둔 채 기기가 다크로 바뀌면 화면은 어두워지는데
+  시계·아이콘이 어두운 글자로 남는다. 그래서 기기 테마가 바뀔 때(`prefers-color-scheme`)와 앱으로 돌아올 때 `DEFAULT` 를 다시 요청한다.
+  이벤트 테마가 켜져 있으면(`<html data-theme>`) 화면이 정한 글자색(`app.js` `applyTheme` 의 `setStyle("DARK")`)을 건드리지 않는다. iOS 는 스스로 따라간다.
 
 화면 쪽(`web/js/app.js`, 프론트엔드)은 `window.Capacitor` 가 있으면 셸을 `ios` 로 판별해 서비스 워커·설치 안내·새 버전 알림을 끄고,
 외부 링크는 Capacitor Browser(안드로이드는 Custom Tab, iOS 는 인앱 Safari), 완료 때 햅틱을 쓴다. 안드로이드도 Capacitor 가 되면서
@@ -119,9 +123,23 @@ Xcode 26 이상. 위와 같고 마지막 두 줄만 `npx cap sync ios`, `npx cap
 4. iPad 지원 여부, 캠퍼스 마법 지도 자료의 스토어 배포 허락(신용범 님).
 5. Google Play: 개인 계정이면 테스터 12명이 14일 동안 비공개 테스트를 한 뒤 프로덕션 신청.
 
+## 폰에서 볼 것 (아직 안 봤다)
+
+클라우드에서는 네이티브 빌드를 못 해서 아래는 코드와 가짜 Capacitor 로만 확인했다. Actions 의 디버그 APK 를 안드로이드 폰에 깔아 본다.
+
+1. 비행기 모드로 처음 켜도 과목 검색과 시간표 만들기가 된다(앱에 넣은 자료). 켤 때 흰 화면이 번쩍이지 않는다.
+2. 뒤로 가기: 열린 시트 닫기 → 이전 화면 → 첫 화면에서는 앱이 내려간다(다시 열면 그대로).
+3. 상태 바의 시계·아이콘이 라이트·다크 기기 모두에서 보인다. 앱을 켜 둔 채 기기 테마를 바꾸고 돌아와도 보인다(위 '안드로이드 상태 바 글자색').
+4. 이벤트 테마: 기기 날짜를 12월 1~25일로 옮기면 크리스마스 테마가 켜진다(앱은 주소로 켤 수 없다). 짙은 초록 바탕 위에서 상태 바 글자가 밝게 나오고,
+   정보 화면에서 테마를 끄면 기기 테마에 맞게 돌아온다. 코드로는 `DARK` = 밝은 글자(안드로이드 `setAppearanceLightStatusBars(false)`, iOS `.lightContent`)다.
+5. 정보 화면의 바깥 링크가 앱 안 브라우저(Custom Tab)로 열린다.
+
 ## 확인한 것 (10/1)
 
 - 클라우드 세션은 안드로이드 SDK·Gradle·Maven 서버에 닿지 않아 네이티브 빌드는 Actions 에서만 한다.
 - 앱 묶음을 가짜 Capacitor(안드로이드)로 브라우저에 띄워: 원격 자료 사용·저장, 실패 시 저장본, 저장본이 없으면 스냅샷,
   3초 넘게 늦으면 스냅샷으로 먼저 열고 늦은 응답은 다음에 사용, 뒤로 가기(시트 닫기 → 이전 화면 → 앱 내리기), 내장 글꼴(CDN 요청 없음).
   같은 것을 `tests/native_runner.mjs`(node)가 확인한다.
+- 10/4: 화면 코드와 `native.js` 를 가짜 안드로이드 Capacitor 로 함께 띄워, 기본 테마에서는 기기 테마를 바꿀 때마다 `SystemBars.setStyle("DEFAULT")` 가 가고
+  크리스마스 테마에서는 처음 `DARK` 한 번뿐인 것을 봤다. 플러그인 쪽 동작은 `@capacitor/android`·`@capacitor/ios` 8.5.2 소스로 읽었다
+  (`Capacitor.Plugins.SystemBars` 는 번들러 없이도 네이티브가 만들어 준다).
