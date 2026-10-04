@@ -141,15 +141,26 @@ def test_search_worker_contract():
     worker = (ROOT / "web" / "js" / "search-worker.js").read_text(encoding="utf-8")
     if "search-worker.js" in app:  # 화면이 워커를 붙였으면
         assert app.count('"./search-worker.js"') == 1, 'new Worker(new URL("./search-worker.js", import.meta.url), { type: "module" }) 모양으로'
-    assert 'from "./engine.js"' in worker and "findConflicts" in worker and '"progress"' in worker and "countFeasible" in worker and "total" in worker
+    assert 'from "./engine.js"' in worker and "whyNone" in worker and '"progress"' in worker and "countFeasible" in worker and "total" in worker
+    assert "rules" in worker and "cause" in worker  # 조건(공강 요일·점심시간)을 넘겨받고, 조합이 없으면 까닭을 알린다
+
+
+_RUNNER = {}
+
+
+def _conflict_runner():
+    """tests/conflict_runner.mjs 를 한 번만 돌려 결과를 나눠 쓴다(몇 초 걸린다)."""
+    if "r" not in _RUNNER:
+        run = subprocess.run(["node", str(ROOT / "tests" / "conflict_runner.mjs")], capture_output=True, text=True,
+                             encoding="utf-8", check=True)
+        _RUNNER["r"] = json.loads(run.stdout)
+    return _RUNNER["r"]
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node 없음")
 def test_conflicts_and_progress():
     """겹치지 않는 조합이 없을 때 까닭인 과목(가장 작은 묶음), 진행 알림(결과는 같다), 더 찾기, 전체 조합 수."""
-    run = subprocess.run(["node", str(ROOT / "tests" / "conflict_runner.mjs")], capture_output=True, text=True,
-                         encoding="utf-8", check=True)
-    r = json.loads(run.stdout)
+    r = _conflict_runner()
     assert r["pair"] == ["A", "B"] and r["triple"] == ["A", "B", "C"] and r["ok"] == []
     assert r["feasible"] == [False, False, True]
     assert r["ticks"] >= 2 and r["ticksMonotone"] and r["lastTick"] == 1 and r["sameResult"]
@@ -169,3 +180,30 @@ def test_conflicts_and_progress():
     # 그 1/10 도 못 센다(멈추지 않고 끝까지 돌면 거의 다 센다)
     assert r["countHard"] == {"count": 10556929, "exact": True}
     assert r["countHardCut"]["exact"] is False and 0 <= r["countHardCut"]["count"] < 10556929 // 10
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node 없음")
+def test_rules():
+    """조건(공강 요일·점심시간): 찾기·세기·까닭이 엔진과 따로 짠 판정(1분 단위로 훑기)과 같은지, 조건이 없으면 전과 같은지."""
+    r = _conflict_runner()
+    # 무작위 묶음 160개 × 무작위 조건: 조합 수(limit 포함), 찾은 조합과 차례(더 찾기 포함), 조합이 없을 때 까닭과 과목 묶음이 모두 맞다.
+    # 조건이 조합을 줄인 묶음도, 까닭 네 가지도 넉넉히 나와야 본 것이다
+    assert r["rulesBad"] == []
+    assert r["rulesCut"] > 100 and all(n >= 5 for n in r["ruleCauses"].values()), r["ruleCauses"]
+    none, one = {"count": 0, "exact": True}, {"count": 1, "exact": True}
+    h = r["hand"]
+    # 월 11:00~12:15 와 12:30~13:45 를 함께 들으면 11~14시 사이에 1시간이 안 빈다(15분은 빈다). 까닭은 점심, 과목은 그 둘
+    assert h["lunchPair"] == [none, {"cause": "lunch", "courseIds": ["A", "B"]}, None, 0, 1]
+    assert h["edge"] == one  # 수업이 11시에 끝나고 14시에 시작하면 11~14시를 통째로 비운 것이다
+    # 수요일 공강: 수요일에만 열리는 과목이 둘이면 둘 다 알린다. 월요일 공강: 월요일 분반만 빠진다
+    assert h["freeDays"] == [none, {"cause": "freeDays", "courseIds": ["A", "C"]}, one, ["A-001 B-002 C-001"]]
+    # 조건 하나씩은 되는데 둘을 함께 걸면 안 되면 rules, 조건과 상관없이 겹치면 overlap, 조합이 있으면 null
+    assert h["either"] == [None, None, {"cause": "rules", "courseIds": ["A"]}]
+    assert h["overlap"] == {"cause": "overlap", "courseIds": ["A", "B"]} and h["ok"] is None
+    # 둘이서 점심을 막는 과목(X·Y)이 있으면 그 둘을 알린다. X 를 빼면 셋이 모여야 막는 A·B·C 가 남는다(그중 둘만으로는 1시간이 빈다)
+    assert h["pairFirst"] == [{"cause": "lunch", "courseIds": ["X", "Y"]}, ["A", "B", "C"], one]
+    assert h["meets"] == [True, False, False]
+    # 조합이 없는 큰 묶음은 탐색 나무에 들어가기 전에 안다(하나씩 돌면 1억 번 넘게 겹침을 본다)
+    assert r["quick"] == {"ranked": 0, "nodes": 0, "feasible": False, "why": {"cause": "overlap", "courseIds": ["X", "Y"]}}
+    # 워커: rules 를 넘기면 조건을 지키는 조합과 그 수, 조합이 없으면 까닭(cause)과 과목
+    assert r["workerRules"] == {"result": True, "counted": True, "cut": True, "conflict": True, "plain": True}

@@ -1,5 +1,5 @@
 // tests/test_web.py 가 부른다: 탐색 워커가 쓰는 엔진 기능(겹침 원인 찾기, 진행 알림)을 가짜 과목으로 확인하고 JSON으로 출력한다.
-import { bruteForce, conflicts, countFeasible, evaluate, feasible, findConflicts, search, TravelMatrix } from "../web/js/engine.js";
+import { bruteForce, conflicts, countFeasible, evaluate, feasible, findConflicts, meetsRules, search, TravelMatrix, WEIGHTS, whyNone } from "../web/js/engine.js";
 
 const sec = (course, no, slots) => ({
   key: `${course}-${no}`, courseId: course, no, name: course, instructor: "", status: "",
@@ -162,7 +162,148 @@ const worker = {
   enough: wideCount > 40,
 };
 
+// 9) 조건(공강 요일·점심시간). 엔진과 따로 짠 판정으로 모든 조합을 하나씩 본다: 1분 단위로 훑어서 다른 분반과 같은 분을 쓰지 않고,
+//    공강 요일이 비고, 요일마다 점심 시간대 안에 정한 분만큼 이어서 비는지
+const occ = Array.from({ length: 7 }, () => new Uint8Array(1440)); // 요일마다 분마다: 그 분을 쓰는 분반(순번 + 1)
+const fits = (combo, rules) => {
+  for (const o of occ) o.fill(0);
+  for (let i = 0; i < combo.length; i++) for (const m of combo[i].meetings) for (let x = m.start; x < m.end; x++) {
+    if (occ[m.day][x] && occ[m.day][x] !== i + 1) return false;
+    occ[m.day][x] = i + 1;
+  }
+  for (const d of (rules && rules.freeDays) || []) if (occ[d].some((x) => x)) return false;
+  const l = rules && rules.lunch;
+  if (l) {
+    const need = Math.min(l.minutes, l.end - l.start);
+    for (let d = 0; d < 7; d++) {
+      let run = 0, ok = false;
+      for (let x = l.start; x < l.end && !ok; x++) { run = occ[d][x] ? 0 : run + 1; ok = run >= need; }
+      if (!ok) return false;
+    }
+  }
+  return true;
+};
+const every = (cs, rules) => { // 조건까지 지키는 모든 조합
+  cs = cs.filter((c) => c.sections.length);
+  const out = [], combo = [];
+  if (!cs.length) return out;
+  (function rec(i) {
+    if (i === cs.length) { if (fits(combo, rules)) out.push([...combo]); return; }
+    for (const s of cs[i].sections) { combo.push(s); rec(i + 1); combo.pop(); }
+  })(0);
+  return out;
+};
+const lunches = [null, { start: 660, end: 840, minutes: 60 }, { start: 720, end: 780, minutes: 60 }, { start: 690, end: 810, minutes: 45 },
+  { start: 720, end: 780, minutes: 30 }, { start: 660, end: 780, minutes: 500 }, { start: 705, end: 795, minutes: 50 }];
+const ruleShapes = [
+  { courses: [2, 5], sections: [1, 7], days: 3, starts: 10, step: 45, lens: [50, 75, 110], meetings: 3, empty: 8 },
+  { courses: [2, 4], sections: [6, 12], days: 5, starts: 20, step: 15, lens: [50, 75], meetings: 2, empty: 0 },
+  { courses: [3, 6], sections: [1, 4], days: 2, starts: 8, step: 60, lens: [60, 120, 170], meetings: 1, empty: 6 },
+  { courses: [2, 5], sections: [2, 6], days: 4, starts: 9, step: 30, lens: [45, 50, 75], meetings: 2, empty: 10 },
+];
+const keyOf = (c) => Math.round(c * 1e6), comboKey = (ss) => ss.map((s) => s.key).sort().join(" ");
+state = 1005;
+const rulesBad = [], ruleCauses = { overlap: 0, freeDays: 0, lunch: 0, rules: 0 };
+let rulesCut = 0;
+for (let t = 0; t < 160; t++) {
+  const sh = ruleShapes[t % ruleShapes.length];
+  const cs = Array.from({ length: between(sh.courses) }, (_, i) => course(`U${i}`, Array.from({ length: between(sh.sections) }, (_, j) =>
+    sec(`U${i}`, `${j}`, sh.empty && rand(sh.empty) === 0 ? [] : Array.from({ length: 1 + rand(sh.meetings) }, () => {
+      const start = 540 + sh.step * rand(sh.starts);
+      return [rand(sh.days), start, start + sh.lens[rand(sh.lens.length)], rooms[rand(4)]];
+    })))));
+  if (!cs.some((c) => c.sections.length)) continue;
+  const rules = {}, nFree = [0, 0, 1, 1, 2][rand(5)], lunch = lunches[rand(lunches.length)];
+  if (nFree) { const days = new Set(); while (days.size < nFree) days.add(rand(5)); rules.freeDays = [...days]; }
+  if (lunch) rules.lunch = lunch;
+  const want = every(cs, rules), base = every(cs, null), bad = (what) => rulesBad.push(`${t}:${what}`);
+  if (want.length < base.length) rulesCut++;
+  // 조합 수(limit 도 같은 뜻), 하나라도 있는지, 완전탐색
+  const got = countFeasible(cs, { rules, budgetMs: 1e9 });
+  if (got.count !== want.length || !got.exact) bad("count");
+  for (const limit of [0, 1, want.length - 1, want.length, want.length + 1].filter((x) => x >= 0)) {
+    const r = countFeasible(cs, { rules, limit, budgetMs: 1e9 });
+    if (!(want.length > limit ? r.count === limit && !r.exact : r.count === want.length && r.exact)) bad("limit");
+  }
+  if (feasible(cs, rules) !== want.length > 0) bad("feasible");
+  if (bruteForce(cs, tenths, "0", WEIGHTS, rules).length !== want.length) bad("brute");
+  if (!base.slice(0, 30).every((c) => meetsRules(c, rules) === fits(c, { ...rules, lunch: rules.lunch || null }))) bad("meetsRules");
+  // 찾기: 조건을 지키는 조합만, 비용이 낮은 것부터 빠짐없이. topK 를 키우면 앞쪽은 그대로. 하한 가지치기를 꺼도 같다
+  const costs = want.map((c) => keyOf(evaluate(c, tenths, "0").cost)).sort((a, b) => a - b), wantKeys = new Set(want.map(comboKey));
+  let prev = [];
+  for (const topK of [1, 4, 100000]) {
+    const ranked = search(cs, tenths, "0", { topK, rules }).ranked, keys = ranked.map((ev) => comboKey(ev.sections));
+    if (keys.length !== Math.min(topK, want.length) || !keys.every((k) => wantKeys.has(k)) || new Set(keys).size !== keys.length
+      || !ranked.every((ev, i) => keyOf(ev.cost) === costs[i]) || !prev.every((k, i) => k === keys[i])) bad(`search${topK}`);
+    if (JSON.stringify(search(cs, tenths, "0", { topK, rules, useBound: false }).ranked.map((ev) => comboKey(ev.sections))) !== JSON.stringify(keys)) bad("bound");
+    prev = keys;
+  }
+  // 조합이 없을 때 까닭: 조건 없이도 없으면 overlap, 한 조건만으로 없으면 그 조건, 아니면 rules. 과목 묶음은 그것만으로 조합이 없고 하나를 빼면 생긴다
+  //   (혼자서도 쓸 분반이 없는 과목이 있으면 그런 과목 전부)
+  const why = whyNone(cs, rules);
+  if ((why === null) !== want.length > 0) bad("whyNull");
+  if (why) {
+    const justFree = { freeDays: rules.freeDays }, justLunch = { lunch: rules.lunch };
+    const noFree = !every(cs, justFree).length, noLunch = !every(cs, justLunch).length;
+    const cause = !base.length ? "overlap" : noFree && !noLunch ? "freeDays" : noLunch && !noFree ? "lunch" : "rules";
+    const used = cause === "overlap" ? null : cause === "freeDays" ? justFree : cause === "lunch" ? justLunch : rules;
+    ruleCauses[why.cause]++;
+    if (why.cause !== cause) bad("cause");
+    const sub = cs.filter((c) => why.courseIds.includes(c.id));
+    const alone = cs.filter((c) => c.sections.length && !every([c], used).length).map((c) => c.id);
+    if (alone.length ? JSON.stringify(alone) !== JSON.stringify(why.courseIds)
+      : !sub.length || every(sub, used).length > 0 || (sub.length > 1 && sub.some((c) => !every(sub.filter((x) => x !== c), used).length))) bad("whySet");
+  } else if (findConflicts(cs, rules).length) bad("findConflicts");
+  // 조건이 없다는 뜻의 여러 모양은 조건을 안 준 것과 같다
+  const plain = JSON.stringify(search(cs, tenths, "0", { topK: 20 }).ranked.map((ev) => comboKey(ev.sections)));
+  for (const none of [null, {}, { freeDays: [] }, { lunch: null }, { freeDays: [7, -1, "2"], lunch: { start: 720, end: 720, minutes: 30 } }, { lunch: { start: 720, end: 780, minutes: 0 } }]) {
+    if (JSON.stringify(search(cs, tenths, "0", { topK: 20, rules: none }).ranked.map((ev) => comboKey(ev.sections))) !== plain
+      || countFeasible(cs, { rules: none, budgetMs: 1e9 }).count !== base.length) bad("none");
+  }
+}
+//    손으로 만든 경우. 월요일 11:00~12:15 수업(A)과 12:30~13:45 수업(B): 11~14시 사이에 15분씩만 빈다
+const noon = { start: 660, end: 840, minutes: 60 };
+const lunchPair = [course("A", [sec("A", "001", [[0, 660, 735, "301"]])]), course("B", [sec("B", "001", [[0, 750, 825, "302"]])]), course("C", [sec("C", "001", wed9)])];
+const edge = [course("A", [sec("A", "001", [[0, 600, 660, "301"]])]), course("B", [sec("B", "001", [[0, 840, 900, "302"]])])]; // 11시에 끝나고 14시에 시작
+const wedOnly = [course("A", [sec("A", "001", wed9)]), course("B", [sec("B", "001", mon9), sec("B", "002", tue9)]), course("C", [sec("C", "001", [[2, 780, 855, "83"]])])];
+const either = [course("A", [sec("A", "001", [[0, 720, 780, "301"]]), sec("A", "002", tue9)]), course("B", [sec("B", "001", wed9)])]; // A: 월 12~13시 또는 화 9시
+// 둘이서 점심을 막는 X·Y(월)와 셋이 모여야 막는 A·B·C(화 11:00·12:00·13:00 시작 50분씩, 둘만 있으면 1시간이 빈다). 하나씩 빼 보기만 하면
+// 과목 차례 때문에 A·B·C 가 나오지만, 둘이서 막는 과목이 있으면 그 둘을 알린다
+const pairFirst = [course("X", [sec("X", "001", [[0, 660, 735, "301"]])]), course("A", [sec("A", "001", [[1, 660, 710, "301"]])]), course("B", [sec("B", "001", [[1, 720, 770, "302"]])]),
+  course("C", [sec("C", "001", [[1, 780, 830, "83"]])]), course("Y", [sec("Y", "001", [[0, 750, 825, "302"]])])];
+const hand = {
+  lunchPair: [countFeasible(lunchPair, { rules: { lunch: noon } }), whyNone(lunchPair, { lunch: noon }), whyNone(lunchPair, { lunch: { ...noon, minutes: 15 } }),
+    search(lunchPair, travel, "301", { rules: { lunch: noon } }).ranked.length, search(lunchPair, travel, "301", { rules: { lunch: { ...noon, minutes: 15 } } }).ranked.length],
+  edge: countFeasible(edge, { rules: { lunch: { ...noon, minutes: 180 } } }), // 11~14시를 통째로 비워도 된다
+  freeDays: [countFeasible(wedOnly, { rules: { freeDays: [2] } }), whyNone(wedOnly, { freeDays: [2] }), countFeasible(wedOnly, { rules: { freeDays: [0] } }),
+    search(wedOnly, travel, "301", { rules: { freeDays: [0] } }).ranked.map((ev) => ev.sections.map((s) => s.key).sort().join(" "))],
+  either: [whyNone(either, { freeDays: [1] }), whyNone(either, { lunch: { start: 720, end: 780, minutes: 60 } }), whyNone(either, { freeDays: [1], lunch: { start: 720, end: 780, minutes: 60 } })],
+  overlap: whyNone(pair, { freeDays: [4], lunch: noon }), // 조건과 상관없이 겹친다
+  pairFirst: [whyNone(pairFirst, { lunch: noon }), findConflicts(pairFirst.slice(1), { lunch: noon }), countFeasible(pairFirst.slice(1, 4).slice(0, 2), { rules: { lunch: noon } })],
+  ok: whyNone(ok, { freeDays: [4], lunch: noon }),
+  meets: [meetsRules(lunchPair[0].sections, { lunch: noon }), meetsRules([lunchPair[0].sections[0], lunchPair[1].sections[0]], { lunch: noon }), meetsRules(wedOnly[0].sections, { freeDays: [2] })],
+};
+//    조합이 없는 큰 묶음: 분반이 가장 많은 두 과목(X, Y)이 서로 다 겹친다. 하나씩 돌면 앞의 과목 6개(겹치지 않는 조합 100만 개)를 다 지나야
+//    알지만, 먼저 세어 보고 바로 안다(탐색 나무에 들어가지 않는다)
+const deep = Array.from({ length: 6 }, (_, i) => course(`P${i}`, Array.from({ length: 10 }, (_, j) => sec(`P${i}`, `${j}`, [[i % 5, 480 + 10 * j + 120 * Math.floor(i / 5), 490 + 10 * j + 120 * Math.floor(i / 5), "1"]]))))
+  .concat(["X", "Y"].map((id) => course(id, Array.from({ length: 12 }, (_, j) => sec(id, `${j}`, [[5, 600, 660 + j, `${j}`]])))));
+const deepRes = search(deep, travel, "301", { topK: 5 });
+const quick = { ranked: deepRes.ranked.length, nodes: deepRes.stats.nodes, feasible: feasible(deep), why: whyNone(deep) };
+//    워커도 같다: rules 를 넘기면 조건을 지키는 조합과 그 수, 조합이 없으면 까닭
+const friFree = { freeDays: [4], lunch: { start: 690, end: 810, minutes: 45 } };
+const ruled = ask({ topK: 100000, rules: friFree }), few = ask({ topK: 5, rules: friFree }), wideRuled = every(wide, friFree);
+const blocked = ask({ topK: 20, rules: { freeDays: [0, 1, 2, 3, 4] } });
+const workerRules = {
+  result: ruled.type === "result" && ruled.ranked.length === wideRuled.length && ruled.total.count === wideRuled.length && ruled.total.exact
+    && ruled.ranked.every((ev) => fits(ev.sections, friFree)),
+  counted: few.type === "result" && few.ranked.length === 5 && few.total.count === wideRuled.length && few.total.exact, // 다 찾지 않아도 조건을 넣어 센 수
+  cut: wideRuled.length > 5 && wideRuled.length < wideCount,
+  conflict: blocked.type === "conflict" && blocked.cause === "freeDays" && blocked.courseIds.length === 4,
+  plain: ask({ topK: 20 }).ranked.length === 20,
+};
+
 console.log(JSON.stringify({
+  rulesBad, ruleCauses, rulesCut, hand, quick, workerRules,
   worker,
   moreOk,
   moreTies,

@@ -155,6 +155,78 @@ export function conflicts(s, t) {
 
 const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
+// ---------------------------------------------------------------- 조건 (공강 요일·점심시간)
+//
+// rules = {freeDays: [요일, ...], lunch: {start, end, minutes}}. 둘 다 없으면(null, {}, 빈 배열) 조건이 없는 것이고 결과는 전과 같다.
+//   freeDays: 공강 요일(0 = 월). 그 요일에 수업이 있는 분반은 쓰지 않는다
+//   lunch: 요일마다 start~end(자정부터 센 분) 사이에 수업 없는 시간이 minutes 분 이상 이어져야 한다.
+//     minutes = end - start 면 그 시간대를 통째로 비운다(더 크게 줘도 그렇게 본다). 수업이 start 에 끝나거나 end 에 시작하는 것은 괜찮다.
+//     셋 중 하나라도 수가 아니거나 end <= start, minutes <= 0 이면 점심 조건이 없는 것으로 본다
+// 둘 다 꼭 지키는 조건이다: 어기는 조합은 순위를 내리는 게 아니라 아예 뺀다(search·countFeasible·feasible·findConflicts·bruteForce 가 같은 뜻으로 받는다).
+
+/** rules 를 다듬어 {free: Set | null, lunch: {start, end, minutes} | null}. 걸 조건이 없으면 null */
+function normRules(rules) {
+  if (!rules) return null;
+  const days = Array.isArray(rules.freeDays) ? rules.freeDays.filter((d) => Number.isInteger(d) && d >= 0 && d < 7) : [];
+  const l = rules.lunch;
+  const lunch = l && [l.start, l.end, l.minutes].every(Number.isFinite) && l.end > l.start && l.minutes > 0
+    ? { start: l.start, end: l.end, minutes: Math.min(l.minutes, l.end - l.start) } : null;
+  return days.length || lunch ? { free: days.length ? new Set(days) : null, lunch } : null;
+}
+
+/**
+ * 점심: 그날 점심 시간대와 겹치는 수업들 busy = [시작, 끝, 시작, 끝, ...] 을 피해 minutes 분이 이어서 비는지.
+ * 비는 시간이 있다면 그것을 앞으로 당겼을 때 시간대가 시작하는 때나 어느 수업이 끝나는 때에 닿으므로, 그 시각들에서 시작하는 것만 본다.
+ */
+function lunchGap(busy, L) {
+  const lastStart = L.end - L.minutes;
+  for (let c = -1; c < busy.length; c += 2) {
+    const t = c < 0 ? L.start : busy[c];
+    if (t < L.start || t > lastStart) continue;
+    let free = true;
+    for (let k = 0; free && k < busy.length; k += 2) free = !(busy[k] < t + L.minutes && t < busy[k + 1]);
+    if (free) return true;
+  }
+  return false;
+}
+
+/** 분반 묶음이 다듬은 조건 R 을 지키는지(서로 겹치는지는 보지 않는다) */
+function obeys(sections, R) {
+  if (!R) return true;
+  const { free, lunch } = R;
+  let byDay = null;
+  for (const s of sections) {
+    for (const m of s.meetings) {
+      if (free && free.has(m.day)) return false;
+      if (lunch && m.start < lunch.end && lunch.start < m.end) {
+        if (!byDay) byDay = new Map();
+        const busy = byDay.get(m.day);
+        if (busy) busy.push(m.start, m.end);
+        else byDay.set(m.day, [m.start, m.end]);
+      }
+    }
+  }
+  if (byDay) for (const busy of byDay.values()) if (!lunchGap(busy, lunch)) return false;
+  return true;
+}
+
+/** 분반 묶음(시간표 하나, 또는 분반 하나면 [s])이 조건을 지키는지. 화면이 '이 분반은 조건 때문에 빠진다'를 보일 때도 쓴다 */
+export function meetsRules(sections, rules) {
+  return obeys(sections, normRules(rules));
+}
+
+/** 과목마다 조건 아래에서 쓸 수 있는 분반만 남긴다. 하나도 안 남는 과목이 있으면 null(조합이 없다) */
+function admit(courses, R) {
+  if (!R) return courses;
+  const out = [];
+  for (const c of courses) {
+    const sections = c.sections.filter((s) => obeys([s], R));
+    if (!sections.length) return null;
+    out.push({ ...c, sections });
+  }
+  return out;
+}
+
 /** 비용을 견주는 단위(백만분의 1분). 같은 구간을 더하는 순서만 달라 생기는 부동소수점 차이는 동점으로 본다 */
 const costKey = (cost) => Math.round(cost * 1e6);
 
@@ -162,13 +234,27 @@ const costKey = (cost) => Math.round(cost * 1e6);
  * 백트래킹 + 분기 한정. courses = [{sections: [...]}], 반환 {ranked, stats}.
  * 부분 비용은 closure() 행렬로 잰다: 원래 행렬은 삼각부등식을 어겨 수업을 더 넣으면 비용이 줄 수도 있다.
  * onProgress(done) 를 주면 progressMs 마다 끝낸 몫(0~1, 탐색 나무의 앞 세 층 기준 추정)을 알린다. 결과는 같다.
+ * rules 를 주면 그 조건(공강 요일·점심시간, 위)을 지키는 조합만 찾는다.
  *
  * 순위는 비용이 낮은 순, 비용이 같으면 먼저 찾은 순(과목·분반 차례)이다. topK 와 상관없이 정해지는 차례라서
- * topK 를 키워 다시 부르면 앞쪽은 그대로이고 그 뒤 순위가 이어 붙는다(화면의 '더 찾기').
+ * topK 를 키워 다시 부르면 앞쪽은 그대로이고 그 뒤 순위가 이어 붙는다(화면의 '더 찾기'). 조건이 같을 때의 이야기다.
  */
-export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, useBound = true, onProgress = null, progressMs = 200 } = {}) {
+export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, useBound = true, onProgress = null, progressMs = 200, rules = null } = {}) {
   const t0 = now();
-  courses = courses.filter((c) => c.sections.length);
+  const R = normRules(rules);
+  const stats = { nCombinations: 0, nodes: 0, leaves: 0, prunedConflict: 0, prunedBound: 0, prunedRule: 0, ms: 0 };
+  const none = () => {
+    stats.ms = now() - t0;
+    if (onProgress) onProgress(1);
+    return { ranked: [], stats };
+  };
+  courses = admit(courses.filter((c) => c.sections.length), R);
+  if (!courses) return none(); // 조건 때문에 쓸 분반이 없는 과목이 있다
+  stats.nCombinations = courses.reduce((p, c) => p * c.sections.length, 1);
+  // 조합이 하나도 없는 묶음은 여기서 먼저 걸러 낸다. 하한 가지치기는 찾은 조합이 있어야 듣기 때문에, 조합이 없으면 겹치지 않는 가지를
+  // 끝까지 다 돌게 된다(과목이 많으면 아주 오래). 세는 쪽은 같은 상태를 한 번만 보므로 훨씬 빨리 안다(조합이 있으면 하나 찾자마자 돌아온다).
+  // 150ms 안에 모르면 그냥 돈다
+  if (courses.length && countFeasible(courses, { limit: 0, budgetMs: 150, rules }).exact) return none();
   const order = courses.map((_, i) => i).sort((i, j) => courses[i].sections.length - courses[j].sections.length); // MRV
   const lens = order.map((i) => courses[i].sections.length);
   const pos = order.map(() => 0); // 지금 가지의 층마다 몇 번째 분반인지
@@ -185,13 +271,22 @@ export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, use
     for (const c of courses) for (const s of c.sections) for (const b of sectionBuildings(s)) ids.add(b);
     boundTravel = travel.closure([...ids].sort());
   }
-  const stats = { nCombinations: courses.reduce((p, c) => p * c.sections.length, 1), nodes: 0, leaves: 0, prunedConflict: 0, prunedBound: 0, ms: 0 };
   // kept: 지금까지의 상위 topK 개 {q, seq, ev}. 가장 나쁜 것(비용이 큰 것, 같으면 늦게 찾은 것)이 맨 앞에 오는 힙
   const kept = [];
   let seq = 0;
   let worstQ = topK >= 1 ? Infinity : -Infinity; // topK 개가 찼을 때 그중 가장 나쁜 비용. 이보다 낮아야 들어온다
   const worse = (a, b) => a.q > b.q || (a.q === b.q && a.seq > b.seq);
   const chosen = [];
+  // 점심 조건: 분반마다 점심 시간대와 겹치는 수업 [요일, 시작, 끝, ...](없으면 null), 요일마다 지금 가지에서 고른 그런 수업들.
+  // 수업을 더 넣어 비는 시간이 늘지는 않으니, 넣자마자 그 요일을 보고 점심이 안 나오면 그 가지를 버린다
+  const L = R && R.lunch;
+  const lunchOf = L ? courses.map((c) => c.sections.map((s) => {
+    const hits = [];
+    for (const m of s.meetings) if (m.start < L.end && L.start < m.end) hits.push(m.day, m.start, m.end);
+    return hits.length ? hits : null;
+  })) : null;
+  const busy = {};
+  const leave = (hits) => { for (let h = 0; h < hits.length; h += 3) busy[hits[h]].length -= 2; };
 
   function keep(ev, q) {
     const item = { q, seq: seq++, ev };
@@ -231,17 +326,26 @@ export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, use
       return;
     }
     const sections = courses[order[depth]].sections;
+    const lunches = lunchOf && lunchOf[order[depth]];
     for (let i = 0; i < sections.length; i++) {
       pos[depth] = i;
       const s = sections[i];
       if (chosen.some((c) => conflicts(c, s))) { stats.prunedConflict++; continue; }
+      const hits = lunches && lunches[i];
+      if (hits) {
+        for (let h = 0; h < hits.length; h += 3) (busy[hits[h]] || (busy[hits[h]] = [])).push(hits[h + 1], hits[h + 2]);
+        let ok = true;
+        for (let h = 0; ok && h < hits.length; h += 3) ok = lunchGap(busy[hits[h]], L);
+        if (!ok) { leave(hits); stats.prunedRule++; continue; }
+      }
       chosen.push(s);
       if (useBound && kept.length >= topK) {
         const partial = evaluate(chosen, boundTravel, home, weights);
-        if (costKey(partial.cost) >= worstQ) { stats.prunedBound++; chosen.pop(); continue; }
+        if (costKey(partial.cost) >= worstQ) { stats.prunedBound++; chosen.pop(); if (hits) leave(hits); continue; }
       }
       backtrack(depth + 1);
       chosen.pop();
+      if (hits) leave(hits);
     }
   }
 
@@ -251,41 +355,60 @@ export function search(courses, travel, home, { topK = 5, weights = WEIGHTS, use
   return { ranked: kept.sort((a, b) => a.q - b.q || a.seq - b.seq).map((k) => k.ev), stats };
 }
 
-/** 시간이 겹치지 않는 조합이 하나라도 있는지. 찾으면 바로 멈춘다. */
-export function feasible(courses) {
+/**
+ * 시간이 겹치지 않고 조건(rules)도 지키는 조합이 하나라도 있는지. 찾으면 바로 멈춘다.
+ * countFeasible 로 본다(같은 상태를 한 번만 보므로 조합이 없는 묶음도 금방 끝난다).
+ */
+export function feasible(courses, rules = null) {
   courses = courses.filter((c) => c.sections.length);
-  const order = courses.map((_, i) => i).sort((i, j) => courses[i].sections.length - courses[j].sections.length);
-  const chosen = [];
-  return (function rec(depth) {
-    if (depth === order.length) return true;
-    for (const s of courses[order[depth]].sections) {
-      if (chosen.some((c) => conflicts(c, s))) continue;
-      chosen.push(s);
-      if (rec(depth + 1)) return true;
-      chosen.pop();
-    }
-    return false;
-  })(0);
+  if (!courses.length) return true;
+  return !countFeasible(courses, { limit: 0, budgetMs: Infinity, rules }).exact; // limit 0: 하나라도 찾으면 {0, false} 로 멈춘다
 }
 
 /**
- * 겹치지 않는 조합이 없을 때 그 까닭인 과목들의 id. 이 과목들만 담아도 조합이 없고, 하나라도 빼면 생기는 가장 작은 묶음이다.
- * 화면은 이 과목 행에 '시간 겹침' 을 단다. 모든 분반이 서로 겹치는 두 과목이 있으면 그 둘, 없으면 하나씩 빼 보며 줄인다.
- * 조합이 있으면 [].
+ * 조합이 없을 때 그 까닭인 과목들의 id. 이 과목들만 담아도 조합이 없고, 하나라도 빼면 생기는 가장 작은 묶음이다.
+ * 화면은 이 과목 행에 '시간 겹침' 을 단다(조건 때문이면 whyNone 의 cause 에 맞는 말). 둘이서 이미 조합이 안 나오는 두 과목이 있으면
+ * 그 둘, 없으면 하나씩 빼 보며 줄인다.
+ * rules 를 주면 조건까지 넣고 본다. 조건 때문에 혼자서도 쓸 분반이 없는 과목이 있으면 그런 과목 전부를 돌려준다
+ * (하나만 알리면 고치고 나서 다음 것이 또 나온다). 조합이 있으면 [].
  */
-export function findConflicts(courses) {
+export function findConflicts(courses, rules = null) {
+  const R = normRules(rules);
   let set = courses.filter((c) => c.sections.length);
-  if (feasible(set)) return [];
+  if (R) {
+    set = set.map((c) => ({ ...c, sections: c.sections.filter((s) => obeys([s], R)) }));
+    const alone = set.filter((c) => !c.sections.length);
+    if (alone.length) return alone.map((c) => c.id);
+  }
+  if (feasible(set, rules)) return [];
   for (let a = 0; a < set.length; a++) {
     for (let b = a + 1; b < set.length; b++) {
-      if (set[a].sections.every((s) => set[b].sections.every((t) => conflicts(s, t)))) return [set[a].id, set[b].id];
+      if (set[a].sections.every((s) => set[b].sections.every((t) => conflicts(s, t) || !obeys([s, t], R)))) return [set[a].id, set[b].id];
     }
   }
   for (const c of [...set]) {
     const rest = set.filter((x) => x !== c);
-    if (!feasible(rest)) set = rest;
+    if (!feasible(rest, rules)) set = rest;
   }
   return set.map((c) => c.id);
+}
+
+/**
+ * 조합이 없는 까닭: {cause, courseIds}. 조합이 있으면 null. courseIds 는 그 까닭으로 본 findConflicts(가장 작은 묶음).
+ *   "overlap"   조건이 없어도 시간이 겹쳐 조합이 없다(조건을 안 줬을 때는 늘 이것)
+ *   "freeDays"  공강 요일 때문이다(점심 조건만 걸면 조합이 있다)
+ *   "lunch"     점심시간 때문이다(공강 요일만 걸면 조합이 있다)
+ *   "rules"     두 조건을 함께 걸어서다(하나씩만 걸면 조합이 있다), 또는 둘 다 따로따로도 조합을 막는다
+ */
+export function whyNone(courses, rules = null) {
+  if (feasible(courses, rules)) return null;
+  const R = normRules(rules);
+  if (!R || !feasible(courses)) return { cause: "overlap", courseIds: findConflicts(courses) };
+  const free = R.free ? { freeDays: [...R.free] } : null, lunch = R.lunch ? { lunch: R.lunch } : null;
+  const byFree = free !== null && !feasible(courses, free), byLunch = lunch !== null && !feasible(courses, lunch);
+  if (byFree && !byLunch) return { cause: "freeDays", courseIds: findConflicts(courses, free) };
+  if (byLunch && !byFree) return { cause: "lunch", courseIds: findConflicts(courses, lunch) };
+  return { cause: "rules", courseIds: findConflicts(courses, rules) };
 }
 
 /**
@@ -296,11 +419,16 @@ export function findConflicts(courses) {
  * 조합을 하나씩 세지 않는다. 요일·시각이 같은 분반(건물만 다른 것)은 한 덩이로 묶어 분반 수를 곱하고, 남은 과목에서 못 고르게 된
  * 덩이가 같은 가지는 한 번만 센다(앞에서 무엇을 골랐든 남은 과목에는 같은 상태다). 겹침 판정은 conflicts 그대로라 하나씩 센 것과 같은
  * 수가 나온다. 수는 Number 라 2^53(약 9천조)을 넘으면 어림값이다.
+ * rules 를 주면 그 조건(공강 요일·점심시간)을 지키는 조합만 센다(search 에 같은 rules 를 줬을 때 나오는 조합 수).
  */
-export function countFeasible(courses, { limit = Infinity, budgetMs = 300 } = {}) {
+export function countFeasible(courses, { limit = Infinity, budgetMs = 300, rules = null } = {}) {
   const t0 = now();
+  const R = normRules(rules);
   courses = courses.filter((c) => c.sections.length);
   if (!courses.length) return { count: 0, exact: true };
+  courses = admit(courses, R);
+  if (!courses) return { count: 0, exact: true }; // 조건 때문에 쓸 분반이 없는 과목이 있다
+  const L = R && R.lunch;
 
   // 과목마다 시간이 같은 분반을 한 덩이로({s: 대표 분반, n: 분반 수}). 덩이가 많은 과목부터 고른다:
   // 깊이 들어갈수록 남은 덩이가 적어 같은 상태를 다시 만나기 쉽다(실제 자료에서 적은 과목부터 고를 때보다 가지가 훨씬 적다)
@@ -316,20 +444,62 @@ export function countFeasible(courses, { limit = Infinity, budgetMs = 300 } = {}
   }).sort((a, b) => b.length - a.length);
   const D = groups.length, last = D - 1;
 
-  // 덩이마다 비트 하나. 뒤에 고르는 과목일수록 낮은 비트라, 깊이 d 에서는 아래 words[d] 워드(남은 과목의 덩이)만 보면 된다
+  // 점심 조건: 요일마다 '이 시각부터 minutes 분' 칸을 둔다(시작 시각 = 점심 시간대가 시작하는 때와 어느 수업이든 끝나는 때. lunchGap 과
+  // 같은 까닭으로 이 칸들만 보면 된다). 덩이를 고르면 그 수업과 겹치는 칸이 죽고, 어느 요일이든 칸이 다 죽으면 그 가지에는 조합이 없다.
+  // 칸도 비트 하나씩이라(가장 낮은 비트들) 막힌 덩이와 함께 상태에 들어간다. 점심 시간대에 수업이 없는 요일은 칸을 두지 않는다
+  const slots = new Map(); // 요일 → {base: 첫 비트, ts: 칸 시작 시각들}
+  let LB = 0; // 칸 수
+  if (L) {
+    const lastStart = L.end - L.minutes, starts = new Map();
+    for (const gs of groups) for (const g of gs) for (const m of g.s.meetings) {
+      if (!(m.start < L.end && L.start < m.end)) continue;
+      if (!starts.has(m.day)) starts.set(m.day, new Set([L.start]));
+      if (m.end <= lastStart) starts.get(m.day).add(m.end);
+    }
+    for (const [day, set] of starts) { slots.set(day, { base: LB, ts: [...set] }); LB += set.size; }
+  }
+  const LW = (LB + 31) >>> 5; // 칸이 차지하는 워드 수
+  const dayMasks = [...slots.values()].map(({ base: b, ts }) => { // 요일마다 그 요일 칸 비트들
+    const mask = new Uint32Array(LW);
+    for (let k = 0; k < ts.length; k++) mask[(b + k) >>> 5] |= 1 << ((b + k) & 31);
+    return mask;
+  });
+  /** 분반 s 를 고르면 죽는 칸을 mask 에 켠다 */
+  const kill = (s, mask) => {
+    for (const m of s.meetings) {
+      const sl = slots.get(m.day);
+      if (!sl || !(m.start < L.end && L.start < m.end)) continue;
+      for (let k = 0; k < sl.ts.length; k++) {
+        if (m.start < sl.ts[k] + L.minutes && sl.ts[k] < m.end) mask[(sl.base + k) >>> 5] |= 1 << ((sl.base + k) & 31);
+      }
+    }
+  };
+  /** 상태 x 에서 칸이 다 죽은 요일이 있는지(점심을 못 지킨다) */
+  const dead = (x) => {
+    for (let k = 0; k < dayMasks.length; k++) {
+      const dm = dayMasks[k];
+      let w = 0;
+      while (w < LW && (~x[w] & dm[w]) === 0) w++;
+      if (w === LW) return true;
+    }
+    return false;
+  };
+
+  // 덩이마다 비트 하나(점심 칸 위로). 뒤에 고르는 과목일수록 낮은 비트라, 깊이 d 에서는 아래 words[d] 워드(점심 칸과 남은 과목의 덩이)만 보면 된다
   const base = new Array(D), words = new Array(D), topMask = new Array(D);
-  for (let d = last, bit = 0; d >= 0; d--) {
+  for (let d = last, bit = LB; d >= 0; d--) {
     base[d] = bit;
     bit += groups[d].length;
     words[d] = (bit + 31) >>> 5;
     topMask[d] = bit & 31 ? (1 << (bit & 31)) - 1 : -1;
   }
-  // conf[d][i]: 깊이 d 의 i 번째 덩이를 고르면 못 고르게 되는 뒤 과목 덩이들
+  // conf[d][i]: 깊이 d 의 i 번째 덩이를 고르면 못 고르게 되는 뒤 과목 덩이들과 죽는 점심 칸. 마지막 과목은 점심 칸만(칸이 있을 때)
   const conf = [];
   for (let d = 0; d < last; d++) {
     if (now() - t0 >= budgetMs) return { count: 0, exact: false };
     conf.push(groups[d].map((g) => {
       const mask = new Uint32Array(words[d + 1]);
+      if (LB) kill(g.s, mask);
       for (let e = d + 1; e < D; e++) {
         const ge = groups[e];
         for (let j = 0; j < ge.length; j++) {
@@ -339,7 +509,28 @@ export function countFeasible(courses, { limit = Infinity, budgetMs = 300 } = {}
       return mask;
     }));
   }
-  const blocked = groups.map((_, d) => new Uint32Array(words[d])); // 깊이마다 지금 가지에서 막힌 덩이(남은 과목 것만)
+  if (LB) conf.push(groups[last].map((g) => { const mask = new Uint32Array(LW); kill(g.s, mask); return mask; }));
+  // 점심이 이미 정해진 요일: 남은 과목이 무엇을 골라도 못 죽이는 칸이 살아 있으면 그 요일은 끝까지 점심이 나온다. 그런 요일은 칸을 모두
+  // 0(살아 있음)으로 맞춰서, 그 요일의 칸만 다른 상태들을 같은 상태로 본다(같은 상태를 더 자주 만나 덜 센다)
+  const safe = new Array(D); // safe[d]: 깊이 d 부터의 과목이 못 죽이는 칸
+  if (LB) {
+    const hit = new Uint32Array(LW);
+    for (let d = last; d >= 0; d--) {
+      for (const c of conf[d]) for (let w = 0; w < LW; w++) hit[w] |= c[w];
+      safe[d] = hit.map((x) => ~x);
+    }
+  }
+  const settle = (x, d) => {
+    const s = safe[d];
+    for (let k = 0; k < dayMasks.length; k++) {
+      const dm = dayMasks[k];
+      let w = 0;
+      while (w < LW && (~x[w] & s[w] & dm[w]) === 0) w++;
+      if (w < LW) for (w = 0; w < LW; w++) x[w] &= ~dm[w];
+    }
+  };
+  const blocked = groups.map((_, d) => new Uint32Array(words[d])); // 깊이마다 지금 가지에서 막힌 덩이(남은 과목 것만)와 죽은 점심 칸
+  const tmp = new Uint32Array(LW);
 
   // 기억: 깊이마다 해시표 하나(형식 배열이라 Map 보다 메모리를 1/3쯤 쓴다). 열쇠 = 막힌 덩이 비트(kw 워드), 값 = 그 아래 조합 수(빈 칸 -1)
   const table = (kw, size) => ({ kw, size, used: 0, keys: new Uint32Array(size * kw), vals: new Float64Array(size).fill(-1) });
@@ -388,7 +579,15 @@ export function countFeasible(courses, { limit = Infinity, budgetMs = 300 } = {}
     const cur = blocked[d], gs = groups[d], b0 = base[d];
     if (d === last) {
       let sum = 0;
-      for (let i = 0; i < gs.length; i++) if (!(cur[(b0 + i) >>> 5] & (1 << ((b0 + i) & 31)))) sum += gs[i].n;
+      for (let i = 0; i < gs.length; i++) {
+        if (cur[(b0 + i) >>> 5] & (1 << ((b0 + i) & 31))) continue;
+        if (LB) {
+          const c = conf[d][i];
+          for (let w = 0; w < LW; w++) tmp[w] = cur[w] | c[w];
+          if (dead(tmp)) continue;
+        }
+        sum += gs[i].n;
+      }
       add(mult * sum);
       return sum;
     }
@@ -402,6 +601,10 @@ export function countFeasible(courses, { limit = Infinity, budgetMs = 300 } = {}
       const c = cf[i];
       for (let w = 0; w < nw; w++) next[w] = cur[w] | c[w];
       next[nw - 1] &= tm;
+      if (LB) {
+        if (dead(next)) continue;
+        settle(next, d + 1);
+      }
       sum += gs[i].n * rec(d + 1, mult * gs[i].n);
       if (stop) return sum; // 다 못 센 가지는 적어 두지 않는다
     }
@@ -413,14 +616,16 @@ export function countFeasible(courses, { limit = Infinity, budgetMs = 300 } = {}
   return { count, exact: !stop };
 }
 
-/** 검증용 완전탐색 (search 와 결과가 같아야 한다). */
-export function bruteForce(courses, travel, home, weights = WEIGHTS) {
+/** 검증용 완전탐색 (search 와 결과가 같아야 한다). rules 를 주면 조건을 지키는 조합만. */
+export function bruteForce(courses, travel, home, weights = WEIGHTS, rules = null) {
+  const R = normRules(rules);
   courses = courses.filter((c) => c.sections.length);
   const out = [];
   const combo = [];
   (function rec(i) {
     if (i === courses.length) {
       for (let a = 0; a < combo.length; a++) for (let b = a + 1; b < combo.length; b++) if (conflicts(combo[a], combo[b])) return;
+      if (!obeys(combo, R)) return;
       out.push(evaluate(combo, travel, home, weights));
       return;
     }
