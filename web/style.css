@@ -881,6 +881,59 @@ html[data-theme="xmas"] body { scrollbar-color: auto; }
 /* 대비를 높인 기기와 강제 색에서는 무늬를 끈다 */
 @media (prefers-contrast: more), (forced-colors: active) { html[data-theme] { --bg-pattern: none; } }
 
+/* 눈(크리스마스 테마. 10/4 사용자: "크리스마스 배경에서 눈에 안 거슬릴 정도로 눈 내리는 효과", "또렷할 필요는 없고 양은 ㄹ의 2배면 될 듯").
+   맨 뒤 바탕 위, 카드·상단 바·하단 띠 아래에서만 내린다. 두 겹(멀리: 작고 덜 밝고 느리다 / 가까이: 조금 크고 밝고 빠르다)을 화면보다 한 장 길게 깔고
+   transform 으로만 내린다: 한 장만큼 내려가면 처음과 같은 그림이라 이음매 없이 되풀이된다. 기울기는 skewX 로 준다(그만큼 좌우로 넉넉히 편다).
+   테마가 켜져 있는 동안 계속 내리고, 동작 줄이기·대비를 높인 기기·강제 색에서는 그리지 않는다.
+   초당 30번만 움직인다(steps: 26초에 780번, 18초에 540번). 연속으로 움직이면 화면을 초당 60번(빠른 화면은 120번) 다시 그리는데, 이러면 30번이다(10/4 잼).
+   눈이 글자 뒤를 지나가도 읽히게 바탕 위 글자는 둘레 1.75px를 바탕색으로 꽉 채운다(--on-bg-halo. 기본 테마에서는 없다). 흐린 그림자(0 0 2px 네 겹)로는
+   가는 획 끝에서 눈이 반쯤 비쳐 글자 바로 옆이 2:1까지 떨어졌다. 흐림 없는 그림자를 1px 8방향과 1.75px 16방향에 깔면 가장 밝은 눈송이가 바로 뒤에 있어도
+   글자에서 1px 안이 모두 바탕색이다(13px on-bg-text3 6.8:1, 화소 밀도 1·2·3배에서 잼). -webkit-text-stroke + paint-order 는 쓰지 않는다:
+   크롬 122 까지와 그 엔진을 쓰는 브라우저는 HTML 글자에 paint-order 가 안 먹어 테두리가 글자를 덮는다 */
+html[data-theme="xmas"] { --snow-far: #ffffff94; --snow-near: #ffffffe0;
+  --on-bg-halo: 1px 0 var(--bg), .71px .71px var(--bg), 0 1px var(--bg), -.71px .71px var(--bg), -1px 0 var(--bg), -.71px -.71px var(--bg), 0 -1px var(--bg), .71px -.71px var(--bg),
+    1.75px 0 var(--bg), 1.62px .67px var(--bg), 1.24px 1.24px var(--bg), .67px 1.62px var(--bg), 0 1.75px var(--bg), -.67px 1.62px var(--bg), -1.24px 1.24px var(--bg), -1.62px .67px var(--bg),
+    -1.75px 0 var(--bg), -1.62px -.67px var(--bg), -1.24px -1.24px var(--bg), -.67px -1.62px var(--bg), 0 -1.75px var(--bg), .67px -1.62px var(--bg), 1.24px -1.24px var(--bg), 1.62px -.67px var(--bg); }
+h2.section-title, .asof, .picked-error, .footnote, .day-summary, .result-head, .ranks-more, .info-foot,
+.picked-error .btn-text, .footnote .btn-text, .ranks-more .btn-text { text-shadow: var(--on-bg-halo, none); } /* 버튼은 글자 그림자를 물려받지 않아 따로 적는다 */
+.day-summary .tag { text-shadow: none; }
+/* 넓은 화면의 하단 바는 오른쪽 칸이 짧으면 화면 아래에 붙지 않고 내용 사이에 놓인다. 그때는 무늬 띠가 바 뒤를 가리지 않아 '취소' 뒤로도 눈이 지나간다(폰의 띠는 늘 가린다) */
+@media (min-width: 42.5em), (horizontal-viewport-segments: 2) { .input-right .bottom-bar .btn-text { text-shadow: var(--on-bg-halo, none); } }
+/* 그 버튼을 올리거나 누르는 동안에는 버튼 면(bg-hover)이 눈을 가린다. 둘레를 두면 그 면 위에서 글자에 짙은 테두리가 보이므로 뺀다(찾는 중에는 면이 없어 그대로 둔다) */
+.picked-error .btn-text:not([aria-disabled="true"]):active, .footnote .btn-text:not([aria-disabled="true"]):active, .ranks-more .btn-text:not([aria-disabled="true"]):active,
+.bottom-bar .btn-text:active { text-shadow: none; }
+@media (hover: hover) {
+  .picked-error .btn-text:not([aria-disabled="true"]):hover, .footnote .btn-text:not([aria-disabled="true"]):hover, .ranks-more .btn-text:not([aria-disabled="true"]):hover,
+  .bottom-bar .btn-text:hover { text-shadow: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="xmas"] body::before { z-index: -3; }
+  html[data-theme="xmas"]::before, html[data-theme="xmas"]::after { content: ""; position: fixed; z-index: -2; bottom: 0; left: calc(-8vh - 48px); right: calc(-8vh - 48px);
+    pointer-events: none; will-change: transform; }
+  html[data-theme="xmas"]::before { top: -360px; background-size: 280px 360px; animation: tt-snow-far 26s steps(780) infinite, tt-snow-in 1.2s ease-out both;
+    background-image: radial-gradient(circle at 107px 83px, var(--snow-far) 0 0.5px, transparent 2.5px), radial-gradient(circle at 46px 329px, var(--snow-far) 0 1px, transparent 3px), radial-gradient(circle at 162px 248px, var(--snow-far) 0 1px, transparent 3px),
+    radial-gradient(circle at 155px 138px, var(--snow-far) 0 0.5px, transparent 2.5px), radial-gradient(circle at 205px 208px, var(--snow-far) 0 1px, transparent 3px), radial-gradient(circle at 235px 158px, var(--snow-far) 0 1px, transparent 3px),
+    radial-gradient(circle at 43px 54px, var(--snow-far) 0 0.5px, transparent 2.5px), radial-gradient(circle at 202px 60px, var(--snow-far) 0 1px, transparent 3px), radial-gradient(circle at 35px 241px, var(--snow-far) 0 1px, transparent 3px),
+    radial-gradient(circle at 193px 353px, var(--snow-far) 0 0.5px, transparent 2.5px), radial-gradient(circle at 15px 114px, var(--snow-far) 0 1px, transparent 3px), radial-gradient(circle at 245px 270px, var(--snow-far) 0 1px, transparent 3px),
+    radial-gradient(circle at 68px 157px, var(--snow-far) 0 0.5px, transparent 2.5px), radial-gradient(circle at 106px 319px, var(--snow-far) 0 1px, transparent 3px); }
+  html[data-theme="xmas"]::after { top: -520px; background-size: 360px 520px; animation: tt-snow-near 18s steps(540) infinite, tt-snow-in 1.2s ease-out both;
+    background-image: radial-gradient(circle at 14px 362px, var(--snow-near) 0 1px, transparent 4px), radial-gradient(circle at 52px 241px, var(--snow-near) 0 1.5px, transparent 4.5px), radial-gradient(circle at 242px 412px, var(--snow-near) 0 2px, transparent 5px),
+    radial-gradient(circle at 163px 259px, var(--snow-near) 0 1px, transparent 4px), radial-gradient(circle at 134px 443px, var(--snow-near) 0 1.5px, transparent 4.5px), radial-gradient(circle at 156px 92px, var(--snow-near) 0 2px, transparent 5px),
+    radial-gradient(circle at 278px 311px, var(--snow-near) 0 1px, transparent 4px), radial-gradient(circle at 22px 490px, var(--snow-near) 0 1.5px, transparent 4.5px), radial-gradient(circle at 302px 154px, var(--snow-near) 0 2px, transparent 5px),
+    radial-gradient(circle at 245px 49px, var(--snow-near) 0 1px, transparent 4px); }
+  /* 전체 화면 지도는 화면을 다 덮어 눈이 안 보인다. 그동안은 멈춰 둔다(안 멈추면 안 보이는 눈 때문에 화면을 초당 30번 다시 그린다). 돌아오면 멈춘 자리에서 이어 내린다 */
+  html[data-theme="xmas"]:has(#view-map:not([hidden]))::before, html[data-theme="xmas"]:has(#view-map:not([hidden]))::after { animation-play-state: paused; }
+  /* 상단 바 바로 아래 40px: 바 밑에서 나오는 눈이 서서히 보이게 한다(무늬는 그대로 이어진다) */
+  html[data-theme="xmas"] body::after { content: ""; position: fixed; z-index: -1; top: 0; left: 0; right: 0; height: calc(var(--topbar-h) + var(--safe-top) + 40px); pointer-events: none;
+    background: var(--bg-pattern), linear-gradient(var(--bg) calc(var(--topbar-h) + var(--safe-top)), transparent); }
+}
+@media (prefers-contrast: more), (forced-colors: active) {
+  html[data-theme="xmas"]::before, html[data-theme="xmas"]::after, html[data-theme="xmas"] body::after { content: none; }
+}
+@keyframes tt-snow-far { from { transform: skewX(-4deg) translate3d(0, 0, 0); } to { transform: skewX(-4deg) translate3d(0, 360px, 0); } }
+@keyframes tt-snow-near { from { transform: skewX(-8deg) translate3d(0, 0, 0); } to { transform: skewX(-8deg) translate3d(0, 520px, 0); } }
+@keyframes tt-snow-in { from { opacity: 0; } }
+
 /* ---------------------------------------------------------------- 마우스를 올릴 수 있을 때만 */
 @media (hover: hover) {
   .icon-btn:hover, .btn-text:hover, .result:hover, .rank-hit:hover, button.info-row:hover, a.info-row:hover, .course-hit:hover .c-title { background: var(--surface-hover); }
