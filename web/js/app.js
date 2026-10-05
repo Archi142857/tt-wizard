@@ -1,7 +1,7 @@
 // TT Wizard 화면(디자인 규칙 v3). 자료(data/*.json)는 scripts/export_web.py 가 만들고, 탐색은 engine.js 가 브라우저에서 한다.
 // 화면은 입력 · 결과 · 정보 셋이고 전체 화면 지도, 자료 출처·오픈소스 라이선스가 그 위에 뜬다. 화면만 방문 기록(pushState)을
 // 남기고 시트(<dialog>)는 남기지 않는다. 화면 문구는 디자인 규칙 '문구'를 따른다(문장은 해요체 한 줄, 그 밖에는 명사구).
-import { DAY_KO, parseCourses, TravelMatrix, search, findConflicts, countFeasible, routeLine } from "./engine.js";
+import { DAY_KO, parseCourses, TravelMatrix, search, countFeasible, routeLine, whyNone, meetsRules } from "./engine.js";
 import { indexCourses as indexSearch, searchCourses, splitMarks, normKey } from "./search.js";
 
 const $ = (id) => document.getElementById(id);
@@ -38,6 +38,13 @@ const HEAVY = 100000;
 const LONG_MS = 10000; // 계산이 이보다 길어질 것 같으면 진행 정도와 '취소'를 보인다
 const TERMS = { 1: "1학기", S: "여름학기", 2: "2학기", W: "겨울학기" };
 const TERM_ORDER = ["1", "S", "2", "W"]; // 한 해 안의 학기 순서(학기 선택칸)
+// 추가 설정의 점심시간(아래 '추가 설정'): 길이는 30·60·90분, 시간대는 시작 10:00~14:00 · 끝 11:00~15:00 을 30분 단위로, 처음 값 11:00~14:00
+const LUNCH_MINS = [30, 60, 90];
+const LUNCH_FROM = 600, LUNCH_TO = 900, LUNCH_STEP = 30;
+const LUNCH_WIN = { start: 660, end: 840 };
+// 조합이 없는 까닭(엔진의 cause)마다 오류 줄과 태그. 추가 설정 때문일 때도 시간 겹침과 같은 자리, 같은 모양이고 말만 까닭을 따른다
+const NONE_TEXT = { overlap: "겹치지 않는 조합이 없어요", freeDays: "공강 요일에 맞는 조합이 없어요", lunch: "점심시간에 맞는 조합이 없어요", rules: "추가 설정에 맞는 조합이 없어요" };
+const NONE_TAG = { overlap: "시간 겹침", freeDays: "공강 요일", lunch: "점심시간", rules: "추가 설정" };
 // 교과구분 색 묶음. 색은 style.css 의 cls-* 토큰, 메타 줄에는 원래 이름(일선, 교직)을 쓰고 색 묶음만 '기타'
 const CLS_GROUPS = [["전필", "req"], ["전선", "elec"], ["교양", "gen"], ["기타", "etc"]];
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -50,9 +57,11 @@ const state = {
   courses: [], byId: new Map(),
   // 담은 과목 [{id, excluded: Set<분반 키>, name, cls, credit, dept}]. 이름 등은 자료에서 사라진 과목을 보이려고 함께 저장한다
   picks: [],
-  overrides: {}, // 분반 키 → {rooms: {수업 번호: 건물}, times: [[요일, 시작, 끝, 건물]]} 강의실·시간 미정을 직접 넣은 것
+  overrides: {}, // 분반 키 → {rooms, meet, base} 직접 넣은 강의실·시간(아래 '직접 넣은 강의실·시간')
   home: "", homeOther: "", homeDorm: "", mode: "slope", // 출발·도착의 처음 값은 자료(campus.homes)의 첫 항목이다(지금은 정문)
-  errors: { noSections: new Set(), overlap: new Set(), general: null }, // 주요 버튼을 누른 뒤의 오류
+  rules: { freeDays: [], lunch: null, win: { ...LUNCH_WIN } }, // 추가 설정: 공강 요일, 점심시간(없음이면 null), 점심을 껐다 켜도 남는 시간대
+  // 오류: noSections 는 주요 버튼을 누른 뒤, overlap·general 은 조합이 없을 때(담을 때 바로, 또는 주요 버튼을 누른 뒤). cause = 조합이 없는 까닭(overlap·freeDays·lunch·rules)
+  errors: { noSections: new Set(), overlap: new Set(), cause: "overlap", general: null },
   result: null, rank: 0, day: 0, reveal: false,
 };
 
@@ -108,7 +117,9 @@ const semKey = (k, sem = state.semester) => `${k}@${sem}`;
 /** 알림 영역(role=status, role=alert)에 읽을 문구. 같은 문구도 다시 읽히게 비웠다가 채운다. */
 const liveTimers = {};
 function announce(text, kind = "status") {
-  const el = $(kind);
+  // 시트(모달 dialog)가 열려 있으면 그 밖은 inert 라 화면의 알림 영역은 읽히지 않는다. 열린 시트 안에 알림 영역이 있으면 그것을 쓴다(과목 시트, 추가 설정 시트)
+  const sheet = document.querySelector("dialog[open]");
+  const el = (sheet && sheet.querySelector(`[data-live="${kind}"]`)) || $(kind);
   el.textContent = "";
   clearTimeout(liveTimers[kind]);
   liveTimers[kind] = setTimeout(() => { el.textContent = text; }, 60);
@@ -179,15 +190,108 @@ function clsKey(cls) {
 const clsColor = (cls) => `var(--cls-${clsKey(cls)})`;
 const clsFill = (cls) => `var(--cls-${clsKey(cls)}-bg)`;
 
-// ---------------------------------------------------------------- 강의실·시간 미정 직접 입력
+// ---------------------------------------------------------------- 직접 넣은 강의실·시간
+// state.overrides[분반 키] = { rooms, meet, base }
+//   rooms: {수업 번호: 건물}            편람의 강의실이 미정인 수업에 고른 건물(값 자리의 선택칸)
+//   meet:  [[요일, 시작, 끝, 건물, 호]]  직접 넣은 수업 전체: 편람에 시간이 없는 분반에 넣은 시간이거나, 편람에 있는 시간·장소를 바꾼 것(10/5 사용자).
+//          호는 편람의 건물을 그대로 둔 수업에만 남는다(호는 직접 넣지 않는다. 걷는 시간은 건물로 계산한다)
+//   base:  meet 를 넣을 때의 편람 값(sigOf). 편람에 시간이 없던 분반이면 ""
+// 예전에 저장한 times: [[요일, 시작, 끝, 건물]](시간 미정 분반에 넣은 시간)는 읽을 때 meet(base "")로 옮긴다
+
+/** 수업 목록을 견주는 글(요일·시각·건물·호. 차례는 상관없다) */
+const sigOf = (ms) => ms.map((m) => `${m.day},${m.start},${m.end},${m.building || ""},${m.room || ""}`).sort().join(";");
+const meetOf = ([day, start, end, building, room]) => ({ day, start, end, building: building || "", room: room || "" });
+
+/** 저장해 둔 직접 입력. 모양이 어긋난 것은 버린다 */
+function readOverrides(sem) {
+  const raw = store.get(semKey("overrides", sem), {});
+  const out = {};
+  if (!raw || typeof raw !== "object") return out;
+  const ok = (t) => Array.isArray(t) && Number.isInteger(t[0]) && t[0] >= 0 && t[0] < 7 && Number.isFinite(t[1]) && Number.isFinite(t[2]) && t[2] > t[1];
+  for (const [key, o] of Object.entries(raw)) {
+    if (!o || typeof o !== "object") continue;
+    const v = {};
+    if (o.rooms && typeof o.rooms === "object" && Object.keys(o.rooms).length) v.rooms = { ...o.rooms };
+    const list = Array.isArray(o.meet) ? o.meet : Array.isArray(o.times) ? o.times : null;
+    if (list) {
+      v.meet = list.filter(ok).map(([d, a, b, bd, room]) => [d, a, b, String(bd || ""), bd ? String(room || "") : ""]);
+      v.base = Array.isArray(o.meet) && typeof o.base === "string" ? o.base : "";
+      if (!v.meet.length && !v.base) { delete v.meet; delete v.base; } // 넣은 시간이 하나도 없다
+    }
+    if (v.rooms || v.meet) out[key] = v;
+  }
+  return out;
+}
+
+/**
+ * 이 분반에 지금 쓰는 직접 입력(수업 목록). 없으면 null.
+ * 편람에 시간이 없을 때 넣어 둔 시간(base "")은 편람에 시간이 생기면 쓰지 않는다(전부터 그랬다: 모르던 것을 채운 값이라 편람을 따른다. 저장해 둔 값은 남는다).
+ * 편람에 있던 시간·장소를 바꾼 것은 편람이 달라져도 그대로 쓰고 '편람 바뀜'을 단다(catalogMoved).
+ */
+function ownMeetings(s) {
+  const o = state.overrides[s.key];
+  if (!o || !o.meet || (!o.base && s.meetings.length)) return null;
+  return o.meet.map((t) => { const m = meetOf(t); m.manual = !!m.building && !m.room; return m; });
+}
 
 /** 직접 넣은 강의실·시간을 반영한 수업 목록. */
 function effMeetings(s) {
+  const own = ownMeetings(s);
+  if (own) return own;
   const o = state.overrides[s.key];
-  if (!s.meetings.length) {
-    return ((o && o.times) || []).map(([day, start, end, building]) => ({ day, start, end, building: building || "", room: "", manual: true }));
-  }
   return s.meetings.map((m, i) => (!m.building && o && o.rooms && o.rooms[i] ? { ...m, building: o.rooms[i], room: "", manual: true } : m));
+}
+
+/** 편람에 있는 시간·장소를 바꿔 둔 분반인가(편람에 시간이 없는 분반에 넣은 시간은 '바꾼 것'이 아니다). */
+const isChanged = (s) => s.meetings.length > 0 && !!ownMeetings(s);
+/** 바꿔 둔 뒤에 편람 값이 달라졌나(바꿀 때의 편람 값과 지금 편람 값이 다르다). 과목 시트를 닫으면 본 것으로 친다(courseSheetClosed). */
+const catalogMoved = (s) => isChanged(s) && state.overrides[s.key].base !== sigOf(s.meetings);
+
+/** 직접 넣은 수업이 편람 값과 같은가. 호는 직접 넣지 못하므로(건물만 고른다) 내 쪽 호가 비어 있으면 건물까지만 견준다. */
+function sameAsCatalog(mine, cat) {
+  const loose = (ms) => ms.map((m) => `${m.day},${m.start},${m.end},${m.building || ""}`).sort().join(";");
+  return loose(mine) === loose(cat)
+    && mine.every((m) => !m.room || cat.some((c) => c.day === m.day && c.start === m.start && c.end === m.end && c.building === m.building && c.room === m.room));
+}
+
+/**
+ * 분반의 수업을 groups([{days, start, end, building, room}])로 바꿔 둔다. 같은 수업을 두 번 넣었으면 하나로.
+ * 편람 값과 같아졌으면(편람에 시간이 없는 분반이면 넣은 시간을 다 뺐으면) 직접 입력이 아니다: 지운다.
+ */
+function setOwn(s, groups) {
+  const prev = state.overrides[s.key];
+  const base = ownMeetings(s) ? prev.base || "" : sigOf(s.meetings);
+  const seen = new Set(), meet = [];
+  for (const g of groups) {
+    for (const day of g.days) {
+      const t = [day, g.start, g.end, g.building || "", g.building ? g.room || "" : ""];
+      if (seen.has(t.join(","))) continue;
+      seen.add(t.join(","));
+      meet.push(t);
+    }
+  }
+  meet.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+  if (sameAsCatalog(meet.map(meetOf), s.meetings)) delete state.overrides[s.key];
+  else state.overrides[s.key] = { meet, base };
+}
+
+/**
+ * 편람을 새로 받은 뒤: 바꿔 둔 값이 새 편람 값과 같아졌으면 직접 입력을 조용히 지운다(알리지 않는다).
+ * 다르면 그대로 두고 과목 행과 분반에 '편람 바뀜'을 단다(catalogMoved).
+ */
+function pruneOverrides() {
+  let any = false;
+  for (const p of state.picks) {
+    for (const s of (state.byId.get(p.id) || { sections: [] }).sections) {
+      const o = state.overrides[s.key];
+      if (!o || !o.meet || !s.meetings.length || !sameAsCatalog(o.meet.map(meetOf), s.meetings)) continue;
+      delete o.meet;
+      delete o.base;
+      if (!o.rooms) delete state.overrides[s.key];
+      any = true;
+    }
+  }
+  if (any) saveOverrides();
 }
 
 /** 강의실이나 시간이 아직 미정인 분반(직접 넣은 것까지 본다). */
@@ -330,10 +434,12 @@ async function loadSemester(sem) {
   state.byId = new Map();
   state.semesterMeta = {};
   state.picks = readPicks(sem);
-  state.overrides = store.get(semKey("overrides", sem), {}) || {};
+  state.overrides = readOverrides(sem);
+  state.rules = readRules(sem);
   state.result = null;
   clearErrors();
   state.errors.noSections = new Set();
+  syncRules();
   renderTerm();
   renderLoadState();
   renderResults();
@@ -354,7 +460,9 @@ async function loadSemester(sem) {
   state.loaded = true;
   for (const p of state.picks) { const c = state.byId.get(p.id); if (c) Object.assign(p, snapshot(c)); }
   savePicks();
-  checkOverlap(); // 지난번에 담아 둔 과목끼리 겹치면 열자마자 보인다
+  pruneOverrides();
+  checkOverlap(); // 지난번에 담아 둔 과목끼리 겹치거나 추가 설정에 맞는 조합이 없으면 열자마자 보인다
+  syncRules();
   renderTerm();
   renderLoadState();
   renderResults();
@@ -480,19 +588,20 @@ function marked(text, ranges) {
 
 const isPicked = (id) => state.picks.some((p) => p.id === id);
 
-/** 담기 버튼과 그 행. 누르는 영역은 행 전체(style.css), 담은 과목의 행은 어두운 바탕. */
-/** 담기 버튼과 행: 담았으면 어두운 바탕에 '✓ 담음'. 담은 과목이 다른 과목과 시간이 겹쳐 조합을 막으면 버튼 앞에 '시간 겹침'. */
+/** 담기 버튼과 그 행. 누르는 영역은 행 전체(style.css), 담은 과목의 행은 어두운 바탕에 '✓ 담음'.
+ *  담은 과목이 조합을 막으면 버튼 앞에 그 까닭을 단다: 시간이 겹치면 '시간 겹침', 추가 설정 때문이면 '공강 요일'·'점심시간'·'추가 설정'. */
 function setAddButton(b, name, picked) {
-  const clash = picked && state.errors.overlap.has(b.dataset.id);
+  const clash = picked && state.errors.overlap.has(b.dataset.id) ? NONE_TAG[state.errors.cause] : "";
   b.classList.toggle("is-on", picked);
   const row = b.closest(".result");
   if (row) {
     row.classList.toggle("is-picked", picked);
     const tag = row.querySelector(".r-clash");
-    if (clash && !tag) b.before(h("span", { class: "tag danger r-clash", "aria-hidden": "true" }, "시간 겹침"));
-    else if (!clash && tag) tag.remove();
+    if (clash && !tag) b.before(h("span", { class: "tag danger r-clash", "aria-hidden": "true" }, clash));
+    else if (clash) tag.textContent = clash;
+    else if (tag) tag.remove();
   }
-  b.setAttribute("aria-label", `${name} ${picked ? "담음" : "담기"}${clash ? ", 시간 겹침" : ""}`);
+  b.setAttribute("aria-label", `${name} ${picked ? "담음" : "담기"}${clash ? `, ${clash}` : ""}`);
   b.replaceChildren(...(picked ? [icon(I.check, 16), "담음"] : ["담기"]));
 }
 
@@ -673,24 +782,33 @@ function changed() {
 
 function clearErrors() {
   state.errors.overlap = new Set();
+  state.errors.cause = "overlap";
   state.errors.general = null;
 }
 
-const OVERLAP_TEXT = "겹치지 않는 조합이 없어요";
+/** 조합이 없다: 막는 과목(가장 작은 묶음)과 까닭을 적어 둔다. 추가 설정 때문이면(rules) 오류 줄 옆에 '추가 설정' 버튼이 붙는다. */
+function setNone(cause, courseIds) {
+  state.errors.overlap = new Set(courseIds);
+  state.errors.cause = cause;
+  state.errors.general = { text: NONE_TEXT[cause], rules: cause !== "overlap" };
+}
 
 /**
  * 켠 분반으로 겹치지 않는 조합이 하나도 없으면 시간표 만들기를 누르기 전에, 담을 때 바로 알린다(10/1 사용자).
  * 서로 막는 과목(가장 작은 묶음)에 '시간 겹침'(담은 과목 행과 검색 결과 행), 담은 과목 제목 아래 '겹치지 않는 조합이 없어요'.
- * 50ms 안에 판단이 안 서면(분반이 아주 많을 때) 넘어가고, 그때는 시간표 만들기에서 워커가 알린다. 겹치면 true.
+ * 추가 설정(공강 요일·점심시간) 때문에 없을 때도 같은 자리, 같은 모양이고 말만 까닭을 따른다(NONE_TEXT·NONE_TAG). 추가 설정을 바꿀 때도 본다.
+ * 50ms 안에 판단이 안 서면(분반이 아주 많을 때) 넘어가고, 그때는 시간표 만들기에서 워커가 알린다. 조합이 없으면 true.
  */
 function checkOverlap() {
   if (!state.loaded) return false;
   const live = collectCourses().courses;
-  if (live.length < 2) return false;
-  const r = countFeasible(live, { limit: 1, budgetMs: 50 });
+  const rules = activeRules();
+  if (!live.length || (live.length < 2 && !rules)) return false; // 과목이 하나면 겹칠 것이 없다. 조건이 걸려 있으면 하나여도 본다
+  const r = countFeasible(live, { limit: 1, budgetMs: 50, rules });
   if (r.count > 0 || !r.exact) return false;
-  state.errors.overlap = new Set(findConflicts(live));
-  state.errors.general = { text: OVERLAP_TEXT };
+  const why = whyNone(live, rules);
+  if (!why) return false;
+  setNone(why.cause, why.courseIds);
   return true;
 }
 
@@ -700,7 +818,7 @@ function addCourse(id) {
   state.picks.push({ id, excluded: new Set(), ...snapshot(c) });
   const clash = changed();
   renderPicked({ added: id });
-  if (clash) announce(`${c.name} 담았어요. ${OVERLAP_TEXT}`, "alert");
+  if (clash) announce(`${c.name} 담았어요. ${state.errors.general.text}`, "alert");
   else announce(`${c.name} 담았어요`);
 }
 
@@ -754,11 +872,12 @@ function focusRow(id, sel) {
   return Boolean(el);
 }
 
-/** 태그는 한 행에 두 개까지, 위험 → 주의 → 중립 순. [[종류, 글]] */
+/** 태그는 한 행에 두 개까지, 위험(조합이 없는 까닭) → 주의(편람 바뀜, 폐강 대상) → 중립(미정) 순. [[종류, 글]] */
 function courseTags(p, c) {
   const on = c.sections.filter((s) => !p.excluded.has(s.key));
   const tags = [];
-  if (state.errors.overlap.has(c.id)) tags.push(["danger", "시간 겹침"]);
+  if (state.errors.overlap.has(c.id)) tags.push(["danger", NONE_TAG[state.errors.cause]]);
+  if (c.sections.some(catalogMoved)) tags.push(["warning", "편람 바뀜"]); // 과목 시트를 닫으면 사라지는 태그라 폐강 대상보다 앞에 둔다
   if (on.some((s) => s.status === "폐강대상")) tags.push(["warning", "폐강 대상"]);
   if (on.some(isUndecided)) tags.push(["", "미정"]);
   return tags.slice(0, 2);
@@ -826,6 +945,7 @@ function renderPickedError() {
   $("picked-error").hidden = !g;
   $("picked-error-text").textContent = g ? g.text : "";
   $("picked-retry").hidden = !(g && g.retry);
+  $("picked-rules").hidden = !(g && g.rules); // 추가 설정 때문에 조합이 없으면 그 시트를 여는 버튼
   if (g) $("run").setAttribute("aria-describedby", "picked-error-text");
   else $("run").removeAttribute("aria-describedby");
 }
@@ -833,10 +953,12 @@ function renderPickedError() {
 // ---------------------------------------------------------------- 과목 시트
 
 let sheetId = null;
-const edits = new Map(); // 분반 키 → 시간 추가 입력 줄 {open, day, sh, sm, eh, em, b, error}
+// 분반 키 → 그 분반의 펼침과 입력 줄: wide = 편람에 시간이 있는 분반을 펼쳤다(수업 칩이 보인다), open = 입력 줄이 열려 있다,
+// at = 고치는 칩 번호(더할 때는 -1), days·sh·sm·eh·em·b = 입력 줄의 값, b0·room0 = 고치는 수업의 원래 건물과 호, error = "" | "day" | "time"
+const edits = new Map();
 
 function editState(key) {
-  if (!edits.has(key)) edits.set(key, { open: false, day: 0, sh: 9, sm: 0, eh: 10, em: 15, b: "", error: false });
+  if (!edits.has(key)) edits.set(key, { wide: false, open: false, at: -1, days: [], sh: 9, sm: 0, eh: 10, em: 15, b: "", b0: "", room0: "", error: "" });
   return edits.get(key);
 }
 
@@ -848,12 +970,64 @@ function openCourseSheet(id, opener) {
 
 const sheetPick = () => state.picks.find((p) => p.id === sheetId);
 
+/** 편람의 교과목명만: 우리 자료는 부제를 끝에 ' (부제)'로 붙여 둔다(ttwizard/parse_sugang.py). 부제 안에 괄호가 있어도 짝을 맞춰 뗀다.
+ *  교과목명에 든 괄호('수영 1(평영)', 앞에 띄어쓰기가 없다)와 쌍점('대학 글쓰기 2: 과학기술글쓰기')은 이름의 일부라 그대로 둔다. */
+function catalogName(name) {
+  const s = String(name || "").trim();
+  if (!s.endsWith(")")) return s;
+  let depth = 0;
+  for (let i = s.length - 1; i > 0; i--) {
+    if (s[i] === ")") depth += 1;
+    else if (s[i] === "(" && --depth === 0) return s[i - 1] === " " ? s.slice(0, i).trim() || s : s;
+  }
+  return s;
+}
+
+/**
+ * 에브리타임에서 찾을 과목명: 우리가 붙인 부제 괄호를 빼고(catalogName), 쌍점이 있으면 그 앞까지만('대학 글쓰기 2: 과학기술글쓰기' → '대학 글쓰기 2').
+ * 앞부분만 넣으면 찾아진다는 것은 사용자가 확인했다(10/5: '대학글쓰기 2' → '대학 글쓰기 2: …'. 띄어쓰기가 달라도 된다). 쌍점 뒤까지 넣은 긴 이름이 그대로
+ * 찾아지는지는 확인하지 못했다(에브리타임은 프로그램으로 열지 않는다). 앞부분이 같은 강의가 여럿이면 결과가 길어지지만('고급영어: 산문'·'고급영어: 발표' …) 빈 화면보다 낫다
+ */
+function searchName(name) {
+  const s = catalogName(name);
+  const i = s.search(/[:：]/);
+  const head = i > 0 ? s.slice(0, i).trim() : "";
+  return head.length >= 2 ? head : s;
+}
+
+/**
+ * 강의평(10/5 사용자: "강의 후기 보기 누르면 에브리타임 내에 수강평으로 넘어가게"): 에브리타임 강의실 검색 화면의 주소. 강의평은 거기서 강의를 한 번 더 눌러야 나온다
+ * (에브리타임의 강의 번호를 편람에서 알 수 없어 바로 가지 못한다). 별점·후기는 가져오지 않는다(에브리타임 약관. 바깥 링크만 건다).
+ * 주소에는 검색어 하나와 찾을 칸 하나(과목명 name, 교수명 professor)만 넣을 수 있다. 과목명으로 찾는다: 교수가 여럿이면 한 화면에서 견줄 수 있다.
+ * 교수가 한 사람뿐인 과목은 결과가 짧은 쪽으로: 이번 편람에서 그 교수의 강의 수가 그 검색어가 든 강의 수보다 적으면 교수명으로 찾는다
+ * (이름이 흔한 과목 '세미나', '논문연구', 앞부분이 같은 '베리타스 강좌 1: …'은 과목명으로 찾으면 다른 강의가 줄줄이 나온다). 한글 이름일 때만이다(영문 이름은 에브리타임 표기를 모른다).
+ */
+function reviewUrl(name, c) {
+  let keyword = searchName(name), condition = "name";
+  const profs = c ? [...new Set(c.sections.map((s) => String(s.instructor || "").trim()))] : [];
+  if (profs.length === 1 && /^[가-힣]{2,}$/.test(profs[0])) {
+    const key = normKey(keyword);
+    const lectures = new Set(), mine = new Set(); // 과목명이 든 강의(과목명 + 교수), 그 교수의 강의
+    for (const x of state.courses) {
+      const n = catalogName(x.name), hit = normKey(n).includes(key);
+      for (const s of x.sections) {
+        const prof = String(s.instructor || "").trim();
+        if (hit) lectures.add(`${n}|${prof}`);
+        if (prof === profs[0]) mine.add(n);
+      }
+    }
+    if (mine.size < lectures.size) { keyword = profs[0]; condition = "professor"; }
+  }
+  return `https://everytime.kr/lecture/search?keyword=${encodeURIComponent(keyword)}&condition=${condition}`;
+}
+
 function renderCourseSheet() {
   const p = sheetPick();
   if (!p) return;
   const c = state.byId.get(p.id);
   $("cs-title").textContent = c ? c.name : p.name || p.id;
   $("cs-meta").textContent = [p.id, c ? c.dept : p.dept, fmtCredit(c ? c.credit : p.credit)].filter(Boolean).join(" · ");
+  $("cs-review").href = reviewUrl(c ? c.name : p.name || p.id, c); // 이번 자료에 없는 과목에도 둔다(과목명은 남아 있다)
   const body = $("cs-body");
   if (!c) {
     body.replaceChildren(h("p", {}, "이번 자료에 없는 과목이에요"));
@@ -878,82 +1052,131 @@ function refreshSheetHead() {
   all.indeterminate = on > 0 && on < c.sections.length;
 }
 
-function timeChipText(t) {
-  return `${DAY_KO[t[0]]} ${hm(t[1])}~${hm(t[2])} · ${t[3] ? buildingLabel(t[3]) : "강의실 미정"}`;
-}
+/** 수업 칩과 편람 값 줄의 글: '화·목 11:00~12:15 · 28동 303호'(같은 시각·장소의 요일은 한 묶음). 직접 고른 건물은 건물만('301동'). */
+const groupText = (g) => `${daysLabel(g.days)} ${hm(g.start)}~${hm(g.end)} · ${roomLabel({ building: g.building, room: g.room })}`;
 
-/** 분반 행 하나: 체크박스와 001(이주훈) / 요일·시각 · 강의실(미정이면 값 자리를 눌러 고른다) / 태그 / 넣은 시간 / 시간 추가 입력 줄 */
+/**
+ * 분반 행 하나: 체크박스와 001(이주훈) / 요일·시각 · 강의실 / 태그.
+ * - 편람에 시간이 있는 분반은 행 끝의 펼침 화살표를 누르면 둘째 줄 대신 수업이 칩으로 놓인다(10/5 사용자: "이미 강의 시간이랑 강의 장소 지정되어 있어도
+ *   바꿀 수 있게"). 칩을 누르면 그 수업을 고치는 입력 줄, ×는 빼기, 시간 추가는 더하기. 바꾼 분반은 접으면 '직접 입력', 펼치면 편람 값과 되돌리기.
+ *   행의 다른 곳을 누르면 전처럼 분반이 켜지고 꺼진다(값 자리를 버튼으로 만들지 않았다: 켜고 끄기가 훨씬 잦다)
+ * - 편람의 강의실이 미정인 수업은 전처럼 값 자리의 선택칸으로 건물을 고른다
+ * - 편람에 시간이 없는 분반은 '시간 미정'과 시간 추가. 넣은 시간은 칩으로 늘 보인다(화살표 없음)
+ * 입력 줄은 연 것 바로 아래에 둔다: 칩을 고칠 때는 칩 아래(시간 추가보다 위), 더할 때는 시간 추가 아래.
+ */
 function fillSec(li, p, s) {
   const on = !p.excluded.has(s.key);
-  const o = state.overrides[s.key] || {};
-  li.className = on ? "sec" : "sec off";
+  const st = editState(s.key);
+  const hasCat = s.meetings.length > 0;
+  const altered = isChanged(s); // 편람의 시간·장소를 바꿔 둔 분반
+  const eff = effMeetings(s);
+  const groups = meetingGroups(eff);
+  const wide = hasCat && st.wide;
+  // 추가 설정(공강 요일·점심시간) 때문에 쓰지 않는 분반: 체크는 켠 그대로 두고 끈 분반처럼 흐리게 한다(켠 것과 조건이 막은 것을 섞지 않는다)
+  const rules = on ? activeRules() : null;
+  const unit = [{ meetings: eff }];
+  const out = !!rules && !meetsRules(unit, rules);
+  li.className = on && !out ? "sec" : "sec off";
+  const editId = `edit-${uid(s.key)}`;
+  const adding = st.open && st.at < 0;
+  const addButton = () => h("button", { type: "button", class: "btn-text small", "data-act": "add-time", "aria-expanded": String(adding), "aria-controls": adding ? editId : null },
+    icon(I.plus, 16), "시간 추가");
+  const when = (g) => `${daysLabel(g.days)} ${hm(g.start)}~${hm(g.end)}`;
+  const dot = () => h("span", { "aria-hidden": "true" }, "·");
+
   const parts = [h("label", { class: "sec-pick" },
     h("input", { type: "checkbox", checked: on, "data-act": "toggle" }),
     h("span", { class: "sec-title" }, s.no, h("span", { class: "prof" }, `(${instructorOf(s)})`)))];
+  if (hasCat) {
+    parts.push(h("button", { type: "button", class: "icon-btn sec-more", "data-act": "more", "aria-expanded": String(wide), "aria-label": `${sectionLabel(s)} 시간·장소 바꾸기` }, icon(I.down, 20)));
+  }
+
+  // 태그는 둘까지: 추가 설정 때문에 쓰지 않는 까닭(흐린데 까닭이 안 보이면 안 되니 맨 앞) → 주의(편람 바뀜은 시트를 닫으면 사라지니 폐강 대상보다 앞) → 중립(직접 입력)
   const tags = [];
-  if (s.status === "폐강대상") tags.push(h("span", { class: "tag warning" }, "폐강 대상"));
-  let extra = [];
-  if (s.meetings.length) {
-    const groups = meetingGroups(s.meetings);
-    const unknown = groups.filter((g) => !g.building);
-    let manual = false;
+  if (out) {
+    const byDay = !meetsRules(unit, { freeDays: rules.freeDays }), byLunch = !meetsRules(unit, { lunch: rules.lunch });
+    tags.push(["", byDay && byLunch ? NONE_TAG.rules : byDay ? NONE_TAG.freeDays : NONE_TAG.lunch]);
+  }
+  if (catalogMoved(s)) tags.push(["warning", "편람 바뀜"]);
+  if (s.status === "폐강대상") tags.push(["warning", "폐강 대상"]);
+
+  const rows = [], extra = [];
+  if (hasCat && !wide) {
+    // 접힌 분반: 수업마다 한 줄. 편람의 강의실이 미정인 수업은 값 자리를 눌러 건물을 고른다(바꿔 둔 분반은 바꾼 값 그대로)
+    const unknown = (g) => g.indices.filter((i) => !s.meetings[i].building);
+    const pending = altered ? [] : groups.filter((g) => unknown(g).length);
+    let manual = altered;
     for (const g of groups) {
-      const when = `${daysLabel(g.days)} ${hm(g.start)}~${hm(g.end)}`;
-      if (g.building) {
-        parts.push(h("div", { class: "sec-when" }, h("span", {}, when), h("span", { "aria-hidden": "true" }, "·"), h("span", {}, roomLabel(g))));
+      if (!pending.includes(g)) {
+        rows.push(h("div", { class: "sec-when" }, h("span", {}, when(g)), dot(), h("span", {}, roomLabel({ building: g.building, room: g.room }))));
         continue;
       }
-      const value = (o.rooms || {})[g.indices[0]] || "";
-      if (value) manual = true;
-      parts.push(h("div", { class: "sec-when" }, h("span", {}, when), h("span", { "aria-hidden": "true" }, "·"),
-        h("span", { class: "sec-value" }, value ? buildingLabel(value) : "강의실 미정", icon(I.down, 16),
-          buildingSelect(value, {
-            "data-act": "room", "data-idx": g.indices.join(","),
-            "aria-label": unknown.length > 1 ? `${s.no} ${daysLabel(g.days)} 강의실` : `${s.no} 강의실`,
+      if (g.building) manual = true;
+      rows.push(h("div", { class: "sec-when" }, h("span", {}, when(g)), dot(),
+        h("span", { class: "sec-value" }, g.building ? buildingLabel(g.building) : "강의실 미정", icon(I.down, 16),
+          buildingSelect(g.building, {
+            "data-act": "room", "data-idx": unknown(g).join(","),
+            "aria-label": pending.length > 1 ? `${s.no} ${daysLabel(g.days)} 강의실` : `${s.no} 강의실`,
           }))));
     }
-    if (manual) tags.push(h("span", { class: "tag" }, "직접 입력"));
+    if (!groups.length) rows.push(h("div", { class: "sec-when" }, h("span", {}, "시간 미정"))); // 수업을 다 뺐다
+    if (manual) tags.push(["", "직접 입력"]);
   } else {
-    const times = o.times || [];
-    const st = editState(s.key);
-    const editId = `edit-${uid(s.key)}`;
-    parts.push(h("div", { class: "sec-when" }, h("span", {}, "시간 미정"),
-      h("button", { type: "button", class: "btn-text small", "data-act": "add-time", "aria-expanded": String(st.open), "aria-controls": st.open ? editId : null },
-        icon(I.plus, 16), "시간 추가")));
-    if (times.length) {
-      extra.push(h("div", { class: "chips" }, times.map((t, i) => {
-        const text = timeChipText(t);
-        return h("span", { class: "chip" }, text, h("button", { type: "button", "data-act": "del-time", "data-i": String(i), "aria-label": `${text} 빼기` }, icon(I.x, 16)));
+    if (!groups.length && !hasCat) rows.push(h("div", { class: "sec-when" }, h("span", {}, "시간 미정"), addButton()));
+    if (groups.length) {
+      extra.push(h("div", { class: "chips" }, groups.map((g, i) => {
+        const text = groupText(g), editing = st.open && st.at === i;
+        return h("span", { class: editing ? "chip is-editing" : "chip" },
+          h("button", { type: "button", class: "chip-q", "data-act": "edit-chip", "data-i": String(i), "aria-expanded": String(editing), "aria-controls": editing ? editId : null,
+            "aria-label": `${text} 바꾸기` }, h("span", {}, text)),
+          h("button", { type: "button", class: "chip-x", "data-act": "del-chip", "data-i": String(i), "aria-label": `${text} 빼기` }, icon(I.x, 16)));
       })));
+      if (st.open && st.at >= 0) extra.push(timeEditor(st, editId));
     }
-    if (st.open) extra.push(timeEditor(s, st, editId));
+    if (groups.length || hasCat) extra.push(h("div", { class: "sec-tools" }, addButton()));
+    if (adding) extra.push(timeEditor(st, editId));
+    // 바꾼 분반을 펼치면 맨 아래에 편람 값과 되돌리기(펼친 동안에는 직접 입력 태그 대신 이 줄이 알린다)
+    if (altered) {
+      extra.push(h("div", { class: "sec-orig" },
+        h("span", {}, `편람 ${meetingGroups(s.meetings).map(groupText).join(", ")}`),
+        h("button", { type: "button", class: "btn-text small", "data-act": "revert" }, "되돌리기")));
+    }
   }
-  if (tags.length) parts.push(h("div", { class: "tags" }, tags));
-  li.replaceChildren(...parts, ...extra);
+  if (tags.length) rows.push(h("div", { class: "tags" }, tags.slice(0, 2).map(([k, t]) => h("span", { class: k ? `tag ${k}` : "tag" }, t))));
+  li.replaceChildren(...parts, ...rows, ...extra);
 }
 
-/** 시간 추가 입력 줄: 요일(월–토), 시작·끝(시·분 선택, 24시간, 5분 단위), 건물(기본 미정), 추가. type="time" 은 쓰지 않는다(AM/PM). */
-function timeEditor(s, st, id) {
+/** 수업을 더하거나 고치는 입력 줄: 요일(월–토, 여럿 고른다), 시작·끝(시·분 선택, 24시간, 5분 단위), 건물(기본 미정), 추가(고칠 때는 바꾸기).
+ *  type="time" 은 쓰지 않는다(AM/PM). 오류 줄은 원인 바로 아래에 둔다: 요일 칸 아래 '고른 요일이 없어요', 시각 줄 아래 '끝 시각이 시작보다 빨라요'. */
+function timeEditor(st, id) {
   const errId = `${id}-err`;
-  const hours = range(6, 23).map((x) => [x, pad2(x)]);
-  const mins = range(0, 55, 5).map((x) => [x, pad2(x)]);
-  const sel = (key, values, label) => {
-    const el = h("select", { class: "select", "data-edit": key, "aria-label": label }, values.map(([v, t]) => h("option", { value: String(v) }, t)));
+  const sel = (key, from, to, step, label) => {
+    const values = range(from, to, step);
+    if (!values.includes(st[key])) values.push(st[key]); // 눈금 밖의 편람 값도 그대로 보인다
+    const el = h("select", { class: "select", "data-edit": key, "aria-label": label }, values.sort((a, b) => a - b).map((v) => h("option", { value: String(v) }, pad2(v))));
     el.value = String(st[key]);
-    if (st.error && (key === "eh" || key === "em")) { el.setAttribute("aria-invalid", "true"); el.setAttribute("aria-describedby", errId); }
+    if (st.error === "time" && (key === "eh" || key === "em")) { el.setAttribute("aria-invalid", "true"); el.setAttribute("aria-describedby", errId); }
     return el;
   };
-  const name = `day-${uid(s.key)}`;
+  const picker = buildingSelect(st.b, { class: "select", "data-edit": "b", "aria-label": "건물" });
+  if (st.b0 && st.room0) { // 편람의 건물을 그대로 두면 호가 남는다(다른 건물을 골랐다가 돌아와도)
+    const opt = [...picker.options].find((x) => x.value === st.b0);
+    if (opt) opt.textContent = roomLabel({ building: st.b0, room: st.room0 });
+  }
+  const error = (kind, text) => (st.error === kind ? h("p", { class: "error-line", id: errId }, text) : null);
+  const colon = () => h("span", { "aria-hidden": "true" }, ":");
   return h("div", { class: "sec-edit", id },
-    h("fieldset", { class: "days" }, h("legend", { class: "sr-only" }, "요일"),
-      DAY_KO.slice(0, 6).split("").map((d, i) => h("label", {}, h("input", { type: "radio", name, value: String(i), checked: st.day === i, "data-edit": "day" }), d))),
+    h("fieldset", { "aria-describedby": st.error === "day" ? errId : null }, h("legend", { class: "sr-only" }, "요일"),
+      h("div", { class: "days" }, range(0, st.days.includes(6) ? 6 : 5).map((d) => h("label", {},
+        h("input", { type: "checkbox", value: String(d), checked: st.days.includes(d), "data-edit": "day", "aria-label": `${DAY_KO[d]}요일` }), DAY_KO[d])))),
+    error("day", "고른 요일이 없어요"),
+    // 좁아서 한 줄에 안 들어가면 시작과 끝 사이에서만 줄을 바꾼다(09:00 ~ / 10:15)
     h("div", { class: "time-row" },
-      sel("sh", hours, "시작 시"), h("span", { "aria-hidden": "true" }, ":"), sel("sm", mins, "시작 분"),
-      h("span", { "aria-hidden": "true" }, "~"),
-      sel("eh", hours, "끝 시"), h("span", { "aria-hidden": "true" }, ":"), sel("em", mins, "끝 분")),
-    st.error ? h("p", { class: "error-line", id: errId }, "끝 시각이 시작보다 빨라요") : null,
-    buildingSelect(st.b, { class: "select", "data-edit": "b", "aria-label": "건물" }),
-    h("div", {}, h("button", { type: "button", class: "btn-add", "data-act": "save-time" }, "추가")));
+      h("span", { class: "time-part" }, sel("sh", 6, 23, 1, "시작 시"), colon(), sel("sm", 0, 55, 5, "시작 분"), h("span", { "aria-hidden": "true" }, "~")),
+      h("span", { class: "time-part" }, sel("eh", 6, 23, 1, "끝 시"), colon(), sel("em", 0, 55, 5, "끝 분"))),
+    error("time", "끝 시각이 시작보다 빨라요"),
+    picker,
+    h("div", {}, h("button", { type: "button", class: "btn-add", "data-act": "save-time" }, st.at >= 0 ? "바꾸기" : "추가")));
 }
 
 function refillSec(li, focusSel) {
@@ -979,30 +1202,33 @@ $("cs-body").addEventListener("change", (e) => {
   const li = t.closest(".sec");
   if (t.dataset.act === "all") {
     p.excluded = t.checked ? new Set() : new Set(c.sections.map((s) => s.key));
-    for (const row of $("cs-body").querySelectorAll(".sec")) {
-      row.classList.toggle("off", !t.checked);
-      row.querySelector('input[data-act="toggle"]').checked = t.checked;
-    }
     sectionsChanged();
+    for (const row of $("cs-body").querySelectorAll(".sec")) refillSec(row); // 흐림과 태그가 추가 설정에도 달려 있어 행을 다시 그린다
   } else if (t.dataset.act === "toggle") {
     if (t.checked) p.excluded.delete(li.dataset.key); else p.excluded.add(li.dataset.key);
-    li.classList.toggle("off", !t.checked);
+    const had = li.contains(document.activeElement); // 체크박스를 눌렀거나 키보드로 바꿨으면 다시 그린 뒤에도 초점이 그 칸에 남는다
     sectionsChanged();
+    refillSec(li, had ? 'input[data-act="toggle"]' : null);
   } else if (t.dataset.act === "room") {
     const key = li.dataset.key;
     const o = { ...(state.overrides[key] || {}) };
     const rooms = { ...(o.rooms || {}) };
     for (const i of t.dataset.idx.split(",")) { if (t.value) rooms[i] = t.value; else delete rooms[i]; }
     if (Object.keys(rooms).length) o.rooms = rooms; else delete o.rooms;
-    if (o.rooms || (o.times && o.times.length)) state.overrides[key] = o; else delete state.overrides[key];
+    if (o.rooms || o.meet) state.overrides[key] = o; else delete state.overrides[key];
     changed();
     renderPicked();
     refillSec(li, `select[data-idx="${t.dataset.idx}"]`);
   } else if (t.dataset.edit) {
-    const st = editState(li.dataset.key);
-    st[t.dataset.edit] = t.dataset.edit === "b" ? t.value : Number(t.value);
-    // 오류는 원인이 풀리면 사라진다
-    if (st.error && st.eh * 60 + st.em > st.sh * 60 + st.sm) { st.error = false; refillSec(li, `[data-edit="${t.dataset.edit}"]${t.type === "radio" ? ":checked" : ""}`); }
+    const st = editState(li.dataset.key), k = t.dataset.edit;
+    if (k === "day") {
+      const d = Number(t.value);
+      st.days = t.checked ? [...new Set([...st.days, d])].sort((a, b) => a - b) : st.days.filter((x) => x !== d);
+    } else if (k === "b") st.b = t.value;
+    else st[k] = Number(t.value);
+    // 오류는 원인이 풀리면 사라진다(입력값은 그대로)
+    const fixed = st.error === "day" ? st.days.length > 0 : st.error === "time" ? st.eh * 60 + st.em > st.sh * 60 + st.sm : false;
+    if (fixed) { st.error = ""; refillSec(li, `[data-edit="${k}"]${k === "day" ? `[value="${t.value}"]` : ""}`); }
   }
 });
 
@@ -1010,51 +1236,100 @@ $("cs-body").addEventListener("click", (e) => {
   const actEl = e.target.closest("[data-act]");
   const act = actEl && actEl.dataset.act;
   const li = e.target.closest(".sec");
-  if (!li) return;
-  const key = li.dataset.key;
-  if (act === "add-time") {
-    const st = editState(key);
-    st.open = !st.open;
+  const p = sheetPick();
+  const c = p && state.byId.get(p.id);
+  const s = c && li && c.sections.find((x) => x.key === li.dataset.key);
+  if (!s) return;
+  const st = editState(s.key);
+  const groups = () => meetingGroups(effMeetings(s)).map(({ days, start, end, building, room }) => ({ days: [...days].sort((a, b) => a - b), start, end, building, room }));
+  const applied = () => { changed(); renderPicked(); };
+  if (act === "more") {
+    st.wide = !st.wide;
+    if (!st.wide) { st.open = false; st.error = ""; }
+    refillSec(li, '[data-act="more"]');
+  } else if (act === "add-time") {
+    // 더할 때는 요일을 비워 둔다(시각과 건물은 지난번 값)
+    Object.assign(st, { open: !(st.open && st.at < 0), at: -1, days: [], b0: "", room0: "", error: "" });
     refillSec(li, '[data-act="add-time"]');
+  } else if (act === "edit-chip") {
+    const i = Number(actEl.dataset.i), g = groups()[i];
+    if (!g) return;
+    if (st.open && st.at === i) Object.assign(st, { open: false, error: "" });
+    else {
+      Object.assign(st, { open: true, at: i, days: g.days, sh: Math.floor(g.start / 60), sm: g.start % 60, eh: Math.floor(g.end / 60), em: g.end % 60,
+        b: g.building, b0: g.building, room0: g.room, error: "" });
+    }
+    refillSec(li, `[data-act="edit-chip"][data-i="${i}"]`);
   } else if (act === "save-time") {
-    const st = editState(key);
     const a = st.sh * 60 + st.sm, b = st.eh * 60 + st.em;
-    if (b <= a) {
-      st.error = true;
-      refillSec(li, '[data-edit="eh"]');
-      announce("끝 시각이 시작보다 빨라요", "alert");
+    const bad = !st.days.length ? "day" : b <= a ? "time" : "";
+    if (bad) {
+      st.error = bad;
+      refillSec(li, bad === "day" ? '[data-edit="day"]' : '[data-edit="eh"]');
+      announce(bad === "day" ? "고른 요일이 없어요" : "끝 시각이 시작보다 빨라요", "alert"); // 시트 안의 알림 영역이 읽는다
       return;
     }
-    const o = { ...(state.overrides[key] || {}) };
-    o.times = [...(o.times || []), [st.day, a, b, st.b]];
-    state.overrides[key] = o;
-    st.open = false;
-    st.error = false;
-    changed();
-    renderPicked();
+    const list = groups(), old = st.at >= 0 ? list[st.at] : null;
+    const g = { days: [...st.days], start: a, end: b, building: st.b, room: st.b && st.b === st.b0 ? st.room0 : "" };
+    const same = !!old && old.start === g.start && old.end === g.end && old.building === g.building && old.room === g.room && old.days.join() === g.days.join();
+    if (!same) { // 바꾼 것이 없으면 직접 입력으로 남기지 않는다
+      if (old) list[st.at] = g; else list.push(g);
+      setOwn(s, list);
+      applied();
+    }
+    Object.assign(st, { open: false, error: "" });
+    refillSec(li);
+    // 초점: 고친 칩으로(묶음이 달라져 없으면 화살표나 시간 추가로), 더했으면 시간 추가로
+    const text = `${groupText(g)} 바꾸기`;
+    const chip = old ? [...li.querySelectorAll(".chip-q")].find((x) => x.getAttribute("aria-label") === text) : null;
+    (chip || li.querySelector(old ? '[data-act="more"], [data-act="add-time"]' : '[data-act="add-time"]') || li.querySelector('[data-act="more"]'))?.focus();
+  } else if (act === "del-chip") {
+    const list = groups();
+    list.splice(Number(actEl.dataset.i), 1);
+    setOwn(s, list);
+    Object.assign(st, { open: false, error: "" });
+    applied();
     refillSec(li, '[data-act="add-time"]');
-  } else if (act === "del-time") {
-    const o = { ...(state.overrides[key] || {}) };
-    o.times = (o.times || []).filter((_, i) => i !== Number(actEl.dataset.i));
-    if (!o.times.length) delete o.times;
-    if (o.rooms || o.times) state.overrides[key] = o; else delete state.overrides[key];
-    changed();
-    renderPicked();
-    refillSec(li, '[data-act="add-time"]');
-  } else if (!e.target.closest("label, select, button, input, a, .sec-edit, .chips")) {
-    // 행 어디를 눌러도 분반이 켜지고 꺼진다(강의실·시간을 넣는 자리는 빼고)
+  } else if (act === "revert") { // 묻지 않고 편람 값으로(다시 바꾸면 된다)
+    delete state.overrides[s.key];
+    Object.assign(st, { open: false, error: "" });
+    applied();
+    refillSec(li, '[data-act="more"]');
+  } else if (!e.target.closest("label, select, button, input, a, .sec-edit, .chips, .sec-tools, .sec-orig")) {
+    // 행 어디를 눌러도 분반이 켜지고 꺼진다(강의실·시간을 넣는 자리와 펼침 화살표는 빼고)
     li.querySelector('input[data-act="toggle"]')?.click();
   }
 });
 
-// ---------------------------------------------------------------- 시트 (과목, 이동시간 계산 방법, 홈 화면에 추가)
+/** 과목 시트를 닫았다: 편람 값이 달라진 것은 본 것으로 치고(그 뒤로는 '편람 바뀜'을 달지 않는다. 또 달라지면 다시 단다), 펼친 분반과 입력 줄은 접는다. */
+function courseSheetClosed() {
+  for (const st of edits.values()) Object.assign(st, { wide: false, open: false, error: "" });
+  const p = sheetPick();
+  const c = p && state.byId.get(p.id);
+  if (!c) return;
+  let seen = false;
+  for (const s of c.sections) {
+    if (!catalogMoved(s)) continue;
+    state.overrides[s.key].base = sigOf(s.meetings);
+    seen = true;
+  }
+  if (seen) { saveOverrides(); renderPicked(); }
+}
+
+// ---------------------------------------------------------------- 시트 (과목, 추가 설정, 이동시간 계산 방법, 홈 화면에 추가, 묻는 시트)
 
 function openSheet(d, opener) {
   for (const x of document.querySelectorAll("dialog[open]")) x.close(); // 시트 위에 시트를 띄우지 않는다
   d.returnTo = opener || document.activeElement;
-  d.style.transform = "";
+  d.style.transform = d.style.margin = "";
   d.showModal();
   d.scrollTop = 0;
+  d.classList.remove("is-scrolled");
+  // 추가 설정 시트는 조합이 없어지면 머리에 오류 줄이 생긴다. 가운데 대화상자(폭 600px부터)는 높이가 달라지면 위아래로 반씩 움직이므로,
+  // 열 때의 아래 끝을 붙잡아 둔다: 폰의 아래 시트처럼 위쪽만 늘어나고 누르던 칸은 제자리다
+  if (d.id === "rules-sheet" && matchMedia("(min-width: 37.5em)").matches) {
+    d.style.margin = `auto auto max(5dvh, calc(50dvh - ${d.getBoundingClientRect().height / 2}px))`;
+  }
 }
 
 /** 완료·닫기, 바깥 누르기, 아래로 끌기: 200ms 에 내려가며 닫힌다. Esc·Android 뒤로 가기(cancel)는 브라우저가 바로 닫는다. */
@@ -1114,14 +1389,26 @@ for (const d of document.querySelectorAll("dialog.sheet")) {
   d.addEventListener("close", () => {
     const back = d.returnTo;
     d.returnTo = null;
-    if (d.id === "course-sheet") {
-      const id = sheetId;
-      sheetId = null;
-      if (back && back.isConnected) back.focus({ preventScroll: true });
-      else focusRow(id, ".course-hit");
-    } else if (back && back.isConnected) back.focus({ preventScroll: true });
+    const live = d.querySelector("[data-live]");
+    if (live) live.textContent = ""; // 다음에 열 때 지난 알림이 다시 읽히지 않게
+    const id = sheetId;
+    if (d.id === "course-sheet") { courseSheetClosed(); sheetId = null; }
+    // 연 요소로 초점을 돌린다. 그사이 사라졌으면(다시 그린 과목 행, 원인이 풀려 숨은 오류 줄 옆 '추가 설정') 그 자리를 잇는 것으로
+    if (back && back.isConnected && !back.closest("[hidden]")) back.focus({ preventScroll: true });
+    else if (d.id === "course-sheet") focusRow(id, ".course-hit");
+    else if (d.id === "rules-sheet") $("open-rules").focus({ preventScroll: true });
   });
+  // 내용이 붙어 있는 머리 밑으로 올라가 있는 동안 머리 아래에 선을 긋는다(잘린 글자가 머리의 글자에 붙어 보이지 않게). 맨 위에서는 없다
+  d.addEventListener("scroll", () => d.classList.toggle("is-scrolled", d.scrollTop > 0), { passive: true });
   enableSheetDrag(d);
+}
+// 시트 머리는 위에 붙어 있다(sticky). 키보드로 거슬러 올라올 때 초점 받은 것이 그 밑에 가리지 않게 머리 높이 + 8px(초점 테두리 몫)만큼 스크롤 여백을 둔다
+// (WCAG 2.2 SC 2.4.11, 기법 C43). 머리 높이는 과목명 줄 수, 글자 크기, 추가 설정 시트의 오류 줄에 따라 달라서 재어서 넣는다(아래쪽 8px 은 style.css)
+if (typeof ResizeObserver !== "undefined") {
+  const sheetHeads = new ResizeObserver((entries) => {
+    for (const { target } of entries) target.parentElement.style.scrollPaddingTop = `${Math.ceil(target.getBoundingClientRect().height) + 8}px`;
+  });
+  for (const head of document.querySelectorAll("dialog.sheet > .sheet-head")) sheetHeads.observe(head);
 }
 
 // ---------------------------------------------------------------- 조건
@@ -1195,6 +1482,156 @@ document.querySelector(".settings").addEventListener("change", (e) => {
   state.result = null;
 });
 
+// ---------------------------------------------------------------- 추가 설정 (공강 요일·점심시간)
+// 조건 카드 맨 아래의 '추가 설정' 행을 누르면 시트가 열린다(10/5 사용자: "추가 설정 탭 하나 만들어서 공강 요일 고르는 옵션이랑 점심시간 지정하는
+// 옵션도 넣어줘". 자리는 디자인의 세 안을 그림으로 보고 골랐다). 건 조건은 행 오른쪽과 결과 화면 조건 줄에 짧게 쓴다('금 공강 · 점심 60분').
+// 엔진에는 rules = {freeDays: [요일(0 = 월)], lunch: {start, end, minutes}} 로 넘긴다(engine.js '조건'). 둘 다 꼭 지키는 조건이라 어기는 조합은 아예 빠진다.
+// state.rules = {freeDays, lunch(없음이면 null), win(점심을 껐다 켜도 남는 시간대)}. 담은 과목처럼 학기마다 따로 기억한다
+// (공강 요일은 그 학기 과목에 달린 것이라, 새 학기에 남아 있으면 까닭 모르게 조합이 준다)
+
+function readRules(sem) {
+  const r = store.get(semKey("rules", sem), null) || {};
+  const win = (w) => !!w && [w.start, w.end].every((x) => Number.isInteger(x) && x % LUNCH_STEP === 0)
+    && w.start >= LUNCH_FROM && w.start <= LUNCH_TO - 60 && w.end >= LUNCH_FROM + 60 && w.end <= LUNCH_TO && w.end > w.start;
+  const lunch = win(r.lunch) && LUNCH_MINS.includes(r.lunch.minutes) && r.lunch.end - r.lunch.start >= r.lunch.minutes
+    ? { start: r.lunch.start, end: r.lunch.end, minutes: r.lunch.minutes } : null;
+  return {
+    freeDays: Array.isArray(r.freeDays) ? [...new Set(r.freeDays.filter((d) => Number.isInteger(d) && d >= 0 && d < 7))].sort((a, b) => a - b) : [],
+    lunch,
+    win: lunch ? { start: lunch.start, end: lunch.end } : win(r.win) ? { start: r.win.start, end: r.win.end } : { ...LUNCH_WIN },
+  };
+}
+function saveRules() {
+  const r = state.rules;
+  if (r.freeDays.length || r.lunch || r.win.start !== LUNCH_WIN.start || r.win.end !== LUNCH_WIN.end) store.set(semKey("rules"), r);
+  else store.del(semKey("rules")); // 건 것이 없고 시간대도 처음 값이면 남기지 않는다
+}
+
+/** 엔진에 넘기는 조건. 건 것이 없으면 null(결과는 조건이 없을 때와 같다). */
+function activeRules(r = state.rules) {
+  if (!r.freeDays.length && !r.lunch) return null;
+  return { freeDays: [...r.freeDays], lunch: r.lunch ? { ...r.lunch } : null };
+}
+
+/** 건 조건을 짧게: ['금 공강', '점심 60분']. 요일은 붙여 쓰고('월금 공강', '월화수목 등교'와 짝), 시간대를 통째로 비우면 '점심 12:00~13:00'. */
+function rulesParts(rules) {
+  const out = [];
+  if (!rules) return out;
+  if (rules.freeDays && rules.freeDays.length) out.push(`${[...rules.freeDays].sort((a, b) => a - b).map((d) => DAY_KO[d]).join("")} 공강`);
+  const l = rules.lunch;
+  if (l) out.push(l.minutes >= l.end - l.start ? `점심 ${hm(l.start)}~${hm(l.end)}` : `점심 ${l.minutes}분`);
+  return out;
+}
+
+/** 덩이를 ' · '로 잇되 줄은 덩이 사이, 가운뎃점 앞에서만 바꾼다(줄 끝에 점이 남지 않게 점을 뒤 덩이에 붙인다. 덩이 하나가 줄보다 길 때만 그 안에서 바뀐다: style.css 의 .nw). */
+const dotted = (parts) => parts.flatMap((t, i) => (i ? [" ", h("span", { class: "nw" }, `· ${t}`)] : [h("span", { class: "nw" }, t)]));
+
+/** 고를 수 있는 공강 요일: 월–금, 그리고 켠 분반에 토·일 수업이 있거나 이미 골라 둔 요일(결과 화면 요일 탭과 같은 기준). */
+function ruleDays() {
+  const days = new Set([0, 1, 2, 3, 4, ...state.rules.freeDays]);
+  for (const p of state.picks) {
+    for (const s of (state.byId.get(p.id) || { sections: [] }).sections) {
+      if (!p.excluded.has(s.key)) for (const m of effMeetings(s)) days.add(m.day);
+    }
+  }
+  return [...days].sort((a, b) => a - b);
+}
+
+/** 추가 설정 때문에 조합이 없으면 그 까닭(freeDays·lunch·rules), 아니면 "". */
+const rulesCause = () => (state.errors.general && state.errors.general.rules ? state.errors.cause : "");
+
+/** 시트의 칸을 만든다(열 때 한 번). 그 뒤로는 값만 맞춘다(syncRules): 칸을 다시 만들지 않아 초점과 자리가 그대로다. */
+function renderRulesSheet() {
+  const r = state.rules;
+  const opts = (from, to) => range(from, to, LUNCH_STEP).map((m) => h("option", { value: String(m) }, hm(m)));
+  const mins = r.lunch ? r.lunch.minutes : 0;
+  $("rules-body").replaceChildren(
+    h("fieldset", { id: "rules-days" }, h("legend", { class: "field-label" }, "공강 요일"),
+      h("div", { class: "days" }, ruleDays().map((d) => h("label", {},
+        h("input", { type: "checkbox", value: String(d), checked: r.freeDays.includes(d), "data-rule": "day", "aria-label": `${DAY_KO[d]}요일` }), DAY_KO[d])))),
+    h("fieldset", { id: "rules-lunch" }, h("legend", { class: "field-label" }, "점심시간"),
+      h("div", { class: "seg" }, [0, ...LUNCH_MINS].map((v) => h("label", {},
+        h("input", { type: "radio", name: "lunch", value: String(v), checked: v === mins, "data-rule": "lunch" }), v ? `${v}분` : "없음"))),
+      // 시간대 줄: 없음일 때도 자리는 남긴다(아래에서 올라온 시트라 줄이 생기면 누르던 세그먼트가 손가락 밑에서 밀린다). 좁으면 시작과 끝 사이에서만 줄을 바꾼다
+      h("div", { class: "time-row lunch-win", id: "lunch-win" },
+        h("span", { class: "time-part" }, h("select", { class: "select", id: "lunch-start", "data-rule": "start", "aria-label": "점심시간대 시작" }, opts(LUNCH_FROM, LUNCH_TO - 60)), h("span", { "aria-hidden": "true" }, "~")),
+        h("span", { class: "time-part" }, h("select", { class: "select", id: "lunch-end", "data-rule": "end", "aria-label": "점심시간대 끝" }, opts(LUNCH_FROM + 60, LUNCH_TO)), h("span", {}, "사이")))));
+  syncRules();
+}
+
+/** 건 조건을 화면에 맞춘다: 조건 카드의 행, 열려 있는 시트의 시간대 줄과 머리의 오류 줄. */
+function syncRules() {
+  const r = state.rules;
+  // 조건은 학기 몫이라 학기를 알기 전(처음 자료를 받는 중, 받지 못했을 때)에는 행을 두지 않는다: 눌러도 열 수 없는 행이 보이지 않게
+  $("open-rules").hidden = !state.semester;
+  $("rules-sum").replaceChildren(...dotted(rulesParts(activeRules())));
+  // 조합이 없는 까닭이 추가 설정이면 시트 머리(제목 아래)에도 같은 오류 줄을 두고 까닭인 칸에 잇는다. 머리에 두면 줄이 생겨도 그 아래의 칸은 제자리다.
+  // 시간이 겹쳐서 없을 때는 두지 않는다(까닭이 이 시트에 없다)
+  const cause = rulesCause(), err = $("rules-error");
+  err.textContent = cause ? state.errors.general.text : "";
+  err.hidden = !cause;
+  const win = $("lunch-win");
+  if (!win) return; // 시트를 아직 연 적이 없다
+  const tie = (id, on) => { if (on) $(id).setAttribute("aria-describedby", "rules-error"); else $(id).removeAttribute("aria-describedby"); };
+  tie("rules-days", cause === "freeDays" || cause === "rules");
+  tie("rules-lunch", cause === "lunch" || cause === "rules");
+  win.classList.toggle("is-off", !r.lunch);
+  const w = r.lunch || r.win;
+  $("lunch-start").value = String(w.start);
+  $("lunch-end").value = String(w.end);
+}
+
+/** 조건이 바뀌었다: 저장하고, 만들어 둔 결과를 지우고, 조합이 있는지 그 자리에서 다시 본다. 새로 막히게 됐거나 까닭이 달라졌으면 시트 안의 알림 영역으로 읽는다. */
+function rulesChanged() {
+  const before = rulesCause() ? state.errors.general.text : "";
+  saveRules();
+  cancelCompute();
+  clearErrors();
+  state.result = null;
+  checkOverlap();
+  syncRules();
+  renderPicked();
+  const now = rulesCause() ? state.errors.general.text : "";
+  if (now && now !== before) announce(now, "alert");
+}
+
+$("rules-body").addEventListener("change", (e) => {
+  const t = e.target, k = t.dataset.rule, r = state.rules;
+  if (!k) return;
+  if (k === "day") {
+    const d = Number(t.value);
+    r.freeDays = t.checked ? [...new Set([...r.freeDays, d])].sort((a, b) => a - b) : r.freeDays.filter((x) => x !== d);
+  } else if (k === "lunch") {
+    const m = Number(t.value);
+    if (!m) r.lunch = null; // 시간대(r.win)는 남는다
+    else {
+      let { start, end } = r.win;
+      if (end - start < m) { end = Math.min(LUNCH_TO, start + m); start = end - m; } // 시간대가 고른 길이보다 짧으면 끝을 늘린다(끝이 15:00 에 걸리면 시작을 당긴다)
+      r.win = { start, end };
+      r.lunch = { start, end, minutes: m };
+    }
+  } else if (r.lunch) { // 시간대의 시작·끝. 고른 길이보다 짧아지면 다른 쪽 끝을 밀어 맞춘다(오류 줄 없이)
+    const m = r.lunch.minutes;
+    let start = k === "start" ? Number(t.value) : r.lunch.start, end = k === "end" ? Number(t.value) : r.lunch.end;
+    if (end - start < m) {
+      if (k === "start") { end = Math.min(LUNCH_TO, start + m); start = end - m; }
+      else { start = Math.max(LUNCH_FROM, end - m); end = start + m; }
+    }
+    r.win = { start, end };
+    r.lunch = { start, end, minutes: m };
+  }
+  rulesChanged();
+});
+
+// 열 때 칸을 새로 만든다: 닫혀 있는 동안 과목·분반이 바뀌어 요일 칸(토·일)과 오류 줄이 달라졌을 수 있다
+function openRules(e) {
+  if (!state.semester) return; // 학기를 아직 모른다(행은 감춰 둔다: syncRules)
+  renderRulesSheet();
+  openSheet($("rules-sheet"), e.currentTarget);
+}
+$("open-rules").addEventListener("click", openRules);
+$("picked-rules").addEventListener("click", openRules); // 오류 줄 옆의 '추가 설정'
+
 // ---------------------------------------------------------------- 시간표 만들기
 
 function travelFor(mode) {
@@ -1230,7 +1667,7 @@ const estimate = (courses) => courses.reduce((n, c) => n * c.sections.length, 1)
 
 // ---------------------------------------------------------------- 탐색 워커
 // 계산은 Web Worker(js/search-worker.js, 백엔드 몫)에서 돌려 화면이 멈추지 않게 한다. 워커를 못 쓰면 화면 스레드에서 돈다.
-// 워커 → 화면: progress(0.2초마다), result, conflict(서로 겹쳐 조합을 막는 과목), error. 취소는 terminate 후 새 워커
+// 워커 → 화면: progress(0.2초마다), result, conflict(조합을 막는 과목과 까닭 cause), error. 취소는 terminate 후 새 워커
 let worker = null, workerHasCampus = false, workerBroken = false, searchId = 0, pending = null;
 class Cancelled extends Error {}
 
@@ -1254,7 +1691,7 @@ function startWorker() {
     if (!pending || m.id !== pending.id) return;
     if (m.type === "progress") pending.onProgress(m.done, m.ms);
     else if (m.type === "result") settle({ ranked: m.ranked, stats: m.stats, total: m.total || null });
-    else if (m.type === "conflict") settle({ ranked: [], conflict: m.courseIds || [] });
+    else if (m.type === "conflict") settle({ ranked: [], conflict: m.courseIds || [], cause: m.cause || "overlap" });
     else if (m.type === "error") settle(null, new Error(m.message));
   };
   worker.onerror = (e) => { // 워커 파일을 못 읽었거나 모듈 워커를 모르는 브라우저: 화면 스레드에서 다시
@@ -1278,28 +1715,33 @@ function settle(value, error) {
 }
 
 /** 화면 스레드에서 탐색(워커를 못 쓸 때). 전체 조합 수도 워커와 같게: 찾은 게 topK 보다 적으면 그게 전부다. count: false 면 다시 세지 않는다. */
-function runHere(courses, { topK = TOP_K, home = state.home, mode = state.mode, count = true } = {}) {
+function runHere(courses, { topK = TOP_K, home = state.home, mode = state.mode, rules = activeRules(), count = true } = {}) {
   return new Promise((resolve) => {
-    const res = search(courses, travelFor(mode), home, { topK });
-    if (!res.ranked.length) { resolve({ ranked: [], conflict: findConflicts(courses) }); return; }
-    res.total = res.ranked.length < topK ? { count: res.ranked.length, exact: true } : count ? countFeasible(courses) : null;
+    const res = search(courses, travelFor(mode), home, { topK, rules });
+    if (!res.ranked.length) {
+      const why = whyNone(courses, rules) || { cause: "overlap", courseIds: [] };
+      resolve({ ranked: [], conflict: why.courseIds, cause: why.cause });
+      return;
+    }
+    res.total = res.ranked.length < topK ? { count: res.ranked.length, exact: true } : count ? countFeasible(courses, { rules }) : null;
     resolve(res);
   });
 }
 
 /**
- * 탐색: {ranked, stats, total} 또는 조합이 없으면 {ranked: [], conflict: [과목 id]}. total = {count, exact}(전체 조합 수).
- * opts = {topK, home, mode, count, spare}. 이어 찾기는 결과를 만든 조건(home·mode) 그대로 topK 만 키워 다시 부르고 전체 수는 다시 세지 않는다
+ * 탐색: {ranked, stats, total} 또는 조합이 없으면 {ranked: [], conflict: [과목 id], cause}. total = {count, exact}(전체 조합 수).
+ * opts = {topK, home, mode, rules, count, spare}. rules 는 추가 설정(공강 요일·점심시간): 조건을 지키는 조합만 찾고 센다.
+ * 이어 찾기는 결과를 만든 조건(home·mode·rules) 그대로 topK 만 키워 다시 부르고 전체 수는 다시 세지 않는다
  * (count: false. 달라는 것보다 적게 왔을 때만 total 이 온다). spare: 누르기 전에 미리 찾아 두는 탐색이라 워커가 없으면 하지 않는다.
  */
 function compute(courses, onProgress, opts = {}) {
   const w = startWorker();
   if (!w) return opts.spare ? Promise.reject(new Error("worker")) : runHere(courses, opts);
-  const { topK = TOP_K, home = state.home, mode = state.mode, count = true } = opts;
+  const { topK = TOP_K, home = state.home, mode = state.mode, rules = activeRules(), count = true } = opts;
   return new Promise((resolve, reject) => {
     const id = ++searchId;
     pending = { id, courses, opts, resolve, reject, onProgress };
-    const msg = { type: "search", id, courses, home, mode, topK };
+    const msg = { type: "search", id, courses, home, mode, topK, rules };
     if (!count) msg.total = false;
     if (!workerHasCampus) { msg.campus = state.campus; workerHasCampus = true; }
     w.postMessage(msg);
@@ -1367,8 +1809,9 @@ async function run() {
   if (!startWorker() && estimate(courses) > HEAVY) { showSpinner(); await nextPaint(); } else timer = setTimeout(showSpinner, 500);
   loadRoutes();
   let res = null, cancelled = false;
+  const rules = activeRules(); // 결과를 만든 조건. 더 보기도 이 조건 그대로 찾는다(그사이 조건을 바꾸면 계산이 취소된다)
   try {
-    res = await compute(courses, onProgress);
+    res = await compute(courses, onProgress, { rules });
   } catch (e) {
     if (e instanceof Cancelled) cancelled = true;
     else console.error(e);
@@ -1390,13 +1833,13 @@ async function run() {
     return;
   }
   if (!res.ranked.length) {
-    state.errors.overlap = new Set(res.conflict || []);
-    state.errors.general = { text: "겹치지 않는 조합이 없어요" };
+    setNone(res.cause || "overlap", res.conflict || []);
     renderPicked();
+    syncRules(); // 추가 설정 시트를 열어 둔 채 기다렸으면 그 머리의 오류 줄도
     reportError(state.errors.general.text);
     return;
   }
-  showResult(res, full);
+  showResult(res, full, rules);
 }
 
 /** 조합 안의 분반을 담은 과목 차례로 놓는다(고른 카드의 분반 목록 순서). */
@@ -1405,13 +1848,13 @@ function sortSections(ranked, courses) {
   for (const ev of ranked) ev.sections.sort((a, b) => order.get(a.courseId) - order.get(b.courseId));
 }
 
-function showResult(res, courses) {
+function showResult(res, courses, rules) {
   sortSections(res.ranked, courses);
   // ranked: 목록에 올린 조합(제목의 찾은 수). 처음에는 RANKS_STEP 개다. ahead: 찾아 뒀지만 아직 목록에 올리지 않은 다음 순위('더 보기'를 누를 때마다
   // RANKS_STEP 개씩 올린다). full: 마지막 탐색이 달라는 만큼 다 왔다(그 뒤 순위가 더 있을 수 있다). 더 보기는 아래 '순위'의 showMore.
   // days·axis: 요일 탭과 시간 축은 처음 찾은 것 전체(TOP_K 개)로 잡는다. 목록에 올린 것만으로 잡으면 더 보기를 누를 때마다 시간표가 움직인다
   state.result = { ranked: res.ranked.slice(0, RANKS_STEP), ahead: res.ranked.slice(RANKS_STEP), full: res.ranked.length >= TOP_K, total: res.total || null,
-    courses, home: state.home, mode: state.mode, days: weekDays(res.ranked), axis: hourRange(res.ranked) };
+    courses, home: state.home, mode: state.mode, rules, days: weekDays(res.ranked), axis: hourRange(res.ranked) };
   rankMore.failed = rankMore.held = false;
   state.rank = 0;
   state.day = firstDay(res.ranked[0]);
@@ -1547,8 +1990,10 @@ function renderResult() {
   const R = state.result;
   if (!R) return;
   $("rank-count").replaceChildren(...rankTitle(R));
-  // 결과 화면에서 기숙사 동을 밝히는 곳은 이 줄뿐이다: '출발·도착 기숙사 906동 · 경사 반영'(번호표·파선 견본·핀 이름은 어느 동이든 '기숙사')
-  $("rank-cond").textContent = `출발·도착 ${isDorm(R.home) ? `기숙사 ${buildingLabel(R.home)}` : placeLabel(R.home)} · ${R.mode === "slope" ? "경사 반영" : "평지"}`;
+  // 결과 화면에서 기숙사 동을 밝히는 곳은 이 줄뿐이다: '출발·도착 기숙사 906동 · 경사 반영'(번호표·파선 견본·핀 이름은 어느 동이든 '기숙사').
+  // 추가 설정을 걸었으면 끝에 붙인다: '출발·도착 정문 · 경사 반영 · 금 공강 · 점심 60분'(목록 제목의 두 수는 그 조건을 지키는 조합만 센 것이다)
+  $("rank-cond").replaceChildren(...dotted([`출발·도착 ${isDorm(R.home) ? `기숙사 ${buildingLabel(R.home)}` : placeLabel(R.home)}`,
+    R.mode === "slope" ? "경사 반영" : "평지", ...rulesParts(R.rules)]));
   $("daytabs").replaceChildren(...R.days.map((d) => h("button", { type: "button", role: "tab", id: `tab-${d}`, "data-day": String(d), "aria-controls": "day-panel" }, DAY_KO[d])));
   updateTabs();
   renderDay({ reveal: state.reveal });
@@ -2697,13 +3142,13 @@ function renderMore() {
   if (R.ahead.length <= RANKS_STEP && moreBeyond(R) && !rankMore.job && !rankMore.held && !rankMore.failed && startWorker()) seekMore(R, true);
 }
 
-/** 찾아 둔 것 뒤의 순위를 찾기 시작한다(결과를 만든 과목·조건 그대로 topK 만 키워서). 찾은 것은 R.ahead 에 둔다. spare = 누르기 전에 미리 찾는 것. */
+/** 찾아 둔 것 뒤의 순위를 찾기 시작한다(결과를 만든 과목·조건(출발·도착, 이동시간, 추가 설정) 그대로 topK 만 키워서). 찾은 것은 R.ahead 에 둔다. spare = 누르기 전에 미리 찾는 것. */
 function seekMore(R, spare) {
   const have = R.ranked.length + R.ahead.length;
   let want = have * 2 + TOP_K; // 찾아 둔 수가 24 → 72 → 168 → 360 …
   if (R.total && R.total.exact) want = Math.min(want, R.total.count);
   const courses = R.courses.map((c) => ({ id: c.id, name: c.name, cls: c.cls, sections: c.sections }));
-  const job = { opts: { topK: want, home: R.home, mode: R.mode, count: false, spare }, onProgress: null, done: null };
+  const job = { opts: { topK: want, home: R.home, mode: R.mode, rules: R.rules, count: false, spare }, onProgress: null, done: null };
   job.done = compute(courses, (done, ms) => { if (job.onProgress) job.onProgress(done, ms); }, job.opts).then((res) => {
     if (state.result !== R || res.ranked.length < have) return "failed"; // 앞쪽은 지난번과 같다는 약속이 깨졌다(올 수 없는 일)
     const tail = res.ranked.slice(have);
@@ -2971,6 +3416,7 @@ $("info-list").addEventListener("click", (e) => {
 });
 
 let pageName = "sources";
+const NGII_URL = "https://map.ngii.go.kr/"; // 국토정보플랫폼(국토지리정보원이 수치지형도를 내주는 누리집)
 function renderPage() {
   const sources = pageName !== "licenses";
   $("page-title").textContent = sources ? "자료 출처" : "오픈소스 라이선스";
@@ -2979,8 +3425,9 @@ function renderPage() {
     ["과목", ["서울대학교 수강편람", state.semesterMeta.updated ? ` · ${asofLong(state.semesterMeta.updated)}` : ""]],
     ["건물", "서울대학교 캠퍼스맵"],
     ["길", link("https://moreadorecampus.com/", "캠퍼스 마법 지도")],
-    ["경사", "국토지리정보원 수치지형도 · 공공누리 제1유형"],
-    ["지도", ["국토지리정보원 수치지형도 · 공공누리 제1유형, ", link("https://www.openstreetmap.org/copyright", "© OpenStreetMap contributors"), " · ODbL"]],
+    // 공공누리 제1유형: 온라인에서는 가능하면 출처 누리집으로 가는 링크를 준다(국토정보플랫폼. 10/5 디자인)
+    ["경사", [link(NGII_URL, "국토지리정보원 수치지형도"), " · 공공누리 제1유형"]],
+    ["지도", [link(NGII_URL, "국토지리정보원 수치지형도"), " · 공공누리 제1유형, ", link("https://www.openstreetmap.org/copyright", "© OpenStreetMap contributors"), " · ODbL"]],
   ] : [
     ["지도 표시", [link("https://github.com/Leaflet/Leaflet/blob/main/LICENSE", "Leaflet"), " · BSD-2-Clause"]],
     ["글꼴", [link("https://github.com/orioncactus/pretendard/blob/main/LICENSE", "Pretendard"), " · SIL OFL 1.1"]],
@@ -3167,11 +3614,15 @@ window.addEventListener("online", () => {
   if (!basemap && (maps.small || maps.full)) loadBasemap(); // 처음 받다 끊겼으면 다시
 });
 
-// 외부 링크(처리방침·문의·출처)는 앱 밖으로. 스토어 앱은 Capacitor Browser(iOS 인앱 Safari, 안드로이드 Custom Tab), 웹은 새 탭
+// 외부 링크(처리방침·문의·출처)는 앱 밖으로. 스토어 앱은 Capacitor Browser(iOS 인앱 Safari, 안드로이드 Custom Tab), 웹은 새 탭.
+// 과목 시트의 강의평(data-browser="system")만 스토어 앱에서도 기기의 기본 브라우저로 연다: 에브리타임은 로그인해야 보이는데 인앱 브라우저는
+// 기기 브라우저의 로그인을 이어받지 않는다. 앱에서는 앱 연결 native.js(백엔드 update51)가 이 표시가 붙었거나 everytime.kr 로 가는 링크의 click 을
+// 먼저(capture) 받아 전파를 끊고, 남은 기본 이동을 Capacitor 가 기기에 넘긴다. 그래서 그 링크는 꼭 <a href> 로 두고 click 에 일을 걸지 않는다.
+// 여기서도 그 표시가 붙은 링크는 건드리지 않는다(native.js 가 그 처리를 하기 전의 앱 빌드에서도 인앱 브라우저로 열지 않게)
 document.addEventListener("click", (e) => {
   const a = e.target.closest('a[target="_blank"]');
   const browser = IN_APP && capacitor?.Plugins?.Browser;
-  if (!a || !browser) return;
+  if (!a || !browser || a.dataset.browser === "system") return;
   e.preventDefault();
   browser.open({ url: a.href });
 });

@@ -89,6 +89,7 @@
     <div class="picked-error" id="picked-error" hidden>
       <p class="error-line" id="picked-error-text"></p>
       <button type="button" class="btn-text small" id="picked-retry" hidden>다시 시도</button>
+      <button type="button" class="btn-text small" id="picked-rules" hidden>추가 설정</button>
     </div>
     <div class="card picked">
       <ul class="list" id="picked-list"></ul>
@@ -111,6 +112,7 @@
           <label><input type="radio" name="mode" value="flat">평지</label>
         </div>
       </fieldset>
+      <button type="button" class="rules-row" id="open-rules" hidden><span class="kv"><span>추가 설정</span> <span class="v" id="rules-sum"></span></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
     </div>
     </div>
     <div class="bottom-bar">
@@ -202,7 +204,18 @@
     <div class="h"><h2 class="sheet-title" id="cs-title"></h2><p class="sheet-meta" id="cs-meta"></p></div>
     <button type="button" class="btn-text" data-close>완료</button>
   </div>
+  <p class="sheet-links"><a class="btn-text small cs-review" id="cs-review" target="_blank" rel="noopener" data-browser="system" aria-label="에브리타임 강의평">강의평<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 16L16 8M9.5 8H16v6.5"></path></svg></a></p>
   <div class="sheet-body" id="cs-body"></div>
+  <div class="sr-only" role="alert" data-live="alert"></div>
+</dialog>
+
+<dialog class="sheet" id="rules-sheet" aria-labelledby="rules-title">
+  <div class="sheet-head">
+    <div class="h"><h2 class="sheet-title" id="rules-title">추가 설정</h2><p class="error-line" id="rules-error" hidden></p></div>
+    <button type="button" class="btn-text" data-close>완료</button>
+  </div>
+  <div class="sheet-body rules-body" id="rules-body"></div>
+  <div class="sr-only" role="alert" data-live="alert"></div>
 </dialog>
 
 <dialog class="sheet" id="calc-sheet" aria-labelledby="calc-title">

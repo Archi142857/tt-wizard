@@ -499,7 +499,9 @@ button.btn-text[aria-disabled="true"], button.btn-text[aria-disabled="true"]:hov
   overflow-wrap: anywhere;
   border: 1px solid transparent; border-radius: var(--radius-sm); color: var(--text2); font-size: 1rem; line-height: 1.5rem; font-weight: 500; text-align: center;
   cursor: pointer; transition: background-color var(--dur-press) var(--ease-standard); }
-.seg input { position: absolute; opacity: 0; pointer-events: none; }
+/* 감춘 입력(세그먼트의 라디오, 요일 칸의 체크박스)은 상자를 칸 전체로 둔다: 초점이 옮겨 오면 브라우저는 입력의 상자가 보이게 스크롤한다.
+   상자가 칸 가운데의 13px 이면 시트를 키보드로 거슬러 올라올 때 칸 위쪽이 붙어 있는 시트 머리 밑에 남는다 */
+.seg input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
 .seg label:has(input:checked) { background: var(--card); color: var(--text); border: 1px solid var(--accent); box-shadow: var(--shadow-sm); }
 .seg label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .seg label:has(input:disabled) { color: var(--text3); cursor: default; }
@@ -507,6 +509,22 @@ button.btn-text[aria-disabled="true"], button.btn-text[aria-disabled="true"]:hov
   border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
   background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23646c7e' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;
   font-size: 1rem; line-height: 1.5rem; color: var(--text); }
+/* 조건 카드 맨 아래의 '추가 설정' 행(공강 요일·점심시간. 10/5 사용자, 자리는 디자인의 세 안을 그림으로 보고 고름). 행 전체가 버튼이고 누르면 시트가 열린다.
+   왼쪽 이름(t-body text), 오른쪽에 건 조건(t-body-sm text2. '금 공강 · 점심 60분', 건 것이 없으면 비운다)과 꺾쇠(muted, 정보 화면 행의 꺾쇠와 같다).
+   이름과 값이 한 줄에 안 들어가면(큰 글자, 좁은 칸) 값이 다음 줄 오른쪽으로 내려간다 */
+.rules-row { display: flex; align-items: center; gap: var(--space-3); width: calc(100% + var(--space-4) * 2); min-height: 56px;
+  margin: calc(var(--space-1) * -1) calc(var(--space-4) * -1) calc(var(--space-4) * -1); padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+  border: 0; border-top: 1px solid var(--line); border-radius: 0 0 var(--radius-lg) var(--radius-lg); background: transparent; text-align: left;
+  color: var(--text); font-size: 1rem; line-height: 1.5rem; }
+.rules-row .kv { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--space-3); }
+.rules-row .v { min-width: 0; margin-left: auto; text-align: right; font-size: 0.875rem; line-height: 1.25rem; color: var(--text2); }
+.rules-row svg { flex-shrink: 0; color: var(--muted); }
+.rules-row:active { background: var(--surface-hover); }
+.rules-row:active svg { color: var(--text2); } /* 누른·올린 면 위에서 muted 는 3:1 에 못 미친다(정보 화면 행과 같다) */
+.rules-row:focus-visible { outline-offset: -2px; }
+/* 건 조건의 덩이('금 공강', '· 점심 60분'. 결과 화면 조건 줄도 같다): 줄은 덩이 사이, 가운뎃점 앞에서만 바꾼다(점은 뒤 덩이에 붙어 있다).
+   덩이 하나가 줄보다 길 때만 그 안에서 바뀐다(글자 200%·폭 320 의 '점심 12:00~13:00', '출발·도착 기숙사 919A동') */
+.rules-row .nw, .result-head .cond .nw { display: inline-block; max-width: 100%; }
 
 /* ---------------------------------------------------------------- 오류, 스낵바, 고지 */
 .error-line { margin: var(--space-2) var(--space-1) 0; font-size: 0.875rem; line-height: 1.25rem; color: var(--danger); }
@@ -524,9 +542,10 @@ button.btn-text[aria-disabled="true"], button.btn-text[aria-disabled="true"]:hov
 .footnote .btn-text { margin-right: calc(var(--space-2) * -1); }
 
 /* ---------------------------------------------------------------- 시트 */
+/* 스크롤 여백: 키보드 초점이 붙어 있는 머리 밑이나 시트 아래 끝에 가리지 않게(WCAG 2.2 SC 2.4.11). 위쪽은 머리 높이 + 8px 을 app.js 가 재서 넣는다 */
 dialog.sheet { width: 100%; max-width: 100%; max-height: 90dvh; margin: auto 0 0; padding: 0 0 var(--safe-bottom); border: 0;
   border-radius: var(--radius-xl) var(--radius-xl) 0 0; background: var(--raised); color: var(--text); box-shadow: var(--shadow-md); overflow: auto;
-  overscroll-behavior: contain; }
+  overscroll-behavior: contain; scroll-padding-bottom: var(--space-2); }
 dialog.sheet[open] { animation: tt-sheet-in var(--dur-enter) var(--ease-enter); }
 dialog.sheet::backdrop { background: var(--scrim, #18203366); } /* ::backdrop 이 :root 변수를 물려받지 않는 브라우저용 값 */
 dialog.sheet.is-dragging { transition: none; }
@@ -538,6 +557,18 @@ dialog.sheet.is-dragging { transition: none; }
 .sheet-head .h { flex: 1; min-width: 0; }
 .sheet-title { margin: 0; font-size: 1.0625rem; line-height: 1.5rem; font-weight: 700; color: var(--heading); word-break: keep-all; }
 .sheet-head > .btn-text { margin-top: calc(var(--space-3) * -1); }
+/* 내용이 붙어 있는 머리 밑으로 올라가 있는 동안 머리 아래에 선(app.js 가 scrollTop > 0 일 때 is-scrolled 를 붙인다). 맨 위에서는 없다 */
+dialog.sheet.is-scrolled .sheet-head { box-shadow: 0 1px 0 var(--line); }
+/* 추가 설정 시트 머리의 오류 줄(고른 조건에 맞는 조합이 없을 때): 과목 시트의 메타 줄 자리. 머리에 두면 줄이 생겨도 그 아래의 칸이 밀리지 않는다 */
+.sheet-head .error-line { margin: 2px 0 0; }
+/* 과목 시트의 강의평(에브리타임으로 나가는 링크): 메타 줄 바로 아래 줄이지만 머리 밖이다. 목록을 내리면 같이 올라가서 붙은 머리가 길어지지 않는다.
+   이 줄이 있는 시트는 머리 아래 여백을 4px 로 줄여 메타 줄에 붙이고(묻는 시트와 같다. 다른 시트는 12px), 링크 위 4px 는 초점 테두리(2px + 2px)가 머리 밑에 가리지 않을 틈이다 */
+.sheet-head:has(+ .sheet-links) { padding-bottom: var(--space-1); }
+.sheet-links { margin: 0; padding: var(--space-1) var(--space-5) var(--space-1) calc(var(--space-5) - var(--space-2)); }
+.cs-review { text-decoration: none; }
+.cs-review svg { width: var(--icon-sm); height: var(--icon-sm); }
+/* 누르는 영역(48)을 2px 내린다: 가운데에 두면 위 6px 가운데 2px 가 붙어 있는 머리 밑에 들어가 46 이 된다. 아래쪽은 분반 수 글자뿐이라 겹칠 것이 없다 */
+.btn-text.small.cs-review::before { top: calc(50% + 2px); } /* 아래 '누르는 영역' 규칙(.btn-text.small::before)보다 세게 */
 /* 묻는 시트(확인 대화상자): 제목은 질문 하나, 그 아래 오른쪽에 텍스트 버튼 둘(왼쪽 닫기, 오른쪽 동사). 넓은 화면에서는 좁은 가운데 대화상자 */
 .sheet.ask .sheet-head { padding-right: var(--space-5); padding-bottom: var(--space-1); }
 .sheet.ask .sheet-title:focus { outline: none; }  /* 사용자가 누르지 않았는데 뜨는 시트라 처음 초점은 제목에 둔다(버튼에 초점 테두리가 먼저 보이지 않게). Tab 을 누르면 닫기부터 */
@@ -550,7 +581,7 @@ dialog.sheet.is-dragging { transition: none; }
   font-size: 0.875rem; line-height: 1.25rem; color: var(--text2); }
 .check { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--touch); cursor: pointer; }
 .check input, .sec input[type="checkbox"] { flex-shrink: 0; width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
-.sec { padding: var(--space-3) 0; }
+.sec { position: relative; padding: var(--space-3) 0; }
 .sec-pick { position: relative; display: flex; align-items: flex-start; gap: var(--space-3); cursor: pointer; }
 .sec-pick::before { content: ""; position: absolute; inset: -12px 0; }
 .sec-pick > input[type="checkbox"] { margin-top: 1px; }
@@ -559,23 +590,63 @@ dialog.sheet.is-dragging { transition: none; }
 .sec-title { font-size: 1rem; line-height: 1.5rem; font-weight: 500; }
 .sec-title .prof { font-weight: 400; color: var(--text2); }
 .sec-when { display: flex; flex-wrap: wrap; align-items: center; column-gap: 6px; font-size: 0.875rem; line-height: 1.25rem; color: var(--text2); }
-.sec.off .sec-title, .sec.off .sec-title .prof, .sec.off .sec-when { color: var(--text3); }
+.sec.off .sec-title, .sec.off .sec-title .prof, .sec.off .sec-when { color: var(--text3); } /* 끈 분반, 추가 설정 때문에 쓰지 않는 분반(체크는 켠 그대로, 까닭은 태그) */
+/* 편람에 시간이 있는 분반의 행 끝 펼침 화살표(48×48): 누르면 수업이 칩으로 놓여 시간·장소를 바꿀 수 있다. 행의 다른 곳은 전처럼 분반을 켜고 끈다 */
+.sec-more { position: absolute; top: 0; right: calc(var(--space-3) * -1); color: var(--muted); }
+.sec-more svg { transition: transform var(--dur-move) var(--ease-standard); }
+.sec-more[aria-expanded="true"] svg { transform: rotate(180deg); }
+.sec-more:active { color: var(--text2); }
+.sec:has(.sec-more) .sec-title { padding-right: var(--space-8); }
 .sec-value { position: relative; display: inline-flex; align-items: center; gap: 2px; min-height: 32px; cursor: pointer; color: var(--accent-text); font-weight: 500; }
 .sec-value select { position: absolute; inset: 0; width: 100%; opacity: 0; font-size: 1rem; cursor: pointer; }
 .sec-value:has(select:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-xs); }
 .sec .tags { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-1); }
-.sec .chips { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-2) 0 0 calc(22px + var(--space-3)); }
+/* 분반의 수업 칩: 글자를 누르면 그 수업을 고치는 입력 줄, ×는 빼기. 글자는 넘치면 줄을 바꾼다(시각이나 강의실이 잘리면 안 된다). 고치는 칩은 accent 테두리.
+   칩의 고치기 버튼은 제 초점 테두리를 끄므로(.chip .chip-q) 칩에 그린다. 칩이 여러 줄이면 줄 사이는 8px(최근 검색어 칩과 같다): 4px 이면 아래 칩의 넓힌 누르는 영역
+   (위로 7px)이 위 칩의 아래 3px 를 덮어, 위 칩의 아래 끝을 누르면 아래 칩이 눌렸다 */
+.sec .chips { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-1); margin: var(--space-2) 0 0 calc(22px + var(--space-3)); }
+.sec .chips .chip { max-width: 100%; min-width: 0; padding: 0; }
+.sec .chips .chip-q { height: auto; min-height: 32px; padding-top: 4px; padding-bottom: 4px; text-align: left; }
+.sec .chips .chip-q > span { overflow: visible; white-space: normal; }
+.sec .chips .chip.is-editing { border-color: var(--accent); }
+/* 빼기(×)의 누르는 영역(48)은 오른쪽으로 5px 옮긴다: 가운데에 두면 왼쪽으로 8px 인데 글자와의 사이가 3px 라 글자 끝 5px 를 덮는다(글자 끝을 누르면 그 수업이 빠졌다) */
+.sec .chips .chip-x::before { left: calc(50% + 5px); }
+.sec .chips .chip:has(.chip-q:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sec .chips .chip:has(.chip-q:active) { background: var(--surface-hover); }
+/* 칩 아래의 시간 추가(글자가 칩 왼쪽 끝에 맞는다), 바꾼 분반을 펼쳤을 때 맨 아래의 편람 값 한 줄(t-caption text3)과 오른쪽 되돌리기 */
+.sec-tools { margin: var(--space-1) 0 0 calc(22px + var(--space-3) - var(--space-2)); }
+/* 시간 추가의 누르는 영역(48)은 2px 내린다: 가운데에 두면 위로 6px 인데 칩과의 사이가 4px 라 칩의 아래 2px 를 덮는다(칩의 아래 끝을 누르면 시간 추가가 눌렸다) */
+.sec-tools .btn-text.small::before { top: calc(50% + 2px); }
+/* 칩을 고치는 입력 줄 바로 아래의 시간 추가는 12px 띄운다: 4px 이면 작은 버튼 둘(바꾸기, 시간 추가. 보이는 높이 36, 누르는 영역 48)의 넓힌 영역이 겹쳐
+   바꾸기의 아래 3px 를 누르면 시간 추가가 눌렸다(고치던 값이 사라진다). 12px 면 두 영역이 맞닿기만 한다 */
+.sec-edit + .sec-tools { margin-top: var(--space-3); }
+.sec-orig { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--space-2); margin: var(--space-2) 0 0 calc(22px + var(--space-3));
+  font-size: 0.8125rem; line-height: 1.125rem; color: var(--text3); font-variant-numeric: tabular-nums; }
+.sec-orig > span { min-width: 0; }
+.sec-orig .btn-text { margin-left: auto; margin-right: calc(var(--space-2) * -1); }
 .sec-edit { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-3); }
 .sec-edit .select { margin: 0; }
 .sec-edit .error-line { margin: 0; }
-.days { display: flex; gap: var(--space-1); margin: 0; padding: 0; border: 0; }
-.days label { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; min-width: 0; min-height: var(--touch); border: 1px solid transparent;
+/* 요일 칸(과목 시트의 시간 입력, 추가 설정의 공강 요일. 여럿 고른다): 한 줄에 놓되 칸 폭이 48px 아래로 줄면 줄을 바꾼다(누르는 영역 48.
+   폭 320 에서 월–토 여섯 칸이 38px 이던 것. 토·일까지 일곱이면 월–금 한 줄, 토·일 다음 줄) */
+.days { display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--touch), 1fr)); gap: var(--space-1); }
+.sec-edit fieldset, .rules-body fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.days label { position: relative; display: flex; align-items: center; justify-content: center; min-width: 0; min-height: var(--touch); border: 1px solid transparent;
   border-radius: var(--radius-sm); background: var(--fill); color: var(--text2); font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; cursor: pointer; }
-.days input { position: absolute; opacity: 0; pointer-events: none; }
+.days input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
 .days label:has(input:checked) { background: var(--accent); color: var(--on-color); }
 .days label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
-.time-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); font-size: 0.875rem; color: var(--text2); }
+.time-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); font-size: 0.875rem; line-height: 1.25rem; color: var(--text2); }
 .time-row .select { width: auto; min-width: 64px; margin: 0; padding-right: 30px; background-position: right 8px center; }
+/* 시각 줄의 시작 묶음(09:00 ~)과 끝 묶음(10:15): 좁아서 한 줄에 안 들어가면 둘 사이에서만 줄을 바꾼다(시와 분이 따로 떨어지지 않는다) */
+.time-part { display: inline-flex; align-items: center; gap: var(--space-1); }
+/* 추가 설정 시트: 공강 요일(요일 칸), 점심시간(없음 | 30분 | 60분 | 90분)과 그 아래 시간대 줄 '11:00 ~ 14:00 사이'.
+   시간대 줄은 없음일 때도 자리를 남긴다(보이지 않게만): 아래에서 올라온 시트는 줄이 생기면 그 위의 칸이 손가락 밑에서 밀려 올라간다. 그래서 무엇을 골라도 시트 높이가 같다 */
+.rules-body { display: flex; flex-direction: column; gap: var(--space-5); padding-top: var(--space-1); }
+.lunch-win { margin-top: var(--space-2); }
+.lunch-win, .lunch-win .time-part { gap: var(--space-2); }
+.lunch-win .select { min-width: 5.75rem; }
+.lunch-win.is-off { visibility: hidden; }
 .chip { display: inline-flex; align-items: center; gap: 2px; min-height: 32px; padding: 0 2px 0 var(--space-3); border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm); background: var(--card); font-size: 0.875rem; line-height: 1.25rem; color: var(--text); }
 .chip button { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0;
@@ -583,6 +654,9 @@ dialog.sheet.is-dragging { transition: none; }
 
 /* ---------------------------------------------------------------- 요일 탭 */
 .daytabs { display: flex; gap: var(--space-2); }
+/* 토요일까지 여섯이면 사이를 4px 로 좁힌다(폭 360 에서 칸 폭 46.7px → 50px. 칸마다 48 이상이면 붙은 선택지는 사이를 넓게 두지 않아도 된다).
+   폭 320 에서는 43px 로, 더 넓힐 데가 없다(알려진 한계) */
+.daytabs:has(> :nth-child(6)) { gap: var(--space-1); }
 .daytabs button { flex: 1; min-width: 0; min-height: var(--touch); overflow-wrap: anywhere; border: 1px solid transparent; border-radius: var(--radius-sm); background: var(--card); color: var(--text2);
   font-size: 1rem; line-height: 1.5rem; font-weight: 500; transition: background-color var(--dur-move) var(--ease-standard); }
 .daytabs button[aria-selected="true"] { background: var(--cta); color: var(--on-cta); }
@@ -744,13 +818,14 @@ dialog.sheet.is-dragging { transition: none; }
 .leaflet-top.leaflet-right { top: var(--space-1); right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px)); }
 
 /* ---------------------------------------------------------------- 순위 */
-.result-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; column-gap: var(--space-3); row-gap: var(--space-1);
+/* 조건 줄은 제목의 아랫줄(찾은 수)과 글자 밑선을 맞춘다. last baseline 을 모르는 브라우저(Safari 16.1, 크롬 107 까지)는 아래 끝 맞춤(2px 낮다). 좁으면 조건이 아래 줄로 내려간다 */
+.result-head { display: flex; flex-wrap: wrap; align-items: flex-end; align-items: last baseline; justify-content: space-between; column-gap: var(--space-3); row-gap: var(--space-1);
   margin: var(--space-8) var(--space-1) var(--space-3); }
-.result-head h2.section-title { flex-wrap: wrap; column-gap: var(--space-2); row-gap: 0; margin: 0; }
-/* 목록 제목 두 덩이: 희미한 전체 조합 수(t-body text3)와 찾은 수(t-h2). 따로 줄을 바꿔 폰에서는 희미한 쪽이 윗줄 */
+.result-head h2.section-title { flex-direction: column; gap: 0; margin: 0; }
+/* 목록 제목 두 덩이: 희미한 전체 조합 수(t-body text3)와 찾은 수(t-h2). 화면 폭과 상관없이 늘 두 줄이고 희미한 쪽이 윗줄이다(10/5 사용자) */
 .result-head .rank-total { font-size: 1rem; line-height: 1.5rem; font-weight: 400; letter-spacing: 0; color: var(--on-bg-text3); font-variant-numeric: tabular-nums; }
 .result-head .rank-found { font-variant-numeric: tabular-nums; }
-.result-head .cond { font-size: 0.875rem; line-height: 1.25rem; color: var(--on-bg-text3); }
+.result-head .cond { min-width: 0; font-size: 0.875rem; line-height: 1.25rem; color: var(--on-bg-text3); }
 /* 후보 카드: 순위와 한 주 요약, 요일별 미리보기(칸마다 수업 막대). 고른 카드는 테두리와 담은 분반 목록 */
 .ranks { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
 .rank { overflow: hidden; border: 2px solid transparent; border-radius: var(--radius-lg); background: var(--card); transition: border-color var(--dur-fade) var(--ease-standard);
@@ -942,8 +1017,8 @@ h2.section-title, .asof, .picked-error, .footnote, .day-summary, .result-head, .
   .course-hit:hover .c-title { background: none; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
   .term-select:hover, .browse-select:hover, .info-pick:hover { background-color: var(--surface-hover); }
   .btn-add.is-on:hover { background: var(--danger-weak); color: var(--danger); }
-  .recent-list .chip:has(.chip-q:hover) { background: var(--surface-hover); }
-  .chip .chip-x:hover, .icon-btn.remove:hover, button.info-row:hover svg, a.info-row:hover svg, label.info-row:hover svg { color: var(--text2); }
+  .recent-list .chip:has(.chip-q:hover), .sec .chips .chip:has(.chip-q:hover), .rules-row:hover { background: var(--surface-hover); }
+  .chip .chip-x:hover, .icon-btn.remove:hover, .sec-more:hover, button.info-row:hover svg, a.info-row:hover svg, label.info-row:hover svg, .rules-row:hover svg { color: var(--text2); }
 }
 
 /* ---------------------------------------------------------------- 작은 컨트롤의 누르는 영역을 48px로 넓힌다 */
@@ -963,7 +1038,7 @@ h2.section-title, .asof, .picked-error, .footnote, .day-summary, .result-head, .
   .btn-primary, .btn-add, .btn-text, .tag, .daytabs button, .seg label, .days label, .snackbar, .banner, .searchbox, .chip, .term-select, .browse-select, .tt-late { border: 1px solid CanvasText; }
   .rank { border-color: CanvasText; }
   .rank.selected { border-color: Highlight; }
-  .seg label:has(input:checked), .days label:has(input:checked), .daytabs button[aria-selected="true"] { outline: 2px solid Highlight; outline-offset: 1px; }
+  .seg label:has(input:checked), .days label:has(input:checked), .daytabs button[aria-selected="true"], .sec .chips .chip.is-editing { outline: 2px solid Highlight; outline-offset: 1px; }
   .tt-block { border: 1px solid CanvasText; }
   .dot, .swatch, .week .wb { forced-color-adjust: none; } /* 교과구분 색 표시는 그대로 둔다 */
   :focus-visible { outline: 2px solid Highlight; }
