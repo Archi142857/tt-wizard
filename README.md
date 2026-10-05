@@ -132,7 +132,7 @@ SNUTT와 같은 방식: 학기 전체 강좌 엑셀을 주기적으로 내려받
 ```bash
 python scripts/fetch_campus_buildings.py     # 캠퍼스맵 동 번호 1~999 검색 → data/campus_buildings.csv (10분 남짓, 한 번만)
 python scripts/fetch_osm_footprints.py       # OpenStreetMap 건물 윤곽·출입구·보행로 → data/osm_*.geojson
-# data/topo/ 에 수치지형도(1:5,000 4장, 1:1,000 22장)의 등고선·표고점·건물 레이어가 들어 있다 (출처·다시 받는 법: data/topo/README.md)
+# 수치지형도(1:5,000 4장, 1:1,000 22장)는 저장소에 없다. 국토정보플랫폼에서 받아 data/topo/ 에 푼다 (까닭·받는 법: docs/topo.md)
 python scripts/dem_from_contours.py          # 등고선·표고점 → data/dem/topo_dem.tif (2 m), 건물 윤곽 → data/topo_buildings.geojson
 python scripts/building_elevation.py         # → data/buildings_elevation.csv, data/building_entrances.csv (+ .geojson)
 ```
@@ -216,7 +216,7 @@ data/
   sample/              데모용 가짜 데이터
   raw/                 엑셀 원본 (latest + 변경이 있던 날짜별, history/ = 지난 학기)
   history/             지난 학기 편람 (웹 화면 courses.json 형식, 학기 선택용)
-  topo/                수치지형도 원자료 (등고선·표고점·건물, 1:1,000 담장·옹벽·계단 레이어) — 건물 고도, 출입구 접속선용
+  topo/                수치지형도 원자료 — 저장소에는 없다(국외 반출 금지 자료라 PC 에만 둔다. 까닭·받는 법 docs/topo.md)
   magicmap/            캠퍼스 마법 지도에서 받은 도로 그래프·건물쌍 거리표와 경사를 붙인 결과
   graph_patch/         마법 지도 그래프에 더할 길·막을 엣지·출입구·접속선(GeoJSON). dorm_buildings.csv = 기숙사 동 번호·좌표
   field/               오르막 실측 구간(routes.csv)·기록 (양식: *_template.csv, 측정 페이지 CSV 는 tracks/ — git 에 안 올림)
@@ -226,7 +226,7 @@ web/                 정적 웹 화면: 과목 검색 → 시간표 · 동선 �
   field/               오르막 실측 페이지 (폰 GPS 기록, 앱에서 링크하지 않음)
 app/                 스토어 앱 (Capacitor 8): android/, ios/ 네이티브 프로젝트, src/native.js(앱 연결), assets/icons/ — docs/app.md
 results/experiments/ 비교 실험 결과 (CSV, 그림, README.md 요약)
-docs/                계획·결정 사항, 방법 설명(elevation_method.md, travel_time_method.md, experiments.md, app.md, search.md)
+docs/                계획·결정 사항, 방법 설명(elevation_method.md, travel_time_method.md, experiments.md, app.md, search.md, topo.md)
 tests/               pytest
 ```
 
@@ -234,12 +234,12 @@ tests/               pytest
 
 - `.env` (TMAP_APP_KEY 등)는 커밋하지 않는다. 자동 갱신에서 키가 필요해지면 GitHub Secrets 로.
 - 수강신청 시스템·캠퍼스맵 API 호출은 최소한으로. 차단되면 로컬 수동 실행으로 전환.
-- 지도 타일은 OpenStreetMap — 출처 표기(© OpenStreetMap contributors) 필수.
+- 지도 타일은 쓰지 않고 바탕 지도를 직접 그린다(`docs/basemap.md`). 지도 위 출처 표기(© 국토지리정보원 · © OpenStreetMap) 필수.
 
 ## 데이터 출처
 
 - 도로 그래프·건물쌍 이동거리: 캠퍼스 마법 지도 (https://moreadorecampus.com/) — 비상업 공개 저장소 게시 허락을 받았다
-- 지면 고도·건물 윤곽: 국토지리정보원 수치지형도 (국토정보플랫폼, 공공누리 제1유형)
+- 지면 고도·건물 윤곽·바탕 지도: 국토지리정보원 수치지형도 (국토정보플랫폼, 공공누리 제1유형). 원본은 저장소에 싣지 않는다(`docs/topo.md`)
 - 건물 윤곽·출입구·보행로: © OpenStreetMap contributors (ODbL)
 - 건물 번호·이름·좌표: 서울대학교 캠퍼스맵 (https://map.snu.ac.kr)
 

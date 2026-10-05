@@ -80,9 +80,16 @@ Xcode 26 이상. 위와 같고 마지막 두 줄만 `npx cap sync ios`, `npx cap
   `DEFAULT` 를 받은 순간의 기기 테마로 바꿔 기억하고 기기 설정이 바뀔 때 그 값을 다시 입혀서, 앱을 켜 둔 채 기기가 다크로 바뀌면 화면은 어두워지는데
   시계·아이콘이 어두운 글자로 남는다. 그래서 기기 테마가 바뀔 때(`prefers-color-scheme`)와 앱으로 돌아올 때 `DEFAULT` 를 다시 요청한다.
   이벤트 테마가 켜져 있으면(`<html data-theme>`) 화면이 정한 글자색(`app.js` `applyTheme` 의 `setStyle("DARK")`)을 건드리지 않는다. iOS 는 스스로 따라간다.
+- **기기 브라우저로 여는 링크**(10/5, 디자인 규칙 '강의평'): 화면은 바깥 링크(`<a target="_blank">`)를 앱 안 브라우저로 여는데, iOS 인앱 Safari 는
+  Safari 의 로그인을 이어받지 않는다. 로그인해야 보이는 에브리타임 강의평은 거기서 열면 다시 로그인해야 해서 기기의 기본 브라우저로 보낸다.
+  대상은 주소의 호스트가 `everytime.kr`(하위 주소 포함)이거나 화면이 `data-browser="system"` 을 붙인 http(s) 링크다.
+  `native.js` 가 문서의 `click` 을 capture 단계에서 먼저 받아 전파만 끊고 기본 동작은 둔다. 웹뷰가 앱 밖 주소로 가려 하면 Capacitor 가 기기에 넘긴다
+  (안드로이드 `Bridge.launchIntent` 의 `ACTION_VIEW`, iOS `WebViewDelegationHandler` 의 `UIApplication.open`. 8.5.2 소스로 확인). 그 주소를 맡은 앱이 기기에 있으면
+  그 앱이 열릴 수 있다. `capacitor.config.json` 의 `server.allowNavigation` 에 그 호스트를 넣으면 웹뷰 안에서 열리게 되니 넣지 않는다.
 
 화면 쪽(`web/js/app.js`, 프론트엔드)은 `window.Capacitor` 가 있으면 셸을 `ios` 로 판별해 서비스 워커·설치 안내·새 버전 알림을 끄고,
-외부 링크는 Capacitor Browser(안드로이드는 Custom Tab, iOS 는 인앱 Safari), 완료 때 햅틱을 쓴다. 안드로이드도 Capacitor 가 되면서
+외부 링크는 Capacitor Browser(안드로이드는 Custom Tab, iOS 는 인앱 Safari), 완료 때 햅틱을 쓴다. 에브리타임으로 나가는 `강의평`만
+기기의 기본 브라우저로 간다(위 '기기 브라우저로 여는 링크'. `native.js` 가 맡아서 `app.js` 는 여느 바깥 링크처럼 두면 된다). 안드로이드도 Capacitor 가 되면서
 `ios` 라는 이름이 맞지 않아 프론트엔드에 플랫폼별로 나눠 달라고 요청했다(공유 폴더 `요청_프론트엔드.md`).
 
 ## 앱에서만 다른 것
@@ -132,7 +139,8 @@ Xcode 26 이상. 위와 같고 마지막 두 줄만 `npx cap sync ios`, `npx cap
 3. 상태 바의 시계·아이콘이 라이트·다크 기기 모두에서 보인다. 앱을 켜 둔 채 기기 테마를 바꾸고 돌아와도 보인다(위 '안드로이드 상태 바 글자색').
 4. 이벤트 테마: 기기 날짜를 12월 1~25일로 옮기면 크리스마스 테마가 켜진다(앱은 주소로 켤 수 없다). 짙은 초록 바탕 위에서 상태 바 글자가 밝게 나오고,
    정보 화면에서 테마를 끄면 기기 테마에 맞게 돌아온다. 코드로는 `DARK` = 밝은 글자(안드로이드 `setAppearanceLightStatusBars(false)`, iOS `.lightContent`)다.
-5. 정보 화면의 바깥 링크가 앱 안 브라우저(Custom Tab)로 열린다.
+5. 정보 화면의 바깥 링크가 앱 안 브라우저(Custom Tab)로 열린다. 과목 시트의 `강의평`(프론트엔드가 넣은 뒤)은 기기의 기본 브라우저나 에브리타임 앱으로 열리고,
+   돌아오면 앱 화면이 그대로다.
 
 ## 확인한 것 (10/1)
 

@@ -1,6 +1,6 @@
 // tests/test_app.py 가 부른다: 앱 연결 스크립트(app/src/native.js)를 가짜 Capacitor·브라우저 위에서 돌리고 결과를 JSON으로 출력한다.
 // 자료 받기(네트워크 → 받아 둔 것 → 앱에 넣은 것, 늦은 응답 저장), 바탕 지도(앱에 넣은 것만), 자료가 아닌 요청, 안드로이드 뒤로 가기,
-// 안드로이드 상태 바 글자색(기기 테마가 바뀔 때), 웹에서는 아무것도 안 함.
+// 안드로이드 상태 바 글자색(기기 테마가 바뀔 때), 기기 브라우저로 여는 링크(에브리타임), 웹에서는 아무것도 안 함.
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
@@ -26,6 +26,7 @@ function setup({ native = true, http = null, online = true, platform = "android"
   const calls = { local: [], remote: [], back: 0, minimized: 0, bars: [] };
   const scheme = []; // 기기 테마(prefers-color-scheme)가 바뀔 때 부를 것들
   const visible = []; // 앱으로 돌아올 때(visibilitychange) 부를 것들
+  const clicks = []; // 문서의 click 을 듣는 것들 [{fn, capture}]
   const listeners = {};
   const dialogs = [];
   const idb = fakeIndexedDB();
@@ -54,7 +55,10 @@ function setup({ native = true, http = null, online = true, platform = "android"
       baseURI: "https://localhost/",
       documentElement: { setAttribute: (k, v) => { attrs[k] = v; }, hasAttribute: (k) => k in attrs },
       visibilityState: "visible",
-      addEventListener: (ev, fn) => { if (ev === "visibilitychange") visible.push(fn); },
+      addEventListener: (ev, fn, opts) => {
+        if (ev === "visibilitychange") visible.push(fn);
+        if (ev === "click") clicks.push({ fn, capture: opts === true || Boolean(opts && opts.capture) });
+      },
       querySelectorAll: (sel) => (sel === "dialog[open]" ? dialogs.filter((d) => d.open) : []),
     },
     location: { origin: "https://localhost" },
@@ -65,7 +69,7 @@ function setup({ native = true, http = null, online = true, platform = "android"
   };
   vm.createContext(context);
   vm.runInContext(SRC, context);
-  return { win, calls, listeners, dialogs, idb, attrs, scheme, visible };
+  return { win, calls, listeners, dialogs, idb, attrs, scheme, visible, clicks };
 }
 
 const read = async (res) => ({ source: res.headers.get("X-TTW-Source"), body: await res.json() });
@@ -174,6 +178,31 @@ const out = {};
   try { throwing.scheme.forEach((fn) => fn({ matches: true })); } catch { threw = true; }
   out.bars = { listening: [s.scheme.length, s.visible.length], start, afterChange, withTheme, afterThemeOff: [...s.calls.bars],
     ios: ios.scheme.length + ios.visible.length, noPlugin: none.scheme.length + none.visible.length, threw };
+}
+
+// 9) 기기 브라우저로 여는 링크: 에브리타임(과 그 하위 주소), data-browser="system" 을 붙인 링크는 화면의 처리(앱 안 브라우저)가 받기 전에
+//    전파만 끊는다(기본 동작은 막지 않는다: 웹뷰의 이동을 Capacitor 가 기기 브라우저로 돌린다). 다른 링크와 링크가 아닌 곳은 건드리지 않는다
+{
+  const press = (s, href, attrs = {}, inside = true) => {
+    const a = href === null ? null : { getAttribute: (k) => (k === "href" ? href : k in attrs ? attrs[k] : null) };
+    const ev = { stopped: false, prevented: false, target: inside ? { closest: (sel) => (sel === "a[href]" ? a : null) } : {},
+      stopImmediatePropagation() { this.stopped = true; }, stopPropagation() { this.stopped = true; }, preventDefault() { this.prevented = true; } };
+    s.clicks.forEach((c) => c.fn(ev));
+    return ev.stopped && !ev.prevented ? "system" : ev.prevented ? "prevented" : "app";
+  };
+  const s = setup();
+  const ios = setup({ platform: "ios" });
+  const web = setup({ native: false });
+  out.links = {
+    capture: s.clicks.map((c) => c.capture),
+    everytime: [press(s, "https://everytime.kr/lecture/search?keyword=%EC%A1%B0%EC%88%98%EB%82%A8&condition=professor"), press(ios, "https://everytime.kr/lecture/view/1")],
+    subdomain: press(s, "https://snu.everytime.kr/"),
+    marked: press(s, "https://example.com/login", { "data-browser": "system" }),
+    others: [press(s, "https://github.com/Archi142857/tt-wizard"), press(s, "https://www.openstreetmap.org/copyright"), press(s, "https://everytime.kr.example.com/"),
+      press(s, "https://noteverytime.kr/"), press(s, "#top"), press(s, "mailto:someone@everytime.kr", { "data-browser": "system" })],
+    notLink: [press(s, null), press(s, "https://everytime.kr/", {}, false)],
+    web: web.clicks.length,
+  };
 }
 
 console.log(JSON.stringify(out));

@@ -9,6 +9,7 @@
 // 2) 안드로이드 뒤로 가기: 열린 시트(<dialog>)를 닫고(cancel 이벤트), 아니면 이전 화면, 첫 화면이면 앱을 내린다.
 // 3) <html data-platform="android|ios">
 // 4) 안드로이드 상태 바 글자색: 앱을 켜 둔 채 기기가 라이트·다크로 바뀌면 다시 맞춘다(아래 '상태 바 글자색').
+// 5) 로그인해 둔 브라우저에서 열려야 하는 바깥 링크(에브리타임 강의평)는 앱 안 브라우저가 아니라 기기의 기본 브라우저로 보낸다(아래 '기기 브라우저로 여는 링크').
 (function () {
   "use strict";
   var cap = window.Capacitor;
@@ -174,6 +175,27 @@
       if (document.visibilityState === "visible") syncBars();
     });
   }
+
+  // ------------------------------------------------------------ 기기 브라우저로 여는 링크
+
+  // 화면(app.js)은 바깥 링크(<a target="_blank">)를 앱 안 브라우저로 연다(Capacitor Browser: 안드로이드 Custom Tab, iOS 인앱 Safari).
+  // 그런데 iOS 인앱 Safari 는 Safari 의 로그인을 이어받지 않아서, 로그인해야 보이는 곳(에브리타임 강의평)은 거기서 열면 다시 로그인해야 한다.
+  // 그런 링크는 기기의 기본 브라우저로 보낸다(디자인 규칙 '강의평', '스토어 출시'의 링크 표). 처리방침·문의·출처 링크는 그대로 앱 안 브라우저다.
+  //   대상: 주소의 호스트가 SYSTEM_HOSTS 이거나, 화면이 data-browser="system" 을 붙인 http(s) 링크.
+  //   방법: 화면의 처리(문서의 click)보다 먼저(capture 단계) 전파만 끊고 기본 동작은 그대로 둔다. 웹뷰가 앱 밖 주소로 가려 하면 Capacitor 가
+  //   기기에 넘긴다(안드로이드 Bridge.launchIntent 의 ACTION_VIEW, iOS WebViewDelegationHandler 의 UIApplication.open). 그 주소를 맡은 앱이
+  //   기기에 있으면 그 앱이 열릴 수 있다.
+  var SYSTEM_HOSTS = /(^|\.)everytime\.kr$/i;
+  document.addEventListener("click", function (e) {
+    var el = e.target;
+    var a = el && typeof el.closest === "function" ? el.closest("a[href]") : null;
+    if (!a) return;
+    var url;
+    try { url = new URL(a.getAttribute("href"), document.baseURI); } catch (err) { return; }
+    if (url.protocol !== "https:" && url.protocol !== "http:") return;
+    if (a.getAttribute("data-browser") !== "system" && !SYSTEM_HOSTS.test(url.hostname)) return;
+    e.stopImmediatePropagation(); // preventDefault 는 하지 않는다: 웹뷰의 기본 이동을 Capacitor 가 기기 브라우저로 돌린다
+  }, true);
 
   window.TTW_APP = { build: BUILD, remote: REMOTE, platform: platform };
 })();

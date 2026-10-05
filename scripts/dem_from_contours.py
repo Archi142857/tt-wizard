@@ -9,6 +9,7 @@
 표고점을 삼각망(TIN)으로 선형 보간하면 2 m 격자 DEM이 된다.
 
 입력  data/topo/<압축 파일마다 폴더>/ 아래의 SHP. 도엽마다 파일 이름이 같으므로 한 폴더에 섞어 풀면 덮어쓴다.
+      원본은 저장소에 없다(국외 반출 금지 자료). 국토정보플랫폼에서 받아 PC 에 둔다: docs/topo.md
       레이어는 파일 이름에 든 코드로 구분한다.
         F0010000 등고선 — 높이 필드 '등고수치'
         F0020000 표고점 — 높이 필드 '수치'
@@ -388,7 +389,7 @@ def main(argv: list[str] | None = None) -> int:
     use = args.scale if layers[args.scale][CONTOUR] else next((sc for sc in SCALES if layers[sc][CONTOUR]), None)
     if use is None:
         raise SystemExit(f"{args.topo} 에 등고선(F0010000) SHP가 없음. 국토정보플랫폼에서 수치지형도 Ver2.0(SHP)을 받아"
-                         " 압축 파일마다 폴더를 따로 만들어 풀 것")
+                         " 압축 파일마다 폴더를 따로 만들어 풀 것(저장소에는 없다. docs/topo.md)")
     if use != args.scale:
         print(f"※ 1:{int(args.scale):,} 등고선이 없어 1:{int(use):,}로 만든다")
     L = layers[use]

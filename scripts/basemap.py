@@ -5,6 +5,7 @@
 
 입력
   data/topo/<도엽 폴더>/   수치지형도 1:5,000(도엽번호 8자리) SHP. 관악캠퍼스 둘레 네 장(37612018·019·028·029)
+      원본은 저장소에 없다(국외 반출 금지 자료). 국토정보플랫폼에서 받아 PC 에 둔다: docs/topo.md
       N3A_A0010000 도로경계(면)   N3A_A0033320 인도   N3A_B0010000 건물   N3L_F0010000 등고선
       N3A_E0010001 하천경계   N3A_E0032111 실폭하천   N3A_E0052114 호수·저수지
   data/osm_basemap.geojson  숲·잔디·공원(면)과 길(선), 자료 범위 전체. fetch_osm_basemap.py(인터넷 되는 PC)가 만든다
@@ -265,7 +266,7 @@ def build(topo: Path = TOPO, osm_basemap: Path = OSM_BASEMAP, osm_paths: Path = 
     proj = Proj()
     dirs = sheet_dirs(topo)
     if not dirs:
-        raise SystemExit(f"{topo} 에 1:5,000 도엽 폴더가 없다")
+        raise SystemExit(f"{topo} 에 1:5,000 도엽 폴더가 없다(수치지형도 원본은 저장소에 없다. 받는 법: docs/topo.md)")
     bb = layer_bbox(dirs, CONTOUR) or layer_bbox(dirs, BUILDING)
     clip = box(bb[0] + 5, bb[1] + 5, bb[2] - 5, bb[3] - 5)  # 도엽 가장자리 5 m 는 자른다(조각난 선)
 

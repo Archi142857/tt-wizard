@@ -271,6 +271,6 @@ TSP 하한(`bound.py`)도 같은 행렬에서 두 방향 중 짧은 쪽으로 �
   Evacuation Dynamics: Empirical Results, Modeling and Applications (arXiv:0802.1620) 에 실린 값을 읽었다.
 - 도로 그래프·건물쌍 거리표: 캠퍼스 마법 지도 (https://moreadorecampus.com/)
 - 지면 고도: 국토지리정보원 1:5,000 수치지형도 (공공누리 제1유형), 방법은 `docs/elevation_method.md`
-- 건물 윤곽·담장·옹벽·계단·도로경계: 국토지리정보원 1:1,000 수치지형도 2025 (공공누리 제1유형, `data/topo/README.md`)
+- 건물 윤곽·담장·옹벽·계단·도로경계: 국토지리정보원 1:1,000 수치지형도 2025 (공공누리 제1유형, `docs/topo.md`)
 - 더한 길·출입구 일부: © OpenStreetMap contributors (ODbL)
 - 출입구·길 확인: 카카오맵 로드뷰·스카이뷰를 눈으로 본 것(화면은 싣지 않는다). 피처마다의 근거는 `data/graph_patch/README.md`
