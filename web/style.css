@@ -448,10 +448,15 @@ button.btn-text[aria-disabled="true"], button.btn-text[aria-disabled="true"]:hov
 .recent { padding: 0 var(--space-4) var(--space-4); }
 .recent .list-head { margin-right: calc(var(--space-2) * -1); }
 .recent-title { margin: 0; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; color: var(--text2); }
-.recent-list { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+/* 칩은 머리(모두 지우기)와 8px, 줄 사이 16px, 칸 사이 12px 띄운다: 누르는 영역(48)이 겹치지 않는 값을 간격 눈금에서 골랐다(칩은 테두리까지 34 라 영역이 칩 밖으로
+   7 씩 나온다. 줄 사이는 14 부터, 칸 사이는 12 부터). 줄·칸 사이 8, 머리와 0 이던 때는 줄이 붙으면 영역이 42, 첫 줄 칩 때문에 모두 지우기가 41 이었다(10/5 디자인) */
+.recent-list { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-3); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
 .recent-list .chip { max-width: 100%; min-width: 0; padding: 0; }
-.chip .chip-q { position: relative; display: flex; align-items: center; width: auto; min-width: 0; height: 32px; padding: 0 2px 0 var(--space-3);
+/* 칩의 글자 버튼: 높이는 32 이상이고 글자를 키우면 따라 커진다(글자 200% 에서 48. 32 로 묶어 두면 키운 글자가 칩에 꽉 찬다) */
+.chip .chip-q { position: relative; display: flex; align-items: center; width: auto; min-width: 0; height: auto; min-height: 32px; padding: 4px 2px 4px var(--space-3);
   color: var(--text); font: inherit; }
+/* 한두 글자 검색어도 글자 쪽을 누르는 폭이 48(37~44 였다). 글자는 가운데에 놓인다(.chip button 의 justify-content) */
+.recent-list .chip-q { min-width: var(--touch); }
 .chip .chip-q > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip .chip-q:focus-visible { outline: none; }
 .recent-list .chip:has(.chip-q:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -474,10 +479,14 @@ button.btn-text[aria-disabled="true"], button.btn-text[aria-disabled="true"]:hov
   .course .remove { order: 2; }
   .course .tags { order: 3; flex-basis: 100%; flex-wrap: wrap; padding-left: calc(8px + var(--space-3)); }
 }
-.course { display: flex; align-items: center; gap: var(--space-3); min-height: 72px; padding: var(--space-3) var(--space-1) var(--space-3) var(--space-4); }
+.course { position: relative; display: flex; align-items: center; gap: var(--space-3); min-height: 72px; padding: var(--space-3) var(--space-1) var(--space-3) var(--space-4); }
 .course.is-new { animation: tt-rise var(--dur-move) var(--ease-standard); }
 .course.is-leaving { animation: tt-fade-out var(--dur-fade) var(--ease-standard) forwards; }
 .course-hit { display: flex; flex: 1; min-width: 0; align-items: flex-start; gap: var(--space-3); padding: 0; border: 0; background: transparent; color: inherit; text-align: left; }
+/* 행 어디를 눌러도(위아래 여백, 태그 위도) 과목 시트가 열린다: 버튼의 누르는 영역을 행 전체로 넓힌다. 버튼 상자는 글자 높이(42px)뿐이라 72px 행의 위아래 15px 와
+   태그는 눌리지 않았다(10/5 디자인). 빼기(×)는 넓힌 영역보다 위에 둔다 */
+.course-hit::before { content: ""; position: absolute; inset: 0; }
+.course .remove { position: relative; }
 .dot { flex-shrink: 0; width: 8px; height: 8px; margin-top: 8px; border-radius: 50%; }
 .c-body { flex: 1; min-width: 0; }
 .c-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 1rem; line-height: 1.5rem; font-weight: 500;
@@ -598,33 +607,48 @@ dialog.sheet.is-scrolled .sheet-head { box-shadow: 0 1px 0 var(--line); }
 .sec-more:active { color: var(--text2); }
 .sec:has(.sec-more) .sec-title { padding-right: var(--space-8); }
 .sec-value { position: relative; display: inline-flex; align-items: center; gap: 2px; min-height: 32px; cursor: pointer; color: var(--accent-text); font-weight: 500; }
-.sec-value select { position: absolute; inset: 0; width: 100%; opacity: 0; font-size: 1rem; cursor: pointer; }
+/* 강의실 미정 ▾: 눌리는 것은 보이는 값 위에 덮은 투명한 선택칸이다(값을 감싼 것의 영역을 넓혀도 선택 창은 열리지 않는다). 그래서 선택칸을 넓혀 48 로 만든다:
+   위로 3px(이름 줄 글자 아래의 빈 자리), 아래로 13px(행의 아래 여백 12 + 구분선 1). 값 높이(32)만 눌리던 것이다(10/5 디자인) */
+.sec-value select { position: absolute; top: -3px; left: 0; width: 100%; height: calc(100% + 16px); opacity: 0; font-size: 1rem; cursor: pointer; }
 .sec-value:has(select:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-xs); }
+/* 미정인 수업이 여러 줄이면 줄 사이 16px(붙어 있으면 아래 줄이 윗줄 선택칸의 넓힌 자리를 가져가 윗줄이 24 뿐이었다) */
+.sec-when:has(.sec-value) + .sec-when:has(.sec-value) { margin-top: var(--space-4); }
+/* 넓힌 선택칸의 아래 끝 1px 는 다음 분반과의 구분선 자리다. 구분선이 다음 행의 위 테두리(.list > li + li)이면 그 줄은 다음 행의 것이라, 아래에 분반이 더 있을 때
+   선택칸이 47 이 된다. 강의실 값이 있는 분반은 구분선을 제 아래 테두리로 그린다(보이는 모습은 같다) */
+.sec:has(.sec-value):not(:last-child) { border-bottom: 1px solid var(--line); }
+.sec:has(.sec-value) + .sec { border-top: 0; }
 .sec .tags { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-1); }
 /* 분반의 수업 칩: 글자를 누르면 그 수업을 고치는 입력 줄, ×는 빼기. 글자는 넘치면 줄을 바꾼다(시각이나 강의실이 잘리면 안 된다). 고치는 칩은 accent 테두리.
-   칩의 고치기 버튼은 제 초점 테두리를 끄므로(.chip .chip-q) 칩에 그린다. 칩이 여러 줄이면 줄 사이는 8px(최근 검색어 칩과 같다): 4px 이면 아래 칩의 넓힌 누르는 영역
-   (위로 7px)이 위 칩의 아래 3px 를 덮어, 위 칩의 아래 끝을 누르면 아래 칩이 눌렸다 */
-.sec .chips { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-1); margin: var(--space-2) 0 0 calc(22px + var(--space-3)); }
+   칩의 고치기 버튼은 제 초점 테두리를 끄므로(.chip .chip-q) 칩에 그린다.
+   칩은 한 줄에 하나씩 놓는다(요일·시각·장소가 줄 맞춰 보이는 목록이고, 나란히 두면 ×의 누르는 영역이 옆 칩에 닿는다). 간격은 누르는 영역(48)이 겹치지 않는 값을
+   간격 눈금에서 골랐다(10/5 디자인. 칩은 테두리까지 34 라 영역이 칩 밖으로 7 씩 나온다): 이름 줄과 20px(이름 줄의 영역이 아래로 12 + 칩 7 = 19 부터), 칩끼리 16px(7 + 7 = 14 부터).
+   태그 아래에서는 8px(태그는 누르는 것이 아니다). 줄 사이 8, 이름 줄과 8 이던 때는 이름 줄이 글자 쪽 37, 위아래로 붙은 칩이 42 였다 */
+.sec .chips { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); margin: var(--space-5) 0 0 calc(22px + var(--space-3)); }
+.sec .tags + .chips { margin-top: var(--space-2); }
 .sec .chips .chip { max-width: 100%; min-width: 0; padding: 0; }
-.sec .chips .chip-q { height: auto; min-height: 32px; padding-top: 4px; padding-bottom: 4px; text-align: left; }
+.sec .chips .chip-q { text-align: left; }
 .sec .chips .chip-q > span { overflow: visible; white-space: normal; }
 .sec .chips .chip.is-editing { border-color: var(--accent); }
-/* 빼기(×)의 누르는 영역(48)은 오른쪽으로 5px 옮긴다: 가운데에 두면 왼쪽으로 8px 인데 글자와의 사이가 3px 라 글자 끝 5px 를 덮는다(글자 끝을 누르면 그 수업이 빠졌다) */
-.sec .chips .chip-x::before { left: calc(50% + 5px); }
 .sec .chips .chip:has(.chip-q:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .sec .chips .chip:has(.chip-q:active) { background: var(--surface-hover); }
-/* 칩 아래의 시간 추가(글자가 칩 왼쪽 끝에 맞는다), 바꾼 분반을 펼쳤을 때 맨 아래의 편람 값 한 줄(t-caption text3)과 오른쪽 되돌리기 */
-.sec-tools { margin: var(--space-1) 0 0 calc(22px + var(--space-3) - var(--space-2)); }
-/* 시간 추가의 누르는 영역(48)은 2px 내린다: 가운데에 두면 위로 6px 인데 칩과의 사이가 4px 라 칩의 아래 2px 를 덮는다(칩의 아래 끝을 누르면 시간 추가가 눌렸다) */
+/* 칩(또는 고치는 입력 줄) 아래의 시간 추가(글자가 칩 왼쪽 끝에 맞는다)는 위로 12px 띄우고, 누르는 영역(48)을 2px 내린다: 칩의 영역이 칩 밖으로 7 + 시간 추가의 영역이
+   위로 4 = 11 부터라 12. 입력 줄의 바꾸기(보이는 높이 36, 영역 48)와도 12px 면 두 영역이 겹치지 않는다(4px 이던 때는 바꾸기의 아래 3px 를 누르면 시간 추가가 눌렸다) */
+.sec-tools { margin: var(--space-3) 0 0 calc(22px + var(--space-3) - var(--space-2)); }
 .sec-tools .btn-text.small::before { top: calc(50% + 2px); }
-/* 칩을 고치는 입력 줄 바로 아래의 시간 추가는 12px 띄운다: 4px 이면 작은 버튼 둘(바꾸기, 시간 추가. 보이는 높이 36, 누르는 영역 48)의 넓힌 영역이 겹쳐
-   바꾸기의 아래 3px 를 누르면 시간 추가가 눌렸다(고치던 값이 사라진다). 12px 면 두 영역이 맞닿기만 한다 */
-.sec-edit + .sec-tools { margin-top: var(--space-3); }
+/* 칩 없이 이름 줄 바로 아래에 올 때(펼친 분반에서 수업을 다 뺐다)는 16px: 이름 줄의 영역 12 + 시간 추가의 영역 4 */
+.sec-pick + .sec-tools, .sec-more + .sec-tools { margin-top: var(--space-4); }
+/* 시간 미정 줄(.sec-when) 안의 시간 추가는 누르는 영역을 6px 내린다: 가운데에 두면 영역의 위쪽이 분반 이름 글자의 아래 끝을 덮어, 이름의 아래 끝을 누르면 입력 줄이 열렸다.
+   내리면 버튼 상자(36) + 아래 12 = 48 이고 아래로는 행의 아래 여백까지다 */
+.sec-when .btn-text.small::before { top: calc(50% + 6px); }
+/* 바꾼 분반을 펼쳤을 때 맨 아래의 편람 값 한 줄(t-caption text3)과 오른쪽 되돌리기 */
 .sec-orig { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--space-2); margin: var(--space-2) 0 0 calc(22px + var(--space-3));
   font-size: 0.8125rem; line-height: 1.125rem; color: var(--text3); font-variant-numeric: tabular-nums; }
 .sec-orig > span { min-width: 0; }
 .sec-orig .btn-text { margin-left: auto; margin-right: calc(var(--space-2) * -1); }
 .sec-edit { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-3); }
+/* 좁은 폰(폭 382px 미만: 360·375)에서는 입력 줄을 들여 쓰지 않는다(10/5 디자인). 들여 쓰면(34px) 요일 여섯 칸(48 × 6 + 4 × 5 = 308)이 다섯 + 하나로 나뉘고
+   폭 360 에서는 시각 줄도 두 줄이 된다. 들여 쓰지 않으면 폭 360 에서 칸 50px, 375 에서 52px 로 한 줄이다. 폭 320 은 그래도 다섯 + 하나, 시각 두 줄 */
+@media (max-width: 23.8125em) { .sec-edit { margin-left: 0; } }
 .sec-edit .select { margin: 0; }
 .sec-edit .error-line { margin: 0; }
 /* 요일 칸(과목 시트의 시간 입력, 추가 설정의 공강 요일. 여럿 고른다): 한 줄에 놓되 칸 폭이 48px 아래로 줄면 줄을 바꾼다(누르는 영역 48.
@@ -647,10 +671,13 @@ dialog.sheet.is-scrolled .sheet-head { box-shadow: 0 1px 0 var(--line); }
 .lunch-win, .lunch-win .time-part { gap: var(--space-2); }
 .lunch-win .select { min-width: 5.75rem; }
 .lunch-win.is-off { visibility: hidden; }
-.chip { display: inline-flex; align-items: center; gap: 2px; min-height: 32px; padding: 0 2px 0 var(--space-3); border: 1px solid var(--line-strong);
+/* 칩(수업 칩, 최근 검색어 칩): 글자 버튼(.chip-q)과 빼기(.chip-x, 32×32)는 3px 떨어져 있고, ×의 누르는 영역(48)은 5px 오른쪽으로 옮긴다(왼쪽 3 + 32 + 오른쪽 13).
+   가운데에 두면 왼쪽으로 8px 라 글자 버튼의 끝을 덮는다(글자 끝을 누르면 그 수업이 빠지거나 그 말이 지워졌다). 3px·5px 면 두 영역이 맞닿기만 한다 */
+.chip { display: inline-flex; align-items: center; gap: 3px; min-height: 32px; padding: 0 2px 0 var(--space-3); border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm); background: var(--card); font-size: 0.875rem; line-height: 1.25rem; color: var(--text); }
 .chip button { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0;
   background: transparent; color: var(--muted); }
+.chip .chip-x::before { left: calc(50% + 5px); }
 
 /* ---------------------------------------------------------------- 요일 탭 */
 .daytabs { display: flex; gap: var(--space-2); }
@@ -1021,8 +1048,11 @@ h2.section-title, .asof, .picked-error, .footnote, .day-summary, .result-head, .
   .chip .chip-x:hover, .icon-btn.remove:hover, .sec-more:hover, button.info-row:hover svg, a.info-row:hover svg, label.info-row:hover svg, .rules-row:hover svg { color: var(--text2); }
 }
 
-/* ---------------------------------------------------------------- 작은 컨트롤의 누르는 영역을 48px로 넓힌다 */
-.btn-add::before, .btn-text.small::before, .field-label .icon-btn::before, .chip button::before, .sec-value::before {
+/* ---------------------------------------------------------------- 작은 컨트롤의 누르는 영역을 48px로 넓힌다
+   넓힌 영역은 이웃의 보이는 면을 덮지 않는다(보이는 면을 누르면 그것이 눌려야 한다). 작은 것이 붙어 있으면 둘 다 48 이 되게 띄우고, 띄울 수 없는 쪽이면 영역을 반대쪽으로
+   옮긴다: 칩의 ×(.chip .chip-x), 시간 추가(.sec-tools, .sec-when), 강의평(.cs-review). 눌리는 것이 따로 있으면 그것을 넓힌다(강의실 미정의 선택칸 .sec-value select,
+   담은 과목 행의 버튼 .course-hit). 좁은 자리에 누르는 것을 넣거나 간격을 바꾸면 화소마다 잰다(디자인 규칙 '누르는 영역') */
+.btn-add::before, .btn-text.small::before, .field-label .icon-btn::before, .chip button::before {
   content: ""; position: absolute; top: 50%; left: 50%; width: max(100%, var(--touch)); height: max(100%, var(--touch)); transform: translate(-50%, -50%); }
 
 /* ---------------------------------------------------------------- 다크 전용 */
@@ -1036,6 +1066,14 @@ h2.section-title, .asof, .picked-error, .footnote, .day-summary, .result-head, .
 /* ---------------------------------------------------------------- 고대비(강제 색) */
 @media (forced-colors: active) {
   .btn-primary, .btn-add, .btn-text, .tag, .daytabs button, .seg label, .days label, .snackbar, .banner, .searchbox, .chip, .term-select, .browse-select, .tt-late { border: 1px solid CanvasText; }
+  /* 강제 색에서는 바탕과 면이 같은 기기 색이 되고 그림자와 그라데이션(주소가 아닌 background-image)이 사라진다. 면의 가장자리와 선을 테두리로 그린다(10/5 디자인).
+     카드와 시트는 평소에 테두리가 없어서 여기서만 1px 생긴다 */
+  .card, dialog.sheet { border: 1px solid CanvasText; }
+  /* 하단 띠: 그라데이션 바탕이 사라져 아래 내용이 주요 버튼 둘레로 비친다. 바탕색으로 덮고 윗선을 긋는다(이벤트 테마가 켜져 있어도: 그 띠는 위쪽이 흐려서 선 아래로 비친다) */
+  .bottom-bar, html[data-theme] .bottom-bar { background: Canvas; border-top: 1px solid CanvasText; }
+  /* 시트의 붙은 머리 밑 선(.is-scrolled 의 box-shadow)은 사라지므로 아래 테두리로 긋는다. 자리는 늘 잡아 두고 색만 바꾼다(선이 생길 때 내용이 밀리지 않게) */
+  .sheet-head { border-bottom: 1px solid Canvas; }
+  dialog.sheet.is-scrolled .sheet-head { border-bottom-color: CanvasText; }
   .rank { border-color: CanvasText; }
   .rank.selected { border-color: Highlight; }
   .seg label:has(input:checked), .days label:has(input:checked), .daytabs button[aria-selected="true"], .sec .chips .chip.is-editing { outline: 2px solid Highlight; outline-offset: 1px; }
@@ -1043,6 +1081,10 @@ h2.section-title, .asof, .picked-error, .footnote, .day-summary, .result-head, .
   .dot, .swatch, .week .wb { forced-color-adjust: none; } /* 교과구분 색 표시는 그대로 둔다 */
   :focus-visible { outline: 2px solid Highlight; }
   html[data-theme] .line-key { color: CanvasText; } /* 이벤트 테마의 파선 견본 색(흰 카드용 짙은 색)이 어두운 강제 색 바탕에서 묻히지 않게 */
+}
+/* 넓은 화면(두 칸)에서는 하단 띠가 오른쪽 칸 안에 놓인다: 윗선을 긋지 않는다 */
+@media (forced-colors: active) and (min-width: 42.5em), (forced-colors: active) and (horizontal-viewport-segments: 2) {
+  .input-right .bottom-bar, html[data-theme] .input-right .bottom-bar { border-top: 0; }
 }
 
 /* ---------------------------------------------------------------- 동작 줄이기 */
