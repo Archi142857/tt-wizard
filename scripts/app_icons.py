@@ -1,4 +1,4 @@
-"""앱 아이콘(디자인 세션 design\\v3\\app-icons, 10/1 판) → 안드로이드 mipmap·iOS AppIcon. 아이콘을 바꿀 때만 돌린다.
+"""앱 아이콘(디자인 세션 design\\v3\\app-icons) → 안드로이드 mipmap·iOS AppIcon. 아이콘을 바꿀 때만 돌린다.
 
   python scripts/app_icons.py
 

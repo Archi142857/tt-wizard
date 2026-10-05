@@ -18,7 +18,7 @@ app/
   package.json, package-lock.json   Capacitor 8.5.2 (core·cli·android·ios) + 플러그인 app·browser·haptics, 글꼴 pretendard
   capacitor.config.json             앱 아이디·이름, 시스템 바(SystemBars)
   src/native.js                     앱 연결 스크립트 (웹에서는 아무것도 안 한다)
-  assets/icons/                     디자인 세션 아이콘 원본(design\v3\app-icons, 10/1 판)
+  assets/icons/                     디자인 세션 아이콘 원본(design\v3\app-icons, 10/5 판)
   android/                          네이티브 안드로이드 프로젝트 (커밋한다. 빌드 결과·복사본은 .gitignore)
   ios/                              네이티브 iOS 프로젝트 (커밋한다)
   www/                              build_app.py 가 만드는 묶음 (git 에 안 올림)
@@ -114,6 +114,9 @@ Xcode 26 이상. 위와 같고 마지막 두 줄만 `npx cap sync ios`, `npx cap
   다크 테마는 `mipmap-night-*`(파랑 바탕·흰 심볼). 안드로이드 7.x(API 24·25)는 `ic_launcher.png`(웹 `icon-512.png`)·`ic_launcher_round.png`.
 - iOS: `AppIcon` 1024 한 장(알파 없음) + Dark 모양(`app-icon-1024-dark.png`).
 - Play 등록 아이콘(`play-icon-512.png`)과 App Store 등록 아이콘은 콘솔에 따로 올린다.
+- 디자인 세션이 아이콘을 다시 내면 `design\v3\app-icons` 의 같은 이름 파일로 덮어쓰고(`legacy-icon-512.png` 는 거기의 `icon-512.png`) 스크립트를 다시 돌린다.
+  바뀐 층에서 나오는 파일만 달라져야 한다(전부 달라지면 Pillow 판이 달라 PNG 가 다르게 써진 것이니 화소로 견줘 본다).
+  지금은 10/5 판이다: 모자의 옅은 띠를 뚫린 띠로 바꿨고(작은 아이콘에서 모자 모양이 잘 안 보여서) 뒷면 층 둘은 10/1 판 그대로라 거기서 나오는 10장은 그대로였다.
 
 ## 판(버전)
 
