@@ -1,0 +1,30 @@
+{
+ "created": [],
+ "deleted": [],
+ "updated": [
+  {
+   "key": "113.464-001",
+   "fields": [
+    "instructor"
+   ],
+   "before": {
+    "instructor": "이선형"
+   },
+   "after": {
+    "instructor": "허원기"
+   }
+  },
+  {
+   "key": "F12.101-003",
+   "fields": [
+    "instructor"
+   ],
+   "before": {
+    "instructor": "이선형"
+   },
+   "after": {
+    "instructor": "권희진"
+   }
+  }
+ ]
+}
